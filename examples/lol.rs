@@ -22,28 +22,6 @@ use bevy::{
     prelude::*, render::view::RenderLayers,
 };
 
-#[derive(Debug, Component)]
-struct WorldModelCamera;
-
-#[derive(Debug, Component)]
-struct Player;
-
-#[derive(Debug, Component, Deref, DerefMut)]
-struct CameraSensitivity(Vec2);
-
-impl Default for CameraSensitivity {
-    fn default() -> Self {
-        Self(
-            // These factors are just arbitrary mouse sensitivity values.
-            // It's often nicer to have a faster horizontal sensitivity than vertical.
-            // We use a component for them so that we can make them user-configurable at runtime
-            // for accessibility reasons.
-            // It also allows you to inspect them in an editor if you `Reflect` the component.
-            Vec2::new(0.003, 0.002),
-        )
-    }
-}
-
 fn main() {
     App::new()
         .add_plugins((

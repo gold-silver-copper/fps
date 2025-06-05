@@ -6,7 +6,7 @@ pub struct CharacterControllerPlugin;
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<MovementAction>()
-            .add_systems(Update, (keyboard_input, gamepad_input).chain())
+            .add_systems(Update, (keyboard_input).chain())
             .add_systems(
                 FixedUpdate,
                 (update_grounded, movement, apply_movement_damping).chain(),
@@ -124,6 +124,28 @@ impl CharacterControllerBundle {
     }
 }
 
+#[derive(Debug, Component)]
+pub struct WorldModelCamera;
+
+#[derive(Debug, Component)]
+pub struct Player;
+
+#[derive(Debug, Component, Deref, DerefMut)]
+pub struct CameraSensitivity(Vec2);
+
+impl Default for CameraSensitivity {
+    fn default() -> Self {
+        Self(
+            // These factors are just arbitrary mouse sensitivity values.
+            // It's often nicer to have a faster horizontal sensitivity than vertical.
+            // We use a component for them so that we can make them user-configurable at runtime
+            // for accessibility reasons.
+            // It also allows you to inspect them in an editor if you `Reflect` the component.
+            Vec2::new(0.003, 0.002),
+        )
+    }
+}
+
 /// Sends [`MovementAction`] events based on keyboard input.
 fn keyboard_input(
     mut movement_event_writer: EventWriter<MovementAction>,
@@ -144,27 +166,6 @@ fn keyboard_input(
 
     if keyboard_input.just_pressed(KeyCode::Space) {
         movement_event_writer.write(MovementAction::Jump);
-    }
-}
-
-/// Sends [`MovementAction`] events based on gamepad input.
-fn gamepad_input(
-    mut movement_event_writer: EventWriter<MovementAction>,
-    gamepads: Query<&Gamepad>,
-) {
-    for gamepad in gamepads.iter() {
-        if let (Some(x), Some(y)) = (
-            gamepad.get(GamepadAxis::LeftStickX),
-            gamepad.get(GamepadAxis::LeftStickY),
-        ) {
-            movement_event_writer.write(MovementAction::Move(
-                Vector2::new(x as Scalar, y as Scalar).clamp_length_max(1.0),
-            ));
-        }
-
-        if gamepad.just_pressed(GamepadButton::South) {
-            movement_event_writer.write(MovementAction::Jump);
-        }
     }
 }
 
@@ -204,18 +205,27 @@ fn movement(
         &mut LinearVelocity,
         Has<Grounded>,
     )>,
+    player: Single<(&Transform), With<Player>>,
 ) {
     //fixedupdate defaults to 64hz
     let delta_time = 1.0 / 64.0;
 
+    let (transform) = player.into_inner();
+    // let xyz = transform.rotation.xyz();
     for event in movement_event_reader.read() {
         for (movement_acceleration, jump_impulse, mut linear_velocity, is_grounded) in
             &mut controllers
         {
             match event {
                 MovementAction::Move(direction) => {
-                    linear_velocity.x += direction.x * movement_acceleration.0 * delta_time;
-                    linear_velocity.z -= direction.y * movement_acceleration.0 * delta_time;
+                    // direction: Vec2 (x: right/left, y: forward/back)
+                    let local_direction = Vec3::new(direction.x, 0.0, -direction.y);
+                    let world_direction = transform.rotation * local_direction;
+
+                    // Apply movement acceleration in the rotated direction
+                    let acceleration = movement_acceleration.0 * delta_time;
+                    linear_velocity.x += world_direction.x * acceleration;
+                    linear_velocity.z += world_direction.z * acceleration;
                 }
                 MovementAction::Jump => {
                     if is_grounded {
