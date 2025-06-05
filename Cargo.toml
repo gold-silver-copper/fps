@@ -1,0 +1,10 @@
+[package]
+name = "fps"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+avian3d = { version = "0.3.0", default-features = true, features = [
+    "diagnostic_ui",
+] }
+bevy = "0.16.1"
