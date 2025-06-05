@@ -5,17 +5,12 @@ pub struct CharacterControllerPlugin;
 
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<MovementAction>().add_systems(
-            Update,
-            (
-                keyboard_input,
-                gamepad_input,
-                update_grounded,
-                movement,
-                apply_movement_damping,
-            )
-                .chain(),
-        );
+        app.add_event::<MovementAction>()
+            .add_systems(Update, (keyboard_input, gamepad_input).chain())
+            .add_systems(
+                FixedUpdate,
+                (update_grounded, movement, apply_movement_damping).chain(),
+            );
     }
 }
 
@@ -202,7 +197,6 @@ fn update_grounded(
 
 /// Responds to [`MovementAction`] events and moves character controllers accordingly.
 fn movement(
-    time: Res<Time>,
     mut movement_event_reader: EventReader<MovementAction>,
     mut controllers: Query<(
         &MovementAcceleration,
@@ -211,9 +205,8 @@ fn movement(
         Has<Grounded>,
     )>,
 ) {
-    // Precision is adjusted so that the example works with
-    // both the `f32` and `f64` features. Otherwise you don't need this.
-    let delta_time = time.delta_secs_f64().adjust_precision();
+    //fixedupdate defaults to 64hz
+    let delta_time = 1.0 / 64.0;
 
     for event in movement_event_reader.read() {
         for (movement_acceleration, jump_impulse, mut linear_velocity, is_grounded) in
