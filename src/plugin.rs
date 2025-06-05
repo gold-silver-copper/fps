@@ -1,9 +1,6 @@
 use avian3d::{math::*, prelude::*};
 use bevy::ecs::query::Has;
-use bevy::{
-    color::palettes::tailwind, input::mouse::AccumulatedMouseMotion, pbr::NotShadowCaster,
-    prelude::*, render::view::RenderLayers,
-};
+use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
 
 pub struct CharacterControllerPlugin;
 

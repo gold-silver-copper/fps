@@ -15,8 +15,6 @@ use avian3d::{math::*, prelude::*};
 use bevy::prelude::*;
 use fps::*;
 
-use std::f32::consts::FRAC_PI_2;
-
 fn main() {
     App::new()
         .add_plugins((
