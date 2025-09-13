@@ -29,7 +29,7 @@ use bevy::{input::mouse::MouseMotion, math::Vec3Swizzles, prelude::*};
 /// ```
 pub struct FpsControllerPlugin;
 
-pub static FPS: f64 = 96.0;
+pub static FPS: f64 = 120.0;
 pub static PLAYER_HEIGHT: f32 = 1.8;
 pub static PLAYER_RADIUS: f32 = 0.25;
 
@@ -86,32 +86,19 @@ pub struct FpsController {
 
     /// If the distance to the ground is less than this value, the player is considered grounded
     pub grounded_distance: f32,
-    pub walk_speed: f32,
-    pub run_speed: f32,
-    pub forward_speed: f32,
-    pub side_speed: f32,
-    pub air_speed_cap: f32,
-    pub air_acceleration: f32,
-    pub max_air_speed: f32,
+    pub base_speed: f32,
+
     pub acceleration: f32,
 
     /// If the dot product (alignment) of the normal of the surface and the upward vector,
     /// which is a value from [-1, 1], is greater than this value, ground movement is applied
     pub traction_normal_cutoff: f32,
-    pub friction_speed_cutoff: f32,
     pub jump_speed: f32,
-    pub fly_speed: f32,
-    pub crouched_speed: f32,
-    pub crouch_speed: f32,
-    pub uncrouch_speed: f32,
+
     pub height: f32,
-    pub upright_height: f32,
-    pub crouch_height: f32,
-    pub fast_fly_speed: f32,
-    pub fly_friction: f32,
+
     pub pitch: f32,
     pub yaw: f32,
-    pub ground_tick: u8,
 
     pub sensitivity: f32,
     pub enable_input: bool,
@@ -122,41 +109,26 @@ pub struct FpsController {
     pub key_right: KeyCode,
     pub key_up: KeyCode,
     pub key_down: KeyCode,
-    pub key_sprint: KeyCode,
+
     pub key_jump: KeyCode,
-    pub key_fly: KeyCode,
-    pub key_crouch: KeyCode,
 }
 
 impl Default for FpsController {
     fn default() -> Self {
         Self {
-            grounded_distance: 0.125,
+            grounded_distance: 0.01,
             radius: PLAYER_RADIUS,
-            fly_speed: 10.0,
-            fast_fly_speed: 30.0,
 
-            walk_speed: 9.0,
-            run_speed: 14.0,
-            forward_speed: 30.0,
-            side_speed: 30.0,
-            air_speed_cap: 2.0,
-            air_acceleration: 20.0,
-            max_air_speed: 15.0,
-            crouched_speed: 5.0,
-            crouch_speed: 6.0,
-            uncrouch_speed: 8.0,
+            base_speed: 5.0,
+
             height: PLAYER_HEIGHT,
-            upright_height: PLAYER_HEIGHT,
-            crouch_height: 1.5,
+
             acceleration: 5.0,
 
             traction_normal_cutoff: 0.7,
-            friction_speed_cutoff: 0.1,
-            fly_friction: 0.5,
+
             pitch: 0.0,
             yaw: 0.0,
-            ground_tick: 0,
 
             jump_speed: 4.0,
 
@@ -167,10 +139,9 @@ impl Default for FpsController {
             key_right: KeyCode::KeyD,
             key_up: KeyCode::KeyQ,
             key_down: KeyCode::KeyE,
-            key_sprint: KeyCode::ShiftLeft,
+
             key_jump: KeyCode::Space,
-            key_fly: KeyCode::KeyF,
-            key_crouch: KeyCode::ControlLeft,
+
             sensitivity: 0.001,
         }
     }
@@ -215,10 +186,8 @@ pub fn fps_controller_input(
             get_axis(&key_input, controller.key_up, controller.key_down),
             get_axis(&key_input, controller.key_forward, controller.key_back),
         );
-        input.sprint = key_input.pressed(controller.key_sprint);
+
         input.jump = key_input.pressed(controller.key_jump);
-        input.fly = key_input.just_pressed(controller.key_fly);
-        input.crouch = key_input.pressed(controller.key_crouch);
     }
 }
 
@@ -248,7 +217,7 @@ pub fn fps_controller_move(
     for (entity, input, mut controller, mut collider, mut transform, mut velocity) in
         query.iter_mut()
     {
-        let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
+        let speeds = Vec3::new(controller.base_speed, 0.0, controller.base_speed);
         let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
         move_to_world.z_axis *= -1.0; // Forward is -Z
         let mut wish_direction = move_to_world * (input.movement * speeds);
@@ -257,13 +226,7 @@ pub fn fps_controller_move(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
-        let max_speed = if input.crouch {
-            controller.crouched_speed
-        } else if input.sprint {
-            controller.run_speed
-        } else {
-            controller.walk_speed
-        };
+        let max_speed = controller.base_speed;
         wish_speed = f32::min(wish_speed, max_speed);
 
         // Shape cast downwards to find ground
@@ -300,50 +263,17 @@ pub fn fps_controller_move(
                     velocity.0.y = controller.jump_speed;
                 }
             }
-
-            // Increment ground tick but cap at max value
-            controller.ground_tick = controller.ground_tick.saturating_add(1);
         } else {
-            controller.ground_tick = 0;
-            wish_speed = f32::min(wish_speed, controller.air_speed_cap);
-
             let add = acceleration(
                 wish_direction,
                 wish_speed,
-                controller.air_acceleration,
+                controller.acceleration,
                 velocity.0,
                 dt,
             );
 
             velocity.0 += add;
-
-            let air_speed = velocity.xz().length();
-            if air_speed > controller.max_air_speed {
-                let ratio = controller.max_air_speed / air_speed;
-                velocity.0.x *= ratio;
-                velocity.0.z *= ratio;
-            }
         };
-
-        /* Crouching */
-
-        let crouch_height = controller.crouch_height;
-        let upright_height = controller.upright_height;
-
-        let crouch_speed = if input.crouch {
-            -controller.crouch_speed
-        } else {
-            controller.uncrouch_speed
-        };
-        controller.height += dt * crouch_speed;
-        controller.height = controller.height.clamp(crouch_height, upright_height);
-
-        if let Some(cylinder) = collider.shape().as_cylinder() {
-            let radius = cylinder.radius;
-            collider.set_shape(SharedShape::cylinder(controller.height * 0.5, radius));
-        } else {
-            panic!("Controller must use a cylinder collider")
-        }
     }
 }
 

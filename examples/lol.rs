@@ -65,10 +65,11 @@ fn setup(
                 combine_rule: CoefficientCombine::Min,
             },
             LinearVelocity::ZERO,
+            LinearDamping(0.8),
             RigidBody::Dynamic,
             Sleeping,
             LockedAxes::ROTATION_LOCKED,
-            Mass(40.0),
+            Mass(1.0),
             GravityScale(1.0),
             Transform::from_xyz(0.0, 1.5, 0.0),
             LogicalPlayer,
@@ -77,14 +78,9 @@ fn setup(
                 yaw: TAU * 5.0 / 8.0,
                 ..default()
             },
-            FpsController {
-                air_acceleration: 80.0,
-                ..default()
-            },
+            FpsController::default(),
         ))
-        .insert(CameraConfig {
-            height_offset: -0.5,
-        })
+        .insert(CameraConfig { height_offset: 0.0 })
         .id();
 
     commands.spawn((
