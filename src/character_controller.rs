@@ -99,7 +99,7 @@ pub struct FpsController {
     pub air_acceleration: f32,
     pub max_air_speed: f32,
     pub acceleration: f32,
-    pub friction: f32,
+
     /// If the dot product (alignment) of the normal of the surface and the upward vector,
     /// which is a value from [-1, 1], is greater than this value, ground movement is applied
     pub traction_normal_cutoff: f32,
@@ -117,7 +117,7 @@ pub struct FpsController {
     pub pitch: f32,
     pub yaw: f32,
     pub ground_tick: u8,
-    pub stop_speed: f32,
+
     pub sensitivity: f32,
     pub enable_input: bool,
 
@@ -156,14 +156,14 @@ impl Default for FpsController {
             upright_height: 3.0,
             crouch_height: 1.5,
             acceleration: 10.0,
-            friction: 10.0,
+
             traction_normal_cutoff: 0.7,
             friction_speed_cutoff: 0.1,
             fly_friction: 0.5,
             pitch: 0.0,
             yaw: 0.0,
             ground_tick: 0,
-            stop_speed: 1.0,
+
             jump_speed: 4.0,
 
             enable_input: true,
@@ -318,23 +318,6 @@ pub fn fps_controller_move(
                     let has_traction =
                         Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
 
-                    // Only apply friction after at least one tick, allows b-hopping without losing speed
-                    if controller.ground_tick >= 1 && has_traction {
-                        let lateral_speed = velocity.0.xz().length();
-                        if lateral_speed > controller.friction_speed_cutoff {
-                            let control = f32::max(lateral_speed, controller.stop_speed);
-                            let drop = control * controller.friction * dt;
-                            let new_speed = f32::max((lateral_speed - drop) / lateral_speed, 0.0);
-                            velocity.0.x *= new_speed;
-                            velocity.0.z *= new_speed;
-                        } else {
-                            velocity.0 = Vec3::ZERO;
-                        }
-                        if controller.ground_tick == 1 {
-                            velocity.0.y = -hit.distance;
-                        }
-                    }
-
                     let add = acceleration(
                         wish_direction,
                         wish_speed,
@@ -391,15 +374,11 @@ pub fn fps_controller_move(
                 controller.height += dt * crouch_speed;
                 controller.height = controller.height.clamp(crouch_height, upright_height);
 
-                if let Some(capsule) = collider.shape().as_capsule() {
-                    let radius = capsule.radius;
-                    let half = Point::from(Vec3::Y * (controller.height * 0.5 - radius));
-                    collider.set_shape(SharedShape::capsule(-half, half, radius));
-                } else if let Some(cylinder) = collider.shape().as_cylinder() {
+                if let Some(cylinder) = collider.shape().as_cylinder() {
                     let radius = cylinder.radius;
                     collider.set_shape(SharedShape::cylinder(controller.height * 0.5, radius));
                 } else {
-                    panic!("Controller must use a cylinder or capsule collider")
+                    panic!("Controller must use a cylinder collider")
                 }
             }
         }
@@ -412,10 +391,8 @@ fn collider_y_offset(collider: &Collider) -> Vec3 {
     Vec3::Y
         * if let Some(cylinder) = collider.shape().as_cylinder() {
             cylinder.half_height
-        } else if let Some(capsule) = collider.shape().as_capsule() {
-            capsule.half_height() + capsule.radius
         } else {
-            panic!("Controller must use a cylinder or capsule collider")
+            panic!("Controller must use a cylinder collider")
         }
 }
 
@@ -424,11 +401,8 @@ fn scaled_collider_laterally(collider: &Collider, scale: f32) -> Collider {
     if let Some(cylinder) = collider.shape().as_cylinder() {
         let new_cylinder = Collider::cylinder(cylinder.radius * scale, cylinder.half_height * 2.0);
         new_cylinder
-    } else if let Some(capsule) = collider.shape().as_capsule() {
-        let new_capsule = Collider::capsule(capsule.radius * scale, capsule.segment.length());
-        new_capsule
     } else {
-        panic!("Controller must use a cylinder or capsule collider")
+        panic!("Controller must use a cylinder collider")
     }
 }
 

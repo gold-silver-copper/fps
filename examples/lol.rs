@@ -59,11 +59,7 @@ fn setup(
             // If you use it, you have to make sure each segment point is
             // equidistant from the translation of the player transform
             // Collider::capsule(0.5, height),
-            Friction {
-                dynamic_coefficient: 0.0,
-                static_coefficient: 0.0,
-                combine_rule: CoefficientCombine::Min,
-            },
+            Friction::new(0.99),
             Restitution {
                 coefficient: 0.0,
                 combine_rule: CoefficientCombine::Min,
@@ -112,9 +108,10 @@ fn setup(
 
     // floor
     commands.spawn((
+        Friction::new(0.99),
         RigidBody::Static,
-        Collider::cuboid(100.0, 1.0, 10.0),
-        Mesh3d(meshes.add(Cuboid::new(100.0, 1.0, 10.0))),
+        Collider::cuboid(100.0, 1.0, 100.0),
+        Mesh3d(meshes.add(Cuboid::new(100.0, 1.0, 100.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
         Transform::from_xyz(10.0, 0.0, 3.0),
     ));
@@ -128,12 +125,6 @@ fn setup(
         },
         Transform::from_xyz(0.0, 15.0, 0.0),
     ));
-
-    /*// Camera
-    commands.spawn((
-        Camera3d::default(),
-        Transform::from_xyz(-7.0, 9.5, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-    )); */
 }
 fn manage_cursor(
     btn: Res<ButtonInput<MouseButton>>,
