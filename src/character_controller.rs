@@ -29,7 +29,7 @@ use bevy::{input::mouse::MouseMotion, math::Vec3Swizzles, prelude::*};
 /// ```
 pub struct FpsControllerPlugin;
 
-pub static FPS: f64 = 120.0;
+pub static FPS: f64 = 60.0;
 pub static PLAYER_HEIGHT: f32 = 1.8;
 pub static PLAYER_RADIUS: f32 = 0.25;
 
@@ -90,9 +90,6 @@ pub struct FpsController {
 
     pub acceleration: f32,
 
-    /// If the dot product (alignment) of the normal of the surface and the upward vector,
-    /// which is a value from [-1, 1], is greater than this value, ground movement is applied
-    pub traction_normal_cutoff: f32,
     pub jump_speed: f32,
 
     pub height: f32,
@@ -116,7 +113,7 @@ pub struct FpsController {
 impl Default for FpsController {
     fn default() -> Self {
         Self {
-            grounded_distance: 0.01,
+            grounded_distance: 0.2,
             radius: PLAYER_RADIUS,
 
             base_speed: 5.0,
@@ -125,12 +122,10 @@ impl Default for FpsController {
 
             acceleration: 5.0,
 
-            traction_normal_cutoff: 0.7,
-
             pitch: 0.0,
             yaw: 0.0,
 
-            jump_speed: 4.0,
+            jump_speed: 5.0,
 
             enable_input: true,
             key_forward: KeyCode::KeyW,
@@ -228,6 +223,15 @@ pub fn fps_controller_move(
         }
         let max_speed = controller.base_speed;
         wish_speed = f32::min(wish_speed, max_speed);
+        let add = acceleration(
+            wish_direction,
+            wish_speed,
+            controller.acceleration,
+            velocity.0,
+            dt,
+        );
+
+        velocity.0 += add;
 
         // Shape cast downwards to find ground
         // Better than a ray cast as it handles when you are near the edge of a surface
@@ -243,36 +247,9 @@ pub fn fps_controller_move(
             &ShapeCastConfig::from_max_distance(controller.grounded_distance),
             &filter,
         ) {
-            let has_traction = Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
-
-            let add = acceleration(
-                wish_direction,
-                wish_speed,
-                controller.acceleration,
-                velocity.0,
-                dt,
-            );
-
-            velocity.0 += add;
-
-            if has_traction {
-                let linear_velocity = velocity.0;
-                velocity.0 -= Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
-
-                if input.jump {
-                    velocity.0.y = controller.jump_speed;
-                }
+            if input.jump {
+                velocity.0.y = controller.jump_speed;
             }
-        } else {
-            let add = acceleration(
-                wish_direction,
-                wish_speed,
-                controller.acceleration,
-                velocity.0,
-                dt,
-            );
-
-            velocity.0 += add;
         };
     }
 }

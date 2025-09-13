@@ -13,12 +13,17 @@
 
 use avian3d::{math::*, prelude::*};
 use bevy::prelude::*;
-
+use bevy::{
+    gltf::{Gltf, GltfMesh, GltfNode},
+    math::Vec3Swizzles,
+    prelude::*,
+    render::camera::Exposure,
+    window::CursorGrabMode,
+};
 use fps::*;
 use std::f32::consts::TAU;
 
-use bevy::{math::Vec3Swizzles, render::camera::Exposure, window::CursorGrabMode};
-
+const SPAWN_POINT: Vec3 = Vec3::new(0.0, 1.625, 0.0);
 fn main() {
     App::new()
         .add_plugins((
@@ -27,8 +32,17 @@ fn main() {
             InputPlugin,
             FpsControllerPlugin,
         ))
+        .insert_resource(AmbientLight {
+            color: Color::WHITE,
+            brightness: 10000.0,
+            affects_lightmapped_meshes: true,
+        })
+        .insert_resource(ClearColor(Color::linear_rgb(0.83, 0.96, 0.96)))
         .add_systems(Startup, setup)
-        .add_systems(Update, (manage_cursor, display_text))
+        .add_systems(
+            Update,
+            (manage_cursor, display_text, scene_colliders, respawn),
+        )
         .run();
 }
 
@@ -36,6 +50,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    assets: Res<AssetServer>,
 ) {
     commands.spawn((
         DirectionalLight {
@@ -59,13 +74,13 @@ fn setup(
             // If you use it, you have to make sure each segment point is
             // equidistant from the translation of the player transform
             // Collider::capsule(0.5, height),
-            Friction::new(0.99),
+            Friction::new(0.6),
             Restitution {
                 coefficient: 0.0,
                 combine_rule: CoefficientCombine::Min,
             },
             LinearVelocity::ZERO,
-            LinearDamping(0.8),
+            LinearDamping(0.6),
             RigidBody::Dynamic,
             Sleeping,
             LockedAxes::ROTATION_LOCKED,
@@ -86,12 +101,16 @@ fn setup(
     commands.spawn((
         Camera3d::default(),
         Projection::Perspective(PerspectiveProjection {
-            fov: TAU / 5.0,
+            fov: 45.0,
             ..default()
         }),
         Exposure::SUNLIGHT,
         RenderPlayer { logical_entity },
     ));
+    commands.insert_resource(MainScene {
+        handle: assets.load("playground.glb"),
+        is_loaded: false,
+    });
 
     // A cube to move around
     commands.spawn((
@@ -102,15 +121,6 @@ fn setup(
         Transform::from_xyz(3.0, 2.0, 3.0),
     ));
 
-    // floor
-    commands.spawn((
-        Friction::new(0.99),
-        RigidBody::Static,
-        Collider::cuboid(100.0, 1.0, 100.0),
-        Mesh3d(meshes.add(Cuboid::new(100.0, 1.0, 100.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
-        Transform::from_xyz(10.0, 0.0, 3.0),
-    ));
     // Light
     commands.spawn((
         PointLight {
@@ -162,5 +172,57 @@ fn display_text(
                 velocity.0.xz().length()
             );
         }
+    }
+}
+
+fn respawn(mut query: Query<(&mut Transform, &mut LinearVelocity)>) {
+    for (mut transform, mut velocity) in &mut query {
+        if transform.translation.y > -50.0 {
+            continue;
+        }
+
+        velocity.0 = Vec3::ZERO;
+        transform.translation = SPAWN_POINT;
+    }
+}
+
+#[derive(Resource)]
+struct MainScene {
+    handle: Handle<Gltf>,
+    is_loaded: bool,
+}
+
+fn scene_colliders(
+    mut commands: Commands,
+    mut main_scene: ResMut<MainScene>,
+    gltf_assets: Res<Assets<Gltf>>,
+    gltf_mesh_assets: Res<Assets<GltfMesh>>,
+    gltf_node_assets: Res<Assets<GltfNode>>,
+    mesh_assets: Res<Assets<Mesh>>,
+) {
+    if main_scene.is_loaded {
+        return;
+    }
+
+    let gltf = gltf_assets.get(&main_scene.handle);
+
+    if let Some(gltf) = gltf {
+        let scene = gltf.scenes.first().unwrap().clone();
+        commands.spawn(SceneRoot(scene));
+        for node in &gltf.nodes {
+            let node = gltf_node_assets.get(node).unwrap();
+            if let Some(gltf_mesh) = node.mesh.clone() {
+                let gltf_mesh = gltf_mesh_assets.get(&gltf_mesh).unwrap();
+                for mesh_primitive in &gltf_mesh.primitives {
+                    let mesh = mesh_assets.get(&mesh_primitive.mesh).unwrap();
+                    commands.spawn((
+                        Collider::trimesh_from_mesh(mesh).unwrap(),
+                        RigidBody::Static,
+                        node.transform,
+                    ));
+                }
+            }
+        }
+        main_scene.is_loaded = true;
     }
 }
