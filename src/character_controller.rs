@@ -29,6 +29,8 @@ use bevy::{input::mouse::MouseMotion, math::Vec3Swizzles, prelude::*};
 /// ```
 pub struct FpsControllerPlugin;
 
+pub static FPS: f64 = 96.0;
+
 impl Plugin for FpsControllerPlugin {
     fn build(&self, app: &mut App) {
         use bevy::input::{gamepad, keyboard, mouse, touch};
@@ -38,7 +40,6 @@ impl Plugin for FpsControllerPlugin {
             (
                 fps_controller_input,
                 fps_controller_look,
-                fps_controller_move,
                 fps_controller_render,
             )
                 .chain()
@@ -47,7 +48,9 @@ impl Plugin for FpsControllerPlugin {
                 .after(gamepad::gamepad_event_processing_system)
                 .after(gamepad::gamepad_connection_system)
                 .after(touch::touch_screen_input_system),
-        );
+        )
+        .insert_resource(Time::<Fixed>::from_hz(FPS))
+        .add_systems(FixedUpdate, (fps_controller_move));
     }
 }
 
@@ -249,7 +252,7 @@ pub fn fps_controller_move(
         With<LogicalPlayer>,
     >,
 ) {
-    let dt = time.delta_secs();
+    let dt = 1.0 / FPS as f32;
 
     for (entity, input, mut controller, mut collider, mut transform, mut velocity) in
         query.iter_mut()

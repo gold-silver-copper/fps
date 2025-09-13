@@ -17,19 +17,12 @@ use bevy::prelude::*;
 use fps::*;
 use std::f32::consts::TAU;
 
-use bevy::{
-    gltf::{Gltf, GltfMesh, GltfNode},
-    math::Vec3Swizzles,
-    prelude::*,
-    render::camera::Exposure,
-    window::CursorGrabMode,
-};
+use bevy::{math::Vec3Swizzles, render::camera::Exposure, window::CursorGrabMode};
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            ExampleCommonPlugin,
             PhysicsPlugins::default(),
             InputPlugin,
             FpsControllerPlugin,
