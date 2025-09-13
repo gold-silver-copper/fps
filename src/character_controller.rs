@@ -88,7 +88,7 @@ pub struct FpsControllerInput {
 pub struct FpsController {
     pub move_mode: MoveMode,
     pub radius: f32,
-    pub gravity: f32,
+
     /// If the distance to the ground is less than this value, the player is considered grounded
     pub grounded_distance: f32,
     pub walk_speed: f32,
@@ -120,7 +120,7 @@ pub struct FpsController {
     pub stop_speed: f32,
     pub sensitivity: f32,
     pub enable_input: bool,
-    pub experimental_step_offset: f32,
+
     pub key_forward: KeyCode,
     pub key_back: KeyCode,
     pub key_left: KeyCode,
@@ -131,7 +131,6 @@ pub struct FpsController {
     pub key_jump: KeyCode,
     pub key_fly: KeyCode,
     pub key_crouch: KeyCode,
-    pub experimental_enable_ledge_cling: bool,
 }
 
 impl Default for FpsController {
@@ -142,7 +141,7 @@ impl Default for FpsController {
             radius: 0.5,
             fly_speed: 10.0,
             fast_fly_speed: 30.0,
-            gravity: 23.0,
+
             walk_speed: 9.0,
             run_speed: 14.0,
             forward_speed: 30.0,
@@ -165,8 +164,8 @@ impl Default for FpsController {
             yaw: 0.0,
             ground_tick: 0,
             stop_speed: 1.0,
-            jump_speed: 8.5,
-            experimental_step_offset: 0.0, // Does not work well on Avian yet.
+            jump_speed: 4.0,
+
             enable_input: true,
             key_forward: KeyCode::KeyW,
             key_back: KeyCode::KeyS,
@@ -179,7 +178,6 @@ impl Default for FpsController {
             key_fly: KeyCode::KeyF,
             key_crouch: KeyCode::ControlLeft,
             sensitivity: 0.001,
-            experimental_enable_ledge_cling: false, // Does not work well on Avian yet.
         }
     }
 }
@@ -238,7 +236,6 @@ pub fn fps_controller_look(mut query: Query<(&mut FpsController, &FpsControllerI
 }
 
 pub fn fps_controller_move(
-    time: Res<Time>,
     spatial_query_pipeline: Res<SpatialQueryPipeline>,
     mut query: Query<
         (
@@ -338,16 +335,14 @@ pub fn fps_controller_move(
                         }
                     }
 
-                    let mut add = acceleration(
+                    let add = acceleration(
                         wish_direction,
                         wish_speed,
                         controller.acceleration,
                         velocity.0,
                         dt,
                     );
-                    if !has_traction {
-                        add.y -= controller.gravity * dt;
-                    }
+
                     velocity.0 += add;
 
                     if has_traction {
@@ -365,14 +360,14 @@ pub fn fps_controller_move(
                     controller.ground_tick = 0;
                     wish_speed = f32::min(wish_speed, controller.air_speed_cap);
 
-                    let mut add = acceleration(
+                    let add = acceleration(
                         wish_direction,
                         wish_speed,
                         controller.air_acceleration,
                         velocity.0,
                         dt,
                     );
-                    add.y = -controller.gravity * dt;
+
                     velocity.0 += add;
 
                     let air_speed = velocity.xz().length();
@@ -406,71 +401,6 @@ pub fn fps_controller_move(
                 } else {
                     panic!("Controller must use a cylinder or capsule collider")
                 }
-
-                // Step offset really only works best for cylinders
-                // For capsules the player has to practically teleported to fully step up
-                if collider.shape().as_cylinder().is_some()
-                    && controller.experimental_step_offset > f32::EPSILON
-                    && controller.ground_tick >= 1
-                {
-                    // Try putting the player forward, but instead lifted upward by the step offset
-                    // If we can find a surface below us, we can adjust our position to be on top of it
-                    let future_position = transform.translation + velocity.0 * dt;
-                    let future_position_lifted =
-                        future_position + Vec3::Y * controller.experimental_step_offset;
-                    if let Some(hit) = spatial_query_pipeline.cast_shape(
-                        &collider,
-                        future_position_lifted,
-                        transform.rotation,
-                        Dir3::new_unchecked(-Vec3::Y),
-                        &ShapeCastConfig::from_max_distance(
-                            controller.experimental_step_offset * SLIGHT_SCALE_DOWN,
-                        ),
-                        &filter,
-                    ) {
-                        let has_traction_on_ledge =
-                            Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
-                        if has_traction_on_ledge {
-                            transform.translation.y +=
-                                controller.experimental_step_offset - hit.distance;
-                        }
-                    }
-                }
-
-                // Prevent falling off ledges
-                if controller.experimental_enable_ledge_cling
-                    && controller.ground_tick >= 1
-                    && input.crouch
-                    && !input.jump
-                {
-                    for _ in 0..2 {
-                        // Find the component of our velocity that is overhanging and subtract it off
-                        let overhang = overhang_component(
-                            entity,
-                            &collider,
-                            transform.as_ref(),
-                            &spatial_query_pipeline,
-                            velocity.0,
-                            dt,
-                        );
-                        if let Some(overhang) = overhang {
-                            velocity.0 -= overhang;
-                        }
-                    }
-                    // If we are still overhanging consider unsolvable and freeze
-                    if overhang_component(
-                        entity,
-                        &collider,
-                        transform.as_ref(),
-                        &spatial_query_pipeline,
-                        velocity.0,
-                        dt,
-                    )
-                    .is_some()
-                    {
-                        velocity.0 = Vec3::ZERO;
-                    }
-                }
             }
         }
     }
@@ -500,51 +430,6 @@ fn scaled_collider_laterally(collider: &Collider, scale: f32) -> Collider {
     } else {
         panic!("Controller must use a cylinder or capsule collider")
     }
-}
-
-fn overhang_component(
-    entity: Entity,
-    collider: &Collider,
-    transform: &Transform,
-    spatial_query: &SpatialQueryPipeline,
-    velocity: Vec3,
-    dt: f32,
-) -> Option<Vec3> {
-    if velocity == Vec3::ZERO {
-        return None;
-    }
-
-    // Cast a segment (zero radius capsule) from our next position back towards us (sweeping a rectangle)
-    // If there is a ledge in front of us we will hit the edge of it
-    // We can use the normal of the hit to subtract off the component that is overhanging
-    let cast_capsule = Collider::capsule(0.01, 0.5);
-    let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
-    let collider_offset = collider_y_offset(collider);
-    let future_position = transform.translation - collider_offset + velocity * dt;
-
-    if let Some(hit) = spatial_query.cast_shape(
-        &cast_capsule,
-        future_position,
-        transform.rotation,
-        Dir3::new_unchecked((-velocity).normalize()),
-        &ShapeCastConfig::from_max_distance(0.5),
-        &filter,
-    ) {
-        let cast = spatial_query.cast_ray(
-            future_position + Vec3::Y * 0.125,
-            Dir3::new_unchecked(-Vec3::Y),
-            0.375,
-            false,
-            &filter,
-        );
-        // Make sure that this is actually a ledge, e.g. there is no ground in front of us
-        if cast.is_none() {
-            let normal = -hit.normal1;
-            let alignment = Vec3::dot(velocity, normal);
-            return Some(alignment * normal);
-        }
-    }
-    None
 }
 
 fn acceleration(

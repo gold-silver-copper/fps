@@ -73,7 +73,7 @@ fn setup(
             Sleeping,
             LockedAxes::ROTATION_LOCKED,
             Mass(1.0),
-            GravityScale(0.0),
+            GravityScale(1.0),
             Transform::from_xyz(0.0, 1.5, 0.0),
             LogicalPlayer,
             FpsControllerInput {
