@@ -7,12 +7,30 @@ pub struct CharacterControllerPlugin;
 impl Plugin for CharacterControllerPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<MovementAction>()
-            .add_systems(Update, (keyboard_input).chain())
-            .add_systems(Update, (move_player_camera))
-            .add_systems(
-                FixedUpdate,
-                (update_grounded, movement, apply_movement_damping).chain(),
-            );
+            .insert_resource(QuakeMoveVars::default())
+            .add_systems(FixedUpdate, (update_grounded, quake_movement).chain());
+    }
+}
+#[derive(Resource)]
+pub struct QuakeMoveVars {
+    pub gravity: f32,
+    pub stopspeed: f32,
+    pub maxspeed: f32,
+    pub accelerate: f32,
+    pub airaccelerate: f32,
+    pub friction: f32,
+}
+
+impl Default for QuakeMoveVars {
+    fn default() -> Self {
+        Self {
+            gravity: 800.0,
+            stopspeed: 100.0,
+            maxspeed: 320.0,
+            accelerate: 10.0,
+            airaccelerate: 0.7,
+            friction: 6.0,
+        }
     }
 }
 
@@ -34,10 +52,6 @@ pub struct Grounded;
 /// The acceleration used for character movement.
 #[derive(Component)]
 pub struct MovementAcceleration(Scalar);
-
-/// The damping factor used for slowing down movement.
-#[derive(Component)]
-pub struct MovementDampingFactor(Scalar);
 
 /// The strength of a jump.
 #[derive(Component)]
@@ -65,21 +79,16 @@ pub struct CharacterControllerBundle {
 #[derive(Bundle)]
 pub struct MovementBundle {
     acceleration: MovementAcceleration,
-    damping: MovementDampingFactor,
+
     jump_impulse: JumpImpulse,
     max_slope_angle: MaxSlopeAngle,
 }
 
 impl MovementBundle {
-    pub const fn new(
-        acceleration: Scalar,
-        damping: Scalar,
-        jump_impulse: Scalar,
-        max_slope_angle: Scalar,
-    ) -> Self {
+    pub const fn new(acceleration: Scalar, jump_impulse: Scalar, max_slope_angle: Scalar) -> Self {
         Self {
             acceleration: MovementAcceleration(acceleration),
-            damping: MovementDampingFactor(damping),
+
             jump_impulse: JumpImpulse(jump_impulse),
             max_slope_angle: MaxSlopeAngle(max_slope_angle),
         }
@@ -88,7 +97,7 @@ impl MovementBundle {
 
 impl Default for MovementBundle {
     fn default() -> Self {
-        Self::new(30.0, 0.9, 7.0, PI * 0.45)
+        Self::new(30.0, 7.0, PI * 0.45)
     }
 }
 
@@ -117,11 +126,11 @@ impl CharacterControllerBundle {
     pub fn with_movement(
         mut self,
         acceleration: Scalar,
-        damping: Scalar,
+
         jump_impulse: Scalar,
         max_slope_angle: Scalar,
     ) -> Self {
-        self.movement = MovementBundle::new(acceleration, damping, jump_impulse, max_slope_angle);
+        self.movement = MovementBundle::new(acceleration, jump_impulse, max_slope_angle);
         self
     }
 }
@@ -145,29 +154,6 @@ impl Default for CameraSensitivity {
             // It also allows you to inspect them in an editor if you `Reflect` the component.
             Vec2::new(0.003, 0.002),
         )
-    }
-}
-
-/// Sends [`MovementAction`] events based on keyboard input.
-fn keyboard_input(
-    mut movement_event_writer: EventWriter<MovementAction>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    let up = keyboard_input.any_pressed([KeyCode::KeyW, KeyCode::ArrowUp]);
-    let down = keyboard_input.any_pressed([KeyCode::KeyS, KeyCode::ArrowDown]);
-    let left = keyboard_input.any_pressed([KeyCode::KeyA, KeyCode::ArrowLeft]);
-    let right = keyboard_input.any_pressed([KeyCode::KeyD, KeyCode::ArrowRight]);
-
-    let horizontal = right as i8 - left as i8;
-    let vertical = up as i8 - down as i8;
-    let direction = Vector2::new(horizontal as Scalar, vertical as Scalar).clamp_length_max(1.0);
-
-    if direction != Vector2::ZERO {
-        movement_event_writer.write(MovementAction::Move(direction));
-    }
-
-    if keyboard_input.just_pressed(KeyCode::Space) || keyboard_input.pressed(KeyCode::Space) {
-        movement_event_writer.write(MovementAction::Jump);
     }
 }
 
@@ -239,45 +225,98 @@ fn movement(
     }
 }
 
-fn move_player_camera(
-    accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
-    player: Single<(&mut Transform, &CameraSensitivity), With<Player>>,
+fn quake_movement(
+    mut movement_event_reader: EventReader<MovementAction>,
+    mut controllers: Query<
+        (&mut LinearVelocity, &Transform, Has<Grounded>),
+        With<CharacterController>,
+    >,
+    vars: Res<QuakeMoveVars>,
 ) {
-    let (mut transform, camera_sensitivity) = player.into_inner();
+    let dt = 1.0 / 64.0;
 
-    let delta = accumulated_mouse_motion.delta;
+    for event in movement_event_reader.read() {
+        for (mut vel, transform, grounded) in &mut controllers {
+            let mut velocity = vel.0;
 
-    if delta != Vec2::ZERO {
-        // Note that we are not multiplying by delta_time here.
-        // The reason is that for mouse movement, we already get the full movement that happened since the last frame.
-        // This means that if we multiply by delta_time, we will get a smaller rotation than intended by the user.
-        // This situation is reversed when reading e.g. analog input from a gamepad however, where the same rules
-        // as for keyboard input apply. Such an input should be multiplied by delta_time to get the intended rotation
-        // independent of the framerate.
-        let delta_yaw = -delta.x * camera_sensitivity.x;
-        let delta_pitch = -delta.y * camera_sensitivity.y;
+            // Build wishdir from input
+            let wishdir = match event {
+                MovementAction::Move(dir2d) => {
+                    let forward = transform.forward().xz().normalize();
+                    let right = transform.right().xz().normalize();
+                    let wish = forward * -dir2d.y + right * dir2d.x;
+                    if wish.length_squared() > 0.0 {
+                        wish.normalize()
+                    } else {
+                        Vec2::ZERO
+                    }
+                }
+                _ => Vec2::ZERO,
+            };
 
-        let (yaw, pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
-        let yaw = yaw + delta_yaw;
+            // Apply friction if grounded
+            if grounded {
+                let speed = velocity.length();
+                if speed > 0.0 {
+                    let control = speed.max(vars.stopspeed);
+                    let drop = control * vars.friction * dt;
+                    let newspeed = (speed - drop).max(0.0);
+                    velocity *= newspeed / speed;
+                }
+            }
 
-        // If the pitch was ±¹⁄₂ π, the camera would look straight up or down.
-        // When the user wants to move the camera back to the horizon, which way should the camera face?
-        // The camera has no way of knowing what direction was "forward" before landing in that extreme position,
-        // so the direction picked will for all intents and purposes be arbitrary.
-        // Another issue is that for mathematical reasons, the yaw will effectively be flipped when the pitch is at the extremes.
-        // To not run into these issues, we clamp the pitch to a safe range.
-        const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
-        let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+            match event {
+                MovementAction::Move(dir2d) => {
+                    if *dir2d != Vec2::ZERO {
+                        let wishspeed = vars.maxspeed.min(dir2d.length() * vars.maxspeed);
 
-        transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+                        if grounded {
+                            // Ground accelerate
+                            quake_accelerate(
+                                &mut velocity,
+                                wishdir,
+                                wishspeed,
+                                vars.accelerate,
+                                dt,
+                            );
+                        } else {
+                            // Air accelerate
+                            quake_accelerate(
+                                &mut velocity,
+                                wishdir,
+                                wishspeed,
+                                vars.airaccelerate,
+                                dt,
+                            );
+                        }
+                    }
+                }
+                MovementAction::Jump => {
+                    if grounded {
+                        velocity.y = 270.0; // Quake jump impulse
+                    }
+                }
+            }
+
+            // Apply gravity
+            if !grounded {
+                velocity.y -= vars.gravity * dt;
+            }
+
+            vel.0 = velocity;
+        }
     }
 }
 
-/// Slows down movement in the XZ plane.
-fn apply_movement_damping(mut query: Query<(&MovementDampingFactor, &mut LinearVelocity)>) {
-    for (damping_factor, mut linear_velocity) in &mut query {
-        // We could use `LinearDamping`, but we don't want to dampen movement along the Y axis
-        linear_velocity.x *= damping_factor.0;
-        linear_velocity.z *= damping_factor.0;
+fn quake_accelerate(vel: &mut Vec3, wishdir: Vec2, wishspeed: f32, accel: f32, dt: f32) {
+    let vel2d = vel.xz();
+    let current_speed = vel2d.dot(wishdir);
+    let add_speed = wishspeed - current_speed;
+    if add_speed <= 0.0 {
+        return;
     }
+    let accel_speed = (accel * dt * wishspeed).min(add_speed);
+    let push = wishdir * accel_speed;
+    vel.x += push.x;
+    vel.z += push.y;
 }

@@ -22,6 +22,8 @@ fn main() {
             ExampleCommonPlugin,
             PhysicsPlugins::default(),
             CharacterControllerPlugin,
+            InputPlugin,
+            CameraPlugin,
         ))
         .add_systems(Startup, setup)
         .run();
@@ -42,11 +44,10 @@ fn setup(
             Transform::from_xyz(0.0, 1.5, 0.0),
             CharacterControllerBundle::new(Collider::capsule(0.4, 1.0)).with_movement(
                 30.0,
-                0.92,
                 7.0,
                 (30.0 as Scalar).to_radians(),
             ),
-            Friction::ZERO.with_combine_rule(CoefficientCombine::Min),
+            Friction::new(0.99).with_combine_rule(CoefficientCombine::Max),
             Restitution::ZERO.with_combine_rule(CoefficientCombine::Min),
             GravityScale(2.0),
         ))
@@ -75,6 +76,7 @@ fn setup(
         RigidBody::Static,
         Collider::cuboid(100.0, 1.0, 10.0),
         Mesh3d(meshes.add(Cuboid::new(100.0, 1.0, 10.0))),
+        Friction::new(0.9).with_combine_rule(CoefficientCombine::Max),
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
         Transform::from_xyz(10.0, 0.0, 3.0),
     ));

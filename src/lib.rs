@@ -1,5 +1,9 @@
+mod character_controller;
 mod diag_plugin;
-mod plugin;
 
+pub use character_controller::*;
 pub use diag_plugin::*;
-pub use plugin::*;
+mod input_plugin;
+pub use input_plugin::*;
+mod camera_plugin;
+pub use camera_plugin::*;

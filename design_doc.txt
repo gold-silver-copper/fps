@@ -1,0 +1,5 @@
+2.5D billboarded rendering
+Customizeable texturemap on a base human form. Allows for clothes, items, player customization such as hair and eye color etc.
+can loot items off dead bodies
+quake movement
+all bullets are physical entities
