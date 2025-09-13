@@ -30,6 +30,8 @@ use bevy::{input::mouse::MouseMotion, math::Vec3Swizzles, prelude::*};
 pub struct FpsControllerPlugin;
 
 pub static FPS: f64 = 96.0;
+pub static PLAYER_HEIGHT: f32 = 1.8;
+pub static PLAYER_RADIUS: f32 = 0.25;
 
 impl Plugin for FpsControllerPlugin {
     fn build(&self, app: &mut App) {
@@ -52,12 +54,6 @@ impl Plugin for FpsControllerPlugin {
         .insert_resource(Time::<Fixed>::from_hz(FPS))
         .add_systems(FixedUpdate, (fps_controller_move));
     }
-}
-
-#[derive(PartialEq)]
-pub enum MoveMode {
-    Noclip,
-    Ground,
 }
 
 #[derive(Component)]
@@ -86,7 +82,6 @@ pub struct FpsControllerInput {
 
 #[derive(Component)]
 pub struct FpsController {
-    pub move_mode: MoveMode,
     pub radius: f32,
 
     /// If the distance to the ground is less than this value, the player is considered grounded
@@ -136,9 +131,8 @@ pub struct FpsController {
 impl Default for FpsController {
     fn default() -> Self {
         Self {
-            move_mode: MoveMode::Ground,
             grounded_distance: 0.125,
-            radius: 0.5,
+            radius: PLAYER_RADIUS,
             fly_speed: 10.0,
             fast_fly_speed: 30.0,
 
@@ -152,10 +146,10 @@ impl Default for FpsController {
             crouched_speed: 5.0,
             crouch_speed: 6.0,
             uncrouch_speed: 8.0,
-            height: 3.0,
-            upright_height: 3.0,
+            height: PLAYER_HEIGHT,
+            upright_height: PLAYER_HEIGHT,
             crouch_height: 1.5,
-            acceleration: 10.0,
+            acceleration: 5.0,
 
             traction_normal_cutoff: 0.7,
             friction_speed_cutoff: 0.1,
@@ -254,133 +248,101 @@ pub fn fps_controller_move(
     for (entity, input, mut controller, mut collider, mut transform, mut velocity) in
         query.iter_mut()
     {
-        if input.fly {
-            controller.move_mode = match controller.move_mode {
-                MoveMode::Noclip => MoveMode::Ground,
-                MoveMode::Ground => MoveMode::Noclip,
-            }
+        let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
+        let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
+        move_to_world.z_axis *= -1.0; // Forward is -Z
+        let mut wish_direction = move_to_world * (input.movement * speeds);
+        let mut wish_speed = wish_direction.length();
+        if wish_speed > f32::EPSILON {
+            // Avoid division by zero
+            wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
+        let max_speed = if input.crouch {
+            controller.crouched_speed
+        } else if input.sprint {
+            controller.run_speed
+        } else {
+            controller.walk_speed
+        };
+        wish_speed = f32::min(wish_speed, max_speed);
 
-        match controller.move_mode {
-            MoveMode::Noclip => {
-                if input.movement == Vec3::ZERO {
-                    let friction = controller.fly_friction.clamp(0.0, 1.0);
-                    velocity.0 *= 1.0 - friction;
-                    if velocity.length_squared() < f32::EPSILON {
-                        velocity.0 = Vec3::ZERO;
-                    }
-                } else {
-                    let fly_speed = if input.sprint {
-                        controller.fast_fly_speed
-                    } else {
-                        controller.fly_speed
-                    };
-                    let mut move_to_world =
-                        Mat3::from_euler(EulerRot::YXZ, input.yaw, input.pitch, 0.0);
-                    move_to_world.z_axis *= -1.0; // Forward is -Z
-                    move_to_world.y_axis = Vec3::Y; // Vertical movement aligned with world up
-                    velocity.0 = move_to_world * input.movement * fly_speed;
+        // Shape cast downwards to find ground
+        // Better than a ray cast as it handles when you are near the edge of a surface
+        let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
+        if let Some(hit) = spatial_query_pipeline.cast_shape(
+            // Consider when the controller is right up against a wall
+            // We do not want the shape cast to detect it,
+            // so provide a slightly smaller collider in the XZ plane
+            &scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN),
+            transform.translation,
+            transform.rotation,
+            -Dir3::Y,
+            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
+            &filter,
+        ) {
+            let has_traction = Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
+
+            let add = acceleration(
+                wish_direction,
+                wish_speed,
+                controller.acceleration,
+                velocity.0,
+                dt,
+            );
+
+            velocity.0 += add;
+
+            if has_traction {
+                let linear_velocity = velocity.0;
+                velocity.0 -= Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
+
+                if input.jump {
+                    velocity.0.y = controller.jump_speed;
                 }
             }
-            MoveMode::Ground => {
-                let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
-                let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
-                move_to_world.z_axis *= -1.0; // Forward is -Z
-                let mut wish_direction = move_to_world * (input.movement * speeds);
-                let mut wish_speed = wish_direction.length();
-                if wish_speed > f32::EPSILON {
-                    // Avoid division by zero
-                    wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
-                }
-                let max_speed = if input.crouch {
-                    controller.crouched_speed
-                } else if input.sprint {
-                    controller.run_speed
-                } else {
-                    controller.walk_speed
-                };
-                wish_speed = f32::min(wish_speed, max_speed);
 
-                // Shape cast downwards to find ground
-                // Better than a ray cast as it handles when you are near the edge of a surface
-                let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
-                if let Some(hit) = spatial_query_pipeline.cast_shape(
-                    // Consider when the controller is right up against a wall
-                    // We do not want the shape cast to detect it,
-                    // so provide a slightly smaller collider in the XZ plane
-                    &scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN),
-                    transform.translation,
-                    transform.rotation,
-                    -Dir3::Y,
-                    &ShapeCastConfig::from_max_distance(controller.grounded_distance),
-                    &filter,
-                ) {
-                    let has_traction =
-                        Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
+            // Increment ground tick but cap at max value
+            controller.ground_tick = controller.ground_tick.saturating_add(1);
+        } else {
+            controller.ground_tick = 0;
+            wish_speed = f32::min(wish_speed, controller.air_speed_cap);
 
-                    let add = acceleration(
-                        wish_direction,
-                        wish_speed,
-                        controller.acceleration,
-                        velocity.0,
-                        dt,
-                    );
+            let add = acceleration(
+                wish_direction,
+                wish_speed,
+                controller.air_acceleration,
+                velocity.0,
+                dt,
+            );
 
-                    velocity.0 += add;
+            velocity.0 += add;
 
-                    if has_traction {
-                        let linear_velocity = velocity.0;
-                        velocity.0 -= Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
-
-                        if input.jump {
-                            velocity.0.y = controller.jump_speed;
-                        }
-                    }
-
-                    // Increment ground tick but cap at max value
-                    controller.ground_tick = controller.ground_tick.saturating_add(1);
-                } else {
-                    controller.ground_tick = 0;
-                    wish_speed = f32::min(wish_speed, controller.air_speed_cap);
-
-                    let add = acceleration(
-                        wish_direction,
-                        wish_speed,
-                        controller.air_acceleration,
-                        velocity.0,
-                        dt,
-                    );
-
-                    velocity.0 += add;
-
-                    let air_speed = velocity.xz().length();
-                    if air_speed > controller.max_air_speed {
-                        let ratio = controller.max_air_speed / air_speed;
-                        velocity.0.x *= ratio;
-                        velocity.0.z *= ratio;
-                    }
-                };
-
-                /* Crouching */
-
-                let crouch_height = controller.crouch_height;
-                let upright_height = controller.upright_height;
-
-                let crouch_speed = if input.crouch {
-                    -controller.crouch_speed
-                } else {
-                    controller.uncrouch_speed
-                };
-                controller.height += dt * crouch_speed;
-                controller.height = controller.height.clamp(crouch_height, upright_height);
-
-                if let Some(cylinder) = collider.shape().as_cylinder() {
-                    let radius = cylinder.radius;
-                    collider.set_shape(SharedShape::cylinder(controller.height * 0.5, radius));
-                } else {
-                    panic!("Controller must use a cylinder collider")
-                }
+            let air_speed = velocity.xz().length();
+            if air_speed > controller.max_air_speed {
+                let ratio = controller.max_air_speed / air_speed;
+                velocity.0.x *= ratio;
+                velocity.0.z *= ratio;
             }
+        };
+
+        /* Crouching */
+
+        let crouch_height = controller.crouch_height;
+        let upright_height = controller.upright_height;
+
+        let crouch_speed = if input.crouch {
+            -controller.crouch_speed
+        } else {
+            controller.uncrouch_speed
+        };
+        controller.height += dt * crouch_speed;
+        controller.height = controller.height.clamp(crouch_height, upright_height);
+
+        if let Some(cylinder) = collider.shape().as_cylinder() {
+            let radius = cylinder.radius;
+            collider.set_shape(SharedShape::cylinder(controller.height * 0.5, radius));
+        } else {
+            panic!("Controller must use a cylinder collider")
         }
     }
 }

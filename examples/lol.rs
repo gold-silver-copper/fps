@@ -51,10 +51,10 @@ fn setup(
     // The other is a "render" player that is what is displayed to the user
     // This distinction is useful for later on if you want to add multiplayer,
     // where often time these two ideas are not exactly synced up
-    let height = 3.0;
+
     let logical_entity = commands
         .spawn((
-            Collider::cylinder(0.5, height),
+            Collider::cylinder(PLAYER_RADIUS, PLAYER_HEIGHT),
             // A capsule can be used but is NOT recommended
             // If you use it, you have to make sure each segment point is
             // equidistant from the translation of the player transform
@@ -68,7 +68,7 @@ fn setup(
             RigidBody::Dynamic,
             Sleeping,
             LockedAxes::ROTATION_LOCKED,
-            Mass(1.0),
+            Mass(40.0),
             GravityScale(1.0),
             Transform::from_xyz(0.0, 1.5, 0.0),
             LogicalPlayer,
