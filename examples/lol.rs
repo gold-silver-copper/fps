@@ -1,18 +1,6 @@
-//! A basic implementation of a character controller for a dynamic rigid body.
-//!
-//! This showcases the following:
-//!
-//! - Basic directional movement and jumping
-//! - Support for both keyboard and gamepad input
-//! - A configurable maximum slope angle for jumping
-//! - Loading a platformer environment from a glTF
-//!
-//! The character controller logic is contained within the `plugin` module.
-//!
-//! For a kinematic character controller, see the `kinematic_character_3d` example.
+use std::f32::consts::TAU;
 
-use avian3d::{math::*, prelude::*};
-use bevy::prelude::*;
+use avian3d::prelude::*;
 use bevy::{
     gltf::{Gltf, GltfMesh, GltfNode},
     math::Vec3Swizzles,
@@ -21,37 +9,34 @@ use bevy::{
     window::CursorGrabMode,
 };
 use fps::*;
-use std::f32::consts::TAU;
 
 const SPAWN_POINT: Vec3 = Vec3::new(0.0, 1.625, 0.0);
+
 fn main() {
     App::new()
-        .add_plugins((
-            DefaultPlugins,
-            PhysicsPlugins::default(),
-            InputPlugin,
-            FpsControllerPlugin,
-        ))
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 10000.0,
             affects_lightmapped_meshes: true,
         })
         .insert_resource(ClearColor(Color::linear_rgb(0.83, 0.96, 0.96)))
+        .add_plugins(DefaultPlugins)
+        .add_plugins(PhysicsPlugins::new(FixedPostUpdate))
+        // .add_plugins(PhysicsDebugPlugin::default())
+        .add_plugins(FpsControllerPlugin)
+        .add_plugins(MyInputPlugin)
         .add_systems(Startup, setup)
         .add_systems(
             Update,
-            (manage_cursor, display_text, scene_colliders, respawn),
+            (manage_cursor, scene_colliders, display_text, respawn),
         )
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    assets: Res<AssetServer>,
-) {
+fn setup(mut commands: Commands, mut window: Query<&mut Window>, assets: Res<AssetServer>) {
+    let mut window = window.single_mut().unwrap();
+    window.title = String::from("Minimal FPS Controller Example");
+
     commands.spawn((
         DirectionalLight {
             illuminance: light_consts::lux::FULL_DAYLIGHT,
@@ -66,113 +51,83 @@ fn setup(
     // The other is a "render" player that is what is displayed to the user
     // This distinction is useful for later on if you want to add multiplayer,
     // where often time these two ideas are not exactly synced up
-
+    let height = 1.8;
+    let radius = 0.25;
+    let mass = 80.0;
     let logical_entity = commands
         .spawn((
-            Collider::cylinder(PLAYER_RADIUS, PLAYER_HEIGHT),
+            Collider::cylinder(radius, height),
             // A capsule can be used but is NOT recommended
             // If you use it, you have to make sure each segment point is
             // equidistant from the translation of the player transform
             // Collider::capsule(0.5, height),
-            Friction::new(0.6),
+            Friction {
+                dynamic_coefficient: 0.9,
+                static_coefficient: 0.9,
+                combine_rule: CoefficientCombine::Max,
+            },
             Restitution {
                 coefficient: 0.0,
                 combine_rule: CoefficientCombine::Min,
             },
             LinearVelocity::ZERO,
-            LinearDamping(0.6),
+            SpeculativeMargin::ZERO,
             RigidBody::Dynamic,
             Sleeping,
             LockedAxes::ROTATION_LOCKED,
-            Mass(1.0),
+            Mass(mass),
             GravityScale(1.0),
-            Transform::from_xyz(0.0, 1.5, 0.0),
+            Transform::from_translation(SPAWN_POINT),
             LogicalPlayer,
             FpsControllerInput {
                 pitch: -TAU / 12.0,
                 yaw: TAU * 5.0 / 8.0,
                 ..default()
             },
-            FpsController::default(),
+            LinearDamping(0.4),
+            FpsController {
+                radius,
+                height,
+                mass,
+
+                ..default()
+            },
         ))
-        .insert(CameraConfig { height_offset: 0.0 })
+        .insert(CameraConfig {
+            height_offset: -0.2,
+        })
         .id();
 
     commands.spawn((
         Camera3d::default(),
         Projection::Perspective(PerspectiveProjection {
-            fov: 45.0,
+            fov: TAU / 5.0,
             ..default()
         }),
         Exposure::SUNLIGHT,
         RenderPlayer { logical_entity },
     ));
+
     commands.insert_resource(MainScene {
         handle: assets.load("playground.glb"),
         is_loaded: false,
     });
 
-    // A cube to move around
     commands.spawn((
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 1.0, 1.0),
-        Mesh3d(meshes.add(Cuboid::default())),
-        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
-        Transform::from_xyz(3.0, 2.0, 3.0),
-    ));
-
-    // Light
-    commands.spawn((
-        PointLight {
-            intensity: 2_000_000.0,
-            range: 50.0,
-            shadows_enabled: true,
+        Text(String::from("")),
+        TextFont {
+            font: assets.load("fira_mono.ttf"),
+            font_size: 24.0,
             ..default()
         },
-        Transform::from_xyz(0.0, 15.0, 0.0),
+        TextColor(Color::BLACK),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(5.0),
+            left: Val::Px(5.0),
+            ..default()
+        },
     ));
-}
-fn manage_cursor(
-    btn: Res<ButtonInput<MouseButton>>,
-    key: Res<ButtonInput<KeyCode>>,
-    mut window_query: Query<&mut Window>,
-    mut controller_query: Query<&mut FpsController>,
-) {
-    for mut window in &mut window_query {
-        if btn.just_pressed(MouseButton::Left) {
-            window.cursor_options.grab_mode = CursorGrabMode::Locked;
-            window.cursor_options.visible = false;
-            for mut controller in &mut controller_query {
-                controller.enable_input = true;
-            }
-        }
-        if key.just_pressed(KeyCode::Escape) {
-            window.cursor_options.grab_mode = CursorGrabMode::None;
-            window.cursor_options.visible = true;
-            for mut controller in &mut controller_query {
-                controller.enable_input = false;
-            }
-        }
-    }
-}
-fn display_text(
-    mut controller_query: Query<(&Transform, &LinearVelocity), With<LogicalPlayer>>,
-    mut text_query: Query<&mut Text>,
-) {
-    for (transform, velocity) in &mut controller_query {
-        for mut text in &mut text_query {
-            text.0 = format!(
-                "vel: {:.2}, {:.2}, {:.2}\npos: {:.2}, {:.2}, {:.2}\nspd: {:.2}",
-                velocity.0.x,
-                velocity.0.y,
-                velocity.0.z,
-                transform.translation.x,
-                transform.translation.y,
-                transform.translation.z,
-                velocity.0.xz().length()
-            );
-        }
-    }
 }
 
 fn respawn(mut query: Query<(&mut Transform, &mut LinearVelocity)>) {
@@ -198,7 +153,6 @@ fn scene_colliders(
     gltf_assets: Res<Assets<Gltf>>,
     gltf_mesh_assets: Res<Assets<GltfMesh>>,
     gltf_node_assets: Res<Assets<GltfNode>>,
-    mesh_assets: Res<Assets<Mesh>>,
 ) {
     if main_scene.is_loaded {
         return;
@@ -214,9 +168,11 @@ fn scene_colliders(
             if let Some(gltf_mesh) = node.mesh.clone() {
                 let gltf_mesh = gltf_mesh_assets.get(&gltf_mesh).unwrap();
                 for mesh_primitive in &gltf_mesh.primitives {
-                    let mesh = mesh_assets.get(&mesh_primitive.mesh).unwrap();
                     commands.spawn((
-                        Collider::trimesh_from_mesh(mesh).unwrap(),
+                        ColliderConstructor::TrimeshFromMeshWithConfig(
+                            TrimeshFlags::FIX_INTERNAL_EDGES,
+                        ),
+                        Mesh3d(mesh_primitive.mesh.clone()),
                         RigidBody::Static,
                         node.transform,
                     ));
@@ -224,5 +180,49 @@ fn scene_colliders(
             }
         }
         main_scene.is_loaded = true;
+    }
+}
+
+fn manage_cursor(
+    btn: Res<ButtonInput<MouseButton>>,
+    key: Res<ButtonInput<KeyCode>>,
+    mut window_query: Query<&mut Window>,
+    mut controller_query: Query<&mut FpsController>,
+) {
+    for mut window in &mut window_query {
+        if btn.just_pressed(MouseButton::Left) {
+            window.cursor_options.grab_mode = CursorGrabMode::Locked;
+            window.cursor_options.visible = false;
+            for mut controller in &mut controller_query {
+                controller.enable_input = true;
+            }
+        }
+        if key.just_pressed(KeyCode::Escape) {
+            window.cursor_options.grab_mode = CursorGrabMode::None;
+            window.cursor_options.visible = true;
+            for mut controller in &mut controller_query {
+                controller.enable_input = false;
+            }
+        }
+    }
+}
+
+fn display_text(
+    mut controller_query: Query<(&Transform, &LinearVelocity), With<LogicalPlayer>>,
+    mut text_query: Query<&mut Text>,
+) {
+    for (transform, velocity) in &mut controller_query {
+        for mut text in &mut text_query {
+            text.0 = format!(
+                "vel: {:.2}, {:.2}, {:.2}\npos: {:.2}, {:.2}, {:.2}\nspd: {:.2}",
+                velocity.0.x,
+                velocity.0.y,
+                velocity.0.z,
+                transform.translation.x,
+                transform.translation.y,
+                transform.translation.z,
+                velocity.0.xz().length()
+            );
+        }
     }
 }

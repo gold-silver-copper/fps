@@ -28,31 +28,27 @@ use bevy::{input::mouse::MouseMotion, math::Vec3Swizzles, prelude::*};
 /// fn my_system() { }
 /// ```
 pub struct FpsControllerPlugin;
-
-pub static FPS: f64 = 60.0;
-pub static PLAYER_HEIGHT: f32 = 1.8;
-pub static PLAYER_RADIUS: f32 = 0.25;
-
+pub static FPS: f64 = 80.0;
 impl Plugin for FpsControllerPlugin {
     fn build(&self, app: &mut App) {
         use bevy::input::{gamepad, keyboard, mouse, touch};
 
-        app.add_systems(
-            PreUpdate,
-            (
-                fps_controller_input,
-                fps_controller_look,
-                fps_controller_render,
+        app.insert_resource(Time::<Fixed>::from_hz(FPS))
+            .add_systems(
+                PreUpdate,
+                (
+                    fps_controller_input,
+                    fps_controller_look,
+                    fps_controller_render,
+                )
+                    .chain()
+                    .after(mouse::mouse_button_input_system)
+                    .after(keyboard::keyboard_input_system)
+                    .after(gamepad::gamepad_event_processing_system)
+                    .after(gamepad::gamepad_connection_system)
+                    .after(touch::touch_screen_input_system),
             )
-                .chain()
-                .after(mouse::mouse_button_input_system)
-                .after(keyboard::keyboard_input_system)
-                .after(gamepad::gamepad_event_processing_system)
-                .after(gamepad::gamepad_connection_system)
-                .after(touch::touch_screen_input_system),
-        )
-        .insert_resource(Time::<Fixed>::from_hz(FPS))
-        .add_systems(FixedUpdate, (fps_controller_move));
+            .add_systems(FixedUpdate, fps_controller_move);
     }
 }
 
@@ -71,8 +67,6 @@ pub struct CameraConfig {
 
 #[derive(Component, Default)]
 pub struct FpsControllerInput {
-    pub fly: bool,
-    pub sprint: bool,
     pub jump: bool,
     pub crouch: bool,
     pub pitch: f32,
@@ -86,16 +80,27 @@ pub struct FpsController {
 
     /// If the distance to the ground is less than this value, the player is considered grounded
     pub grounded_distance: f32,
-    pub base_speed: f32,
+    pub walk_speed: f32,
+
+    pub forward_speed: f32,
+    pub side_speed: f32,
+    pub air_speed_cap: f32,
+
+    pub air_acceleration: f32,
 
     pub acceleration: f32,
 
-    pub jump_speed: f32,
+    /// If the dot product (alignment) of the normal of the surface and the upward vector,
+    /// which is a value from [-1, 1], is greater than this value, ground movement is applied
+    pub traction_normal_cutoff: f32,
 
     pub height: f32,
-
+    pub ground_tick: u8,
+    pub jump_tick: u8,
     pub pitch: f32,
     pub yaw: f32,
+    pub friction: f32,
+    pub mass: f32,
 
     pub sensitivity: f32,
     pub enable_input: bool,
@@ -113,19 +118,29 @@ pub struct FpsController {
 impl Default for FpsController {
     fn default() -> Self {
         Self {
-            grounded_distance: 0.2,
-            radius: PLAYER_RADIUS,
+            grounded_distance: 0.04,
+            radius: 0.25,
 
-            base_speed: 5.0,
+            walk_speed: 7.0,
+            mass: 80.0,
 
-            height: PLAYER_HEIGHT,
+            forward_speed: 30.0,
+            side_speed: 30.0,
+            air_speed_cap: 2.0,
 
-            acceleration: 5.0,
+            air_acceleration: 10.0,
+
+            ground_tick: 0,
+            jump_tick: 0,
+            height: 1.8,
+
+            acceleration: 3.5,
+
+            traction_normal_cutoff: 0.6,
+            friction: 0.99,
 
             pitch: 0.0,
             yaw: 0.0,
-
-            jump_speed: 5.0,
 
             enable_input: true,
             key_forward: KeyCode::KeyW,
@@ -152,7 +167,7 @@ impl Default for FpsController {
 // Used as padding by camera pitching (up/down) to avoid spooky math problems
 const ANGLE_EPSILON: f32 = 0.001953125;
 
-const SLIGHT_SCALE_DOWN: f32 = 0.9375;
+const SLIGHT_SCALE_DOWN: f32 = 0.6;
 
 pub fn fps_controller_input(
     key_input: Res<ButtonInput<KeyCode>>,
@@ -203,16 +218,30 @@ pub fn fps_controller_move(
             &mut Collider,
             &mut Transform,
             &mut LinearVelocity,
+            &mut ExternalImpulse,
+            &mut Friction,
+            &mut LinearDamping,
         ),
         With<LogicalPlayer>,
     >,
 ) {
     let dt = 1.0 / FPS as f32;
 
-    for (entity, input, mut controller, mut collider, mut transform, mut velocity) in
-        query.iter_mut()
+    for (
+        entity,
+        input,
+        mut controller,
+        mut collider,
+        mut transform,
+        mut velocity,
+        mut external_force,
+        mut friction,
+        mut damping,
+    ) in query.iter_mut()
     {
-        let speeds = Vec3::new(controller.base_speed, 0.0, controller.base_speed);
+        let scale_vec = Vec3::splat(controller.mass);
+
+        let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
         let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
         move_to_world.z_axis *= -1.0; // Forward is -Z
         let mut wish_direction = move_to_world * (input.movement * speeds);
@@ -221,21 +250,13 @@ pub fn fps_controller_move(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
-        let max_speed = controller.base_speed;
+        let max_speed = controller.walk_speed;
         wish_speed = f32::min(wish_speed, max_speed);
-        let add = acceleration(
-            wish_direction,
-            wish_speed,
-            controller.acceleration,
-            velocity.0,
-            dt,
-        );
-
-        velocity.0 += add;
 
         // Shape cast downwards to find ground
         // Better than a ray cast as it handles when you are near the edge of a surface
         let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
+
         if let Some(hit) = spatial_query_pipeline.cast_shape(
             // Consider when the controller is right up against a wall
             // We do not want the shape cast to detect it,
@@ -247,9 +268,67 @@ pub fn fps_controller_move(
             &ShapeCastConfig::from_max_distance(controller.grounded_distance),
             &filter,
         ) {
-            if input.jump {
-                velocity.0.y = controller.jump_speed;
+            damping.0 = 0.99;
+            let has_traction = Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
+            //  println!("ON GROUND");
+            let slope_wish_dir =
+                wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
+            let add = acceleration(
+                slope_wish_dir,
+                wish_speed,
+                controller.acceleration,
+                velocity.0,
+                dt,
+            );
+
+            external_force.apply_impulse(add * scale_vec);
+            friction.dynamic_coefficient = controller.friction;
+            friction.static_coefficient = controller.friction;
+            friction.combine_rule = CoefficientCombine::Max;
+
+            if has_traction {
+                if controller.ground_tick == 0 {
+                    let linear_velocity = velocity.0;
+
+                    let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
+
+                    velocity.0 -= normal_force;
+                }
+
+                if input.jump && controller.jump_tick > 0 {
+                    let jump_force = Vec3 {
+                        x: 0.0,
+                        y: 6.0,
+                        z: 0.0,
+                    };
+                    external_force.apply_impulse(jump_force * scale_vec);
+                    controller.jump_tick = 0;
+
+                    println!("JUMPED");
+                } else {
+                    controller.jump_tick = controller.jump_tick.saturating_add(1);
+                }
             }
+            controller.ground_tick = controller.ground_tick.saturating_add(1);
+        } else {
+            controller.ground_tick = 0;
+            damping.0 = 0.3;
+
+            friction.dynamic_coefficient = 0.1;
+            friction.static_coefficient = 0.1;
+            friction.combine_rule = CoefficientCombine::Min;
+            wish_speed = f32::min(wish_speed, controller.air_speed_cap);
+            //   println!("WISH DIR IS {:#?}", wish_direction);
+
+            let add = acceleration(
+                wish_direction,
+                wish_speed,
+                controller.air_acceleration,
+                velocity.0,
+                dt,
+            );
+            //  println!("ADD IS {:#?}", add);
+            external_force.apply_impulse(add * scale_vec);
         };
     }
 }
@@ -260,8 +339,10 @@ fn collider_y_offset(collider: &Collider) -> Vec3 {
     Vec3::Y
         * if let Some(cylinder) = collider.shape().as_cylinder() {
             cylinder.half_height
+        } else if let Some(capsule) = collider.shape().as_capsule() {
+            capsule.half_height() + capsule.radius
         } else {
-            panic!("Controller must use a cylinder collider")
+            panic!("Controller must use a cylinder or capsule collider")
         }
 }
 
@@ -270,8 +351,11 @@ fn scaled_collider_laterally(collider: &Collider, scale: f32) -> Collider {
     if let Some(cylinder) = collider.shape().as_cylinder() {
         let new_cylinder = Collider::cylinder(cylinder.radius * scale, cylinder.half_height * 2.0);
         new_cylinder
+    } else if let Some(capsule) = collider.shape().as_capsule() {
+        let new_capsule = Collider::capsule(capsule.radius * scale, capsule.segment.length());
+        new_capsule
     } else {
-        panic!("Controller must use a cylinder collider")
+        panic!("Controller must use a cylinder or capsule collider")
     }
 }
 
