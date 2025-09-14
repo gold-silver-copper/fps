@@ -106,6 +106,7 @@ pub struct FpsController {
     pub yaw: f32,
     pub friction: f32,
     pub mass: f32,
+    pub lean_degree: f32,
 
     pub sensitivity: f32,
     pub enable_input: bool,
@@ -139,7 +140,7 @@ impl Default for FpsController {
             ground_tick: 0,
             jump_tick: 0,
             height: 1.8,
-
+            lean_degree: 0.0,
             acceleration: 3.5,
 
             traction_normal_cutoff: 0.6,
@@ -341,17 +342,33 @@ pub fn fps_controller_move(
             //  println!("ADD IS {:#?}", add);
             external_force.apply_impulse(add * scale_vec);
         };
-        //LEANING
+        // Always start with base yaw rotation
+        let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
 
-        if input.lean > 0.1 || input.lean < -0.1 {
-            damping.0 = 2.0
+        if input.lean.abs() > 0.1 {
+            damping.0 = 2.0;
+
+            controller.lean_degree += input.lean;
+
+            // How much to lean (radians)
+            let lean_amount = controller.lean_degree * 0.02; // ~±11.5 degrees
+            let lean_rotation = Quat::from_axis_angle(Vec3::Z, lean_amount);
+
+            // Where the feet are relative to the entity’s origin
+            let foot_pivot = transform.translation - collider_y_offset(&collider);
+
+            // Reset rotation so pivot math is clean
+            transform.rotation = Quat::IDENTITY;
+
+            // Compute new rotated translation around foot pivot
+            let relative = transform.translation - foot_pivot;
+            let rotated_relative = (yaw_rotation * lean_rotation) * relative;
+
+            transform.translation = foot_pivot + rotated_relative;
+            transform.rotation = (yaw_rotation * lean_rotation).normalize();
+        } else {
+            transform.rotation = yaw_rotation;
         }
-        let lean_amount = input.lean * 0.8; // radians, ~17 degrees max
-
-        let lean_rotation = Quat::from_axis_angle(Vec3::Z, lean_amount);
-
-        // apply to logical entity
-        transform.rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0) * lean_rotation;
     }
 }
 
