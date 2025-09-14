@@ -4,7 +4,11 @@ use avian3d::{
     parry::{math::Point, shape::SharedShape},
     prelude::*,
 };
-use bevy::{input::mouse::MouseMotion, math::Vec3Swizzles, prelude::*};
+use bevy::{
+    input::mouse::MouseMotion,
+    math::{Vec3Swizzles, VectorSpace},
+    prelude::*,
+};
 
 /// Manages the FPS controllers. Executes in `PreUpdate`, after bevy's internal
 /// input processing is finished.
@@ -72,6 +76,7 @@ pub struct FpsControllerInput {
     pub pitch: f32,
     pub yaw: f32,
     pub movement: Vec3,
+    pub lean: f32, // -1.0 left, +1.0 right
 }
 
 #[derive(Component)]
@@ -109,8 +114,9 @@ pub struct FpsController {
     pub key_back: KeyCode,
     pub key_left: KeyCode,
     pub key_right: KeyCode,
-    pub key_up: KeyCode,
-    pub key_down: KeyCode,
+
+    pub key_lean_left: KeyCode,
+    pub key_lean_right: KeyCode,
 
     pub key_jump: KeyCode,
 }
@@ -147,8 +153,8 @@ impl Default for FpsController {
             key_back: KeyCode::KeyS,
             key_left: KeyCode::KeyA,
             key_right: KeyCode::KeyD,
-            key_up: KeyCode::KeyQ,
-            key_down: KeyCode::KeyE,
+            key_lean_left: KeyCode::KeyQ,
+            key_lean_right: KeyCode::KeyE,
 
             key_jump: KeyCode::Space,
 
@@ -193,8 +199,13 @@ pub fn fps_controller_input(
 
         input.movement = Vec3::new(
             get_axis(&key_input, controller.key_right, controller.key_left),
-            get_axis(&key_input, controller.key_up, controller.key_down),
+            0.0,
             get_axis(&key_input, controller.key_forward, controller.key_back),
+        );
+        input.lean = get_axis(
+            &key_input,
+            controller.key_lean_left,
+            controller.key_lean_right,
         );
 
         input.jump = key_input.pressed(controller.key_jump);
@@ -330,6 +341,17 @@ pub fn fps_controller_move(
             //  println!("ADD IS {:#?}", add);
             external_force.apply_impulse(add * scale_vec);
         };
+        //LEANING
+
+        if input.lean > 0.1 || input.lean < -0.1 {
+            damping.0 = 2.0
+        }
+        let lean_amount = input.lean * 0.8; // radians, ~17 degrees max
+
+        let lean_rotation = Quat::from_axis_angle(Vec3::Z, lean_amount);
+
+        // apply to logical entity
+        transform.rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0) * lean_rotation;
     }
 }
 
@@ -339,8 +361,6 @@ fn collider_y_offset(collider: &Collider) -> Vec3 {
     Vec3::Y
         * if let Some(cylinder) = collider.shape().as_cylinder() {
             cylinder.half_height
-        } else if let Some(capsule) = collider.shape().as_capsule() {
-            capsule.half_height() + capsule.radius
         } else {
             panic!("Controller must use a cylinder or capsule collider")
         }
@@ -351,9 +371,6 @@ fn scaled_collider_laterally(collider: &Collider, scale: f32) -> Collider {
     if let Some(cylinder) = collider.shape().as_cylinder() {
         let new_cylinder = Collider::cylinder(cylinder.radius * scale, cylinder.half_height * 2.0);
         new_cylinder
-    } else if let Some(capsule) = collider.shape().as_capsule() {
-        let new_capsule = Collider::capsule(capsule.radius * scale, capsule.segment.length());
-        new_capsule
     } else {
         panic!("Controller must use a cylinder or capsule collider")
     }
@@ -406,8 +423,12 @@ pub fn fps_controller_render(
             let camera_offset = Vec3::Y * camera_config.height_offset;
             render_transform.translation =
                 logical_transform.translation + collider_offset + camera_offset;
-            render_transform.rotation =
-                Quat::from_euler(EulerRot::YXZ, controller.yaw, controller.pitch, 0.0);
+            // just copy logical rotation instead of rebuilding
+            /*let zetik = logical_transform.rotation.xyz().z;
+
+            */
+            let pitch_quat = Quat::from_euler(EulerRot::YXZ, 0.0, controller.pitch, 0.0);
+            render_transform.rotation = logical_transform.rotation.mul_quat(pitch_quat);
         }
     }
 }

@@ -12,7 +12,7 @@ impl Plugin for MyInputPlugin {
 
 /// Sends [`MovementAction`] events based on keyboard input.
 fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>) {
-    let quit = keyboard_input.any_pressed([KeyCode::KeyQ]);
+    let quit = keyboard_input.any_pressed([KeyCode::KeyI]);
     if quit {
         panic!()
     }
