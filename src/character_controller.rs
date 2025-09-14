@@ -351,7 +351,7 @@ pub fn fps_controller_move(
             controller.lean_degree += input.lean;
 
             // How much to lean (radians)
-            let lean_amount = controller.lean_degree * 0.02; // ~±11.5 degrees
+            let lean_amount = controller.lean_degree * dt; // ~±11.5 degrees
             let lean_rotation = Quat::from_axis_angle(Vec3::Z, lean_amount);
 
             // Where the feet are relative to the entity’s origin
@@ -360,6 +360,8 @@ pub fn fps_controller_move(
             // Reset rotation so pivot math is clean
             transform.rotation = Quat::IDENTITY;
 
+            if controller.lean_degree.abs() < 5.0 {}
+
             // Compute new rotated translation around foot pivot
             let relative = transform.translation - foot_pivot;
             let rotated_relative = (yaw_rotation * lean_rotation) * relative;
@@ -367,7 +369,10 @@ pub fn fps_controller_move(
             transform.translation = foot_pivot + rotated_relative;
             transform.rotation = (yaw_rotation * lean_rotation).normalize();
         } else {
-            transform.rotation = yaw_rotation;
+            controller.lean_degree *= 0.9;
+            let lean_amount = controller.lean_degree * dt; // ~±11.5 degrees
+            let lean_rotation = Quat::from_axis_angle(Vec3::Z, lean_amount);
+            transform.rotation = (yaw_rotation * lean_rotation).normalize();
         }
     }
 }
