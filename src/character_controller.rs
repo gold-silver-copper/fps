@@ -108,15 +108,21 @@ pub struct FpsController {
     pub friction: f32,
     pub mass: f32,
     pub lean_degree: f32,
-
+    pub ground_damp: f32,
     pub sensitivity: f32,
     pub enable_input: bool,
     pub crouch_degree: f32,
+    pub jump_force: f32,
+    pub lean_mod: f32,
 
     pub key_forward: KeyCode,
     pub key_back: KeyCode,
     pub key_left: KeyCode,
     pub key_right: KeyCode,
+    pub air_damp: f32,
+    pub air_friction: f32,
+    pub lean_side_impulse: f32,
+    pub leaning_speed: f32,
 
     pub key_lean_left: KeyCode,
     pub key_lean_right: KeyCode,
@@ -132,8 +138,12 @@ impl Default for FpsController {
 
             walk_speed: 7.0,
             mass: 80.0,
-            crouched_speed: 4.0,
+            crouched_speed: 3.5,
             crouch_speed: 6.0,
+            air_damp: 0.3,
+            ground_damp: 0.99,
+            air_friction: 0.1,
+            jump_force: 6.0,
 
             forward_speed: 30.0,
             side_speed: 30.0,
@@ -141,6 +151,8 @@ impl Default for FpsController {
 
             air_acceleration: 10.0,
             crouch_degree: 1.0,
+            lean_mod: 0.4,
+            leaning_speed: 3.0,
 
             ground_tick: 0,
             jump_tick: 0,
@@ -153,6 +165,7 @@ impl Default for FpsController {
 
             pitch: 0.0,
             yaw: 0.0,
+            lean_side_impulse: 0.3,
 
             enable_input: true,
             key_forward: KeyCode::KeyW,
@@ -179,7 +192,7 @@ impl Default for FpsController {
 // Used as padding by camera pitching (up/down) to avoid spooky math problems
 const ANGLE_EPSILON: f32 = 0.001953125;
 
-const SLIGHT_SCALE_DOWN: f32 = 0.6;
+const SLIGHT_SCALE_DOWN: f32 = 0.8;
 
 pub fn fps_controller_input(
     key_input: Res<ButtonInput<KeyCode>>,
@@ -295,17 +308,15 @@ pub fn fps_controller_move(
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // local +X is "right"
 
-        let side_impulse_strength = 0.35;
-
         if input.lean.abs() > 0.1 {
-            max_speed /= 1.5;
-            controller.lean_degree += input.lean * 3.0 * dt;
+            max_speed = controller.crouched_speed;
+            controller.lean_degree += input.lean * controller.leaning_speed * dt;
             controller.lean_degree = controller.lean_degree.clamp(-0.95, 0.95);
 
             // Apply sideways impulse when within lean limit
             if controller.lean_degree.abs() < 0.9 && some_hit.is_some() {
-                let impulse =
-                    right_dir * (input.lean.signum() * side_impulse_strength * controller.mass);
+                let impulse = right_dir
+                    * (input.lean.signum() * controller.lean_side_impulse * controller.mass);
                 external_force.apply_impulse(impulse);
             }
         } else {
@@ -313,13 +324,14 @@ pub fn fps_controller_move(
             if controller.lean_degree.abs() < 0.05 {
                 controller.lean_degree = 0.0;
             } else {
-                max_speed /= 1.5;
-                controller.lean_degree -= controller.lean_degree.signum() * 3.0 * dt;
+                max_speed = controller.crouched_speed;
+                controller.lean_degree -=
+                    controller.lean_degree.signum() * controller.leaning_speed * dt;
 
                 if some_hit.is_some() {
                     let impulse = right_dir
                         * (-controller.lean_degree.signum()
-                            * (side_impulse_strength * 0.95)
+                            * (controller.lean_side_impulse * 0.95)
                             * controller.mass);
                     external_force.apply_impulse(impulse);
                 }
@@ -327,7 +339,7 @@ pub fn fps_controller_move(
         }
 
         // How much to lean (radians)
-        let lean_amount = controller.lean_degree * 0.4; // ~±11.5 degrees
+        let lean_amount = controller.lean_degree * controller.lean_mod; // ~±11.5 degrees
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
 
@@ -336,7 +348,7 @@ pub fn fps_controller_move(
         match some_hit {
             // NEAR GROUND
             Some(hit) => {
-                damping.0 = 0.99;
+                damping.0 = controller.ground_damp;
                 let has_traction =
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
                 //  println!("ON GROUND");
@@ -368,7 +380,7 @@ pub fn fps_controller_move(
                     if input.jump && controller.jump_tick > 0 {
                         let jump_force = Vec3 {
                             x: 0.0,
-                            y: 6.0,
+                            y: controller.jump_force,
                             z: 0.0,
                         };
                         external_force.apply_impulse(jump_force * scale_vec);
@@ -384,10 +396,10 @@ pub fn fps_controller_move(
             //IN AIR
             None => {
                 controller.ground_tick = 0;
-                damping.0 = 0.3;
+                damping.0 = controller.air_damp;
 
-                friction.dynamic_coefficient = 0.1;
-                friction.static_coefficient = 0.1;
+                friction.dynamic_coefficient = controller.air_friction;
+                friction.static_coefficient = controller.air_friction;
                 friction.combine_rule = CoefficientCombine::Min;
                 wish_speed = f32::min(wish_speed, controller.air_speed_cap);
                 //   println!("WISH DIR IS {:#?}", wish_direction);
