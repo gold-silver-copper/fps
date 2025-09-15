@@ -342,7 +342,7 @@ pub fn fps_controller_move(
             //  println!("ADD IS {:#?}", add);
             external_force.apply_impulse(add * scale_vec);
         };
-        //LEAN
+        // LEAN
         // Always start with base yaw rotation
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // local +X is "right"
@@ -350,31 +350,31 @@ pub fn fps_controller_move(
         if input.lean.abs() > 0.1 {
             damping.0 = 2.0;
 
+            // Adjust lean degree with clamping
             controller.lean_degree += input.lean * 3.0 * dt;
-            if controller.lean_degree.is_sign_positive() {
-                controller.lean_degree = controller.lean_degree.min(0.95);
-            }
-            if controller.lean_degree.is_sign_negative() {
-                controller.lean_degree = controller.lean_degree.max(-0.95);
-            }
+            controller.lean_degree = controller.lean_degree.clamp(-0.95, 0.95);
 
+            // Apply sideways impulse when within lean limit
             if controller.lean_degree.abs() < 0.9 {
-                let side_impulse_strength = 0.35; // tweak this
+                let side_impulse_strength = 0.35;
                 let impulse =
                     right_dir * (input.lean.signum() * side_impulse_strength * controller.mass);
                 external_force.apply_impulse(impulse);
             }
         } else {
+            // Relax back to neutral
             if controller.lean_degree.abs() < 0.05 {
                 controller.lean_degree = 0.0;
             } else {
                 controller.lean_degree -= controller.lean_degree.signum() * 3.0 * dt;
-                let side_impulse_strength = 0.3; // tweak this
+
+                let side_impulse_strength = 0.3;
                 let impulse = right_dir
                     * (-controller.lean_degree.signum() * side_impulse_strength * controller.mass);
                 external_force.apply_impulse(impulse);
             }
         }
+
         // How much to lean (radians)
         let lean_amount = controller.lean_degree * 0.4; // ~±11.5 degrees
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
