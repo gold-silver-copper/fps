@@ -108,7 +108,7 @@ pub struct FpsController {
     pub friction: f32,
     pub mass: f32,
     pub lean_degree: f32,
-    pub crouch_height: f32,
+
     pub sensitivity: f32,
     pub enable_input: bool,
     pub crouch_degree: f32,
@@ -134,7 +134,7 @@ impl Default for FpsController {
             mass: 80.0,
             crouched_speed: 4.0,
             crouch_speed: 6.0,
-            crouch_height: 1.5,
+
             forward_speed: 30.0,
             side_speed: 30.0,
             air_speed_cap: 2.0,
@@ -340,10 +340,11 @@ pub fn fps_controller_move(
                 let has_traction =
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
                 //  println!("ON GROUND");
-                let slope_wish_dir =
+                // This is for walking up slopes well
+                wish_direction =
                     wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
                 let add = acceleration(
-                    slope_wish_dir,
+                    wish_direction,
                     wish_speed,
                     controller.acceleration,
                     velocity.0,
@@ -405,21 +406,14 @@ pub fn fps_controller_move(
         /* Crouching */
         if input.crouch {
             controller.crouch_degree += controller.crouch_speed * dt;
-            controller.crouch_degree = controller.crouch_degree.clamp(1.0, 2.0);
         } else {
             controller.crouch_degree -= controller.crouch_speed * dt;
-            controller.crouch_degree = controller.crouch_degree.clamp(1.0, 2.0);
         }
-
-        if let Some(cylinder) = collider.shape().as_cylinder() {
-            let radius = cylinder.radius;
-            collider.set_shape(SharedShape::cylinder(
-                controller.height / controller.crouch_degree,
-                radius,
-            ));
-        } else {
-            panic!("Controller must use a cylinder or capsule collider")
-        }
+        controller.crouch_degree = controller.crouch_degree.clamp(1.0, 2.0);
+        collider.set_shape(SharedShape::cylinder(
+            (controller.height / 2.0) / controller.crouch_degree,
+            controller.radius,
+        ));
     }
 }
 
