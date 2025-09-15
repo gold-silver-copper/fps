@@ -251,6 +251,21 @@ pub fn fps_controller_move(
         mut damping,
     ) in query.iter_mut()
     {
+        // Shape cast downwards to find ground
+        // Better than a ray cast as it handles when you are near the edge of a surface
+        let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
+        let some_hit = spatial_query_pipeline.cast_shape(
+            // Consider when the controller is right up against a wall
+            // We do not want the shape cast to detect it,
+            // so provide a slightly smaller collider in the XZ plane
+            &scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN),
+            transform.translation,
+            transform.rotation,
+            -Dir3::Y,
+            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
+            &filter,
+        );
+
         let scale_vec = Vec3::splat(controller.mass);
 
         let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
@@ -276,7 +291,7 @@ pub fn fps_controller_move(
             controller.lean_degree = controller.lean_degree.clamp(-0.95, 0.95);
 
             // Apply sideways impulse when within lean limit
-            if controller.lean_degree.abs() < 0.9 {
+            if controller.lean_degree.abs() < 0.9 && some_hit.is_some() {
                 let impulse =
                     right_dir * (input.lean.signum() * side_impulse_strength * controller.mass);
                 external_force.apply_impulse(impulse);
@@ -289,11 +304,13 @@ pub fn fps_controller_move(
                 max_speed /= 1.5;
                 controller.lean_degree -= controller.lean_degree.signum() * 3.0 * dt;
 
-                let impulse = right_dir
-                    * (-controller.lean_degree.signum()
-                        * (side_impulse_strength * 0.95)
-                        * controller.mass);
-                external_force.apply_impulse(impulse);
+                if some_hit.is_some() {
+                    let impulse = right_dir
+                        * (-controller.lean_degree.signum()
+                            * (side_impulse_strength * 0.95)
+                            * controller.mass);
+                    external_force.apply_impulse(impulse);
+                }
             }
         }
 
@@ -304,83 +321,73 @@ pub fn fps_controller_move(
 
         wish_speed = f32::min(wish_speed, max_speed);
 
-        // Shape cast downwards to find ground
-        // Better than a ray cast as it handles when you are near the edge of a surface
-        let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
+        match some_hit {
+            Some(hit) => {
+                damping.0 = 0.99;
+                let has_traction =
+                    Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
+                //  println!("ON GROUND");
+                let slope_wish_dir =
+                    wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
+                let add = acceleration(
+                    slope_wish_dir,
+                    wish_speed,
+                    controller.acceleration,
+                    velocity.0,
+                    dt,
+                );
 
-        if let Some(hit) = spatial_query_pipeline.cast_shape(
-            // Consider when the controller is right up against a wall
-            // We do not want the shape cast to detect it,
-            // so provide a slightly smaller collider in the XZ plane
-            &scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN),
-            transform.translation,
-            transform.rotation,
-            -Dir3::Y,
-            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
-            &filter,
-        ) {
-            damping.0 = 0.99;
-            let has_traction = Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
-            //  println!("ON GROUND");
-            let slope_wish_dir =
-                wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
-            let add = acceleration(
-                slope_wish_dir,
-                wish_speed,
-                controller.acceleration,
-                velocity.0,
-                dt,
-            );
+                external_force.apply_impulse(add * scale_vec);
+                friction.dynamic_coefficient = controller.friction;
+                friction.static_coefficient = controller.friction;
+                friction.combine_rule = CoefficientCombine::Max;
 
-            external_force.apply_impulse(add * scale_vec);
-            friction.dynamic_coefficient = controller.friction;
-            friction.static_coefficient = controller.friction;
-            friction.combine_rule = CoefficientCombine::Max;
+                if has_traction {
+                    if controller.ground_tick == 0 {
+                        let linear_velocity = velocity.0;
 
-            if has_traction {
-                if controller.ground_tick == 0 {
-                    let linear_velocity = velocity.0;
+                        let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
 
-                    let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
+                        velocity.0 -= normal_force;
+                    }
 
-                    velocity.0 -= normal_force;
+                    if input.jump && controller.jump_tick > 0 {
+                        let jump_force = Vec3 {
+                            x: 0.0,
+                            y: 6.0,
+                            z: 0.0,
+                        };
+                        external_force.apply_impulse(jump_force * scale_vec);
+                        controller.jump_tick = 0;
+
+                        println!("JUMPED");
+                    } else {
+                        controller.jump_tick = controller.jump_tick.saturating_add(1);
+                    }
                 }
-
-                if input.jump && controller.jump_tick > 0 {
-                    let jump_force = Vec3 {
-                        x: 0.0,
-                        y: 6.0,
-                        z: 0.0,
-                    };
-                    external_force.apply_impulse(jump_force * scale_vec);
-                    controller.jump_tick = 0;
-
-                    println!("JUMPED");
-                } else {
-                    controller.jump_tick = controller.jump_tick.saturating_add(1);
-                }
+                controller.ground_tick = controller.ground_tick.saturating_add(1);
             }
-            controller.ground_tick = controller.ground_tick.saturating_add(1);
-        } else {
-            controller.ground_tick = 0;
-            damping.0 = 0.3;
+            None => {
+                controller.ground_tick = 0;
+                damping.0 = 0.3;
 
-            friction.dynamic_coefficient = 0.1;
-            friction.static_coefficient = 0.1;
-            friction.combine_rule = CoefficientCombine::Min;
-            wish_speed = f32::min(wish_speed, controller.air_speed_cap);
-            //   println!("WISH DIR IS {:#?}", wish_direction);
+                friction.dynamic_coefficient = 0.1;
+                friction.static_coefficient = 0.1;
+                friction.combine_rule = CoefficientCombine::Min;
+                wish_speed = f32::min(wish_speed, controller.air_speed_cap);
+                //   println!("WISH DIR IS {:#?}", wish_direction);
 
-            let add = acceleration(
-                wish_direction,
-                wish_speed,
-                controller.air_acceleration,
-                velocity.0,
-                dt,
-            );
-            //  println!("ADD IS {:#?}", add);
-            external_force.apply_impulse(add * scale_vec);
-        };
+                let add = acceleration(
+                    wish_direction,
+                    wish_speed,
+                    controller.air_acceleration,
+                    velocity.0,
+                    dt,
+                );
+                //  println!("ADD IS {:#?}", add);
+                external_force.apply_impulse(add * scale_vec);
+            }
+        }
     }
 }
 
