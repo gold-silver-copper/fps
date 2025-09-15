@@ -176,7 +176,7 @@ impl Default for FpsController {
             key_lean_right: KeyCode::KeyE,
             key_crouch: KeyCode::ShiftLeft,
             key_jump: KeyCode::Space,
-
+            //  key_movement_mod_up:KeyCode::M
             sensitivity: 0.001,
         }
     }
