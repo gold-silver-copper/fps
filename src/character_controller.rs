@@ -262,7 +262,46 @@ pub fn fps_controller_move(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
-        let max_speed = controller.walk_speed;
+
+        // LEAN
+        // Always start with base yaw rotation
+        let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
+        let right_dir = yaw_rotation * Vec3::X; // local +X is "right"
+        let mut max_speed = controller.walk_speed;
+        let side_impulse_strength = 0.35;
+
+        if input.lean.abs() > 0.1 {
+            max_speed /= 1.5;
+            controller.lean_degree += input.lean * 3.0 * dt;
+            controller.lean_degree = controller.lean_degree.clamp(-0.95, 0.95);
+
+            // Apply sideways impulse when within lean limit
+            if controller.lean_degree.abs() < 0.9 {
+                let impulse =
+                    right_dir * (input.lean.signum() * side_impulse_strength * controller.mass);
+                external_force.apply_impulse(impulse);
+            }
+        } else {
+            // Relax back to neutral
+            if controller.lean_degree.abs() < 0.05 {
+                controller.lean_degree = 0.0;
+            } else {
+                max_speed /= 1.5;
+                controller.lean_degree -= controller.lean_degree.signum() * 3.0 * dt;
+
+                let impulse = right_dir
+                    * (-controller.lean_degree.signum()
+                        * (side_impulse_strength * 0.95)
+                        * controller.mass);
+                external_force.apply_impulse(impulse);
+            }
+        }
+
+        // How much to lean (radians)
+        let lean_amount = controller.lean_degree * 0.4; // ~±11.5 degrees
+        let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
+        transform.rotation = (yaw_rotation * lean_rotation).normalize();
+
         wish_speed = f32::min(wish_speed, max_speed);
 
         // Shape cast downwards to find ground
@@ -342,43 +381,6 @@ pub fn fps_controller_move(
             //  println!("ADD IS {:#?}", add);
             external_force.apply_impulse(add * scale_vec);
         };
-        // LEAN
-        // Always start with base yaw rotation
-        let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
-        let right_dir = yaw_rotation * Vec3::X; // local +X is "right"
-
-        if input.lean.abs() > 0.1 {
-            damping.0 = 2.0;
-
-            // Adjust lean degree with clamping
-            controller.lean_degree += input.lean * 3.0 * dt;
-            controller.lean_degree = controller.lean_degree.clamp(-0.95, 0.95);
-
-            // Apply sideways impulse when within lean limit
-            if controller.lean_degree.abs() < 0.9 {
-                let side_impulse_strength = 0.35;
-                let impulse =
-                    right_dir * (input.lean.signum() * side_impulse_strength * controller.mass);
-                external_force.apply_impulse(impulse);
-            }
-        } else {
-            // Relax back to neutral
-            if controller.lean_degree.abs() < 0.05 {
-                controller.lean_degree = 0.0;
-            } else {
-                controller.lean_degree -= controller.lean_degree.signum() * 3.0 * dt;
-
-                let side_impulse_strength = 0.3;
-                let impulse = right_dir
-                    * (-controller.lean_degree.signum() * side_impulse_strength * controller.mass);
-                external_force.apply_impulse(impulse);
-            }
-        }
-
-        // How much to lean (radians)
-        let lean_amount = controller.lean_degree * 0.4; // ~±11.5 degrees
-        let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
-        transform.rotation = (yaw_rotation * lean_rotation).normalize();
     }
 }
 
