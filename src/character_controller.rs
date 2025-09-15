@@ -277,12 +277,14 @@ pub fn fps_controller_move(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
+        //Gets touched by lean code to limit move speed while leaning
+        let mut max_speed = controller.walk_speed;
 
         // LEAN
         // Always start with base yaw rotation
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // local +X is "right"
-        let mut max_speed = controller.walk_speed;
+
         let side_impulse_strength = 0.35;
 
         if input.lean.abs() > 0.1 {
@@ -322,6 +324,7 @@ pub fn fps_controller_move(
         wish_speed = f32::min(wish_speed, max_speed);
 
         match some_hit {
+            // NEAR GROUND
             Some(hit) => {
                 damping.0 = 0.99;
                 let has_traction =
@@ -367,6 +370,7 @@ pub fn fps_controller_move(
                 }
                 controller.ground_tick = controller.ground_tick.saturating_add(1);
             }
+            //IN AIR
             None => {
                 controller.ground_tick = 0;
                 damping.0 = 0.3;
