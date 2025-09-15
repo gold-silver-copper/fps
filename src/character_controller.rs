@@ -94,7 +94,8 @@ pub struct FpsController {
     pub air_acceleration: f32,
 
     pub acceleration: f32,
-
+    pub crouched_speed: f32,
+    pub crouch_speed: f32,
     /// If the dot product (alignment) of the normal of the surface and the upward vector,
     /// which is a value from [-1, 1], is greater than this value, ground movement is applied
     pub traction_normal_cutoff: f32,
@@ -107,9 +108,10 @@ pub struct FpsController {
     pub friction: f32,
     pub mass: f32,
     pub lean_degree: f32,
-
+    pub crouch_height: f32,
     pub sensitivity: f32,
     pub enable_input: bool,
+    pub crouch_degree: f32,
 
     pub key_forward: KeyCode,
     pub key_back: KeyCode,
@@ -118,7 +120,7 @@ pub struct FpsController {
 
     pub key_lean_left: KeyCode,
     pub key_lean_right: KeyCode,
-
+    pub key_crouch: KeyCode,
     pub key_jump: KeyCode,
 }
 
@@ -130,12 +132,15 @@ impl Default for FpsController {
 
             walk_speed: 7.0,
             mass: 80.0,
-
+            crouched_speed: 4.0,
+            crouch_speed: 6.0,
+            crouch_height: 1.5,
             forward_speed: 30.0,
             side_speed: 30.0,
             air_speed_cap: 2.0,
 
             air_acceleration: 10.0,
+            crouch_degree: 1.0,
 
             ground_tick: 0,
             jump_tick: 0,
@@ -156,7 +161,7 @@ impl Default for FpsController {
             key_right: KeyCode::KeyD,
             key_lean_left: KeyCode::KeyQ,
             key_lean_right: KeyCode::KeyE,
-
+            key_crouch: KeyCode::ShiftLeft,
             key_jump: KeyCode::Space,
 
             sensitivity: 0.001,
@@ -210,6 +215,7 @@ pub fn fps_controller_input(
         );
 
         input.jump = key_input.pressed(controller.key_jump);
+        input.crouch = key_input.pressed(controller.key_crouch);
     }
 }
 
@@ -278,7 +284,11 @@ pub fn fps_controller_move(
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
         //Gets touched by lean code to limit move speed while leaning
-        let mut max_speed = controller.walk_speed;
+        let mut max_speed = if input.crouch {
+            controller.crouched_speed
+        } else {
+            controller.walk_speed
+        };
 
         // LEAN
         // Always start with base yaw rotation
@@ -391,6 +401,24 @@ pub fn fps_controller_move(
                 //  println!("ADD IS {:#?}", add);
                 external_force.apply_impulse(add * scale_vec);
             }
+        }
+        /* Crouching */
+        if input.crouch {
+            controller.crouch_degree += controller.crouch_speed * dt;
+            controller.crouch_degree = controller.crouch_degree.clamp(1.0, 2.0);
+        } else {
+            controller.crouch_degree -= controller.crouch_speed * dt;
+            controller.crouch_degree = controller.crouch_degree.clamp(1.0, 2.0);
+        }
+
+        if let Some(cylinder) = collider.shape().as_cylinder() {
+            let radius = cylinder.radius;
+            collider.set_shape(SharedShape::cylinder(
+                controller.height / controller.crouch_degree,
+                radius,
+            ));
+        } else {
+            panic!("Controller must use a cylinder or capsule collider")
         }
     }
 }
