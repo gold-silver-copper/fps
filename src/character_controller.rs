@@ -4,6 +4,8 @@ use avian3d::{
     parry::{math::Point, shape::SharedShape},
     prelude::*,
 };
+use bevy::input::mouse::MouseScrollUnit;
+use bevy::input::mouse::MouseWheel;
 use bevy::{
     input::mouse::MouseMotion,
     math::{Vec3Swizzles, VectorSpace},
@@ -44,6 +46,7 @@ impl Plugin for FpsControllerPlugin {
                     fps_controller_input,
                     fps_controller_look,
                     fps_controller_render,
+                    scroll_events,
                 )
                     .chain()
                     .after(mouse::mouse_button_input_system)
@@ -77,6 +80,8 @@ pub struct FpsControllerInput {
     pub yaw: f32,
     pub movement: Vec3,
     pub lean: f32, // -1.0 left, +1.0 right
+    pub lean_degree_mod: f32,
+    pub crouch_degree_mod: f32,
 }
 
 #[derive(Component)]
@@ -113,7 +118,7 @@ pub struct FpsController {
     pub enable_input: bool,
     pub crouch_degree: f32,
     pub jump_force: f32,
-    pub lean_mod: f32,
+    pub lean_max: f32,
 
     pub key_forward: KeyCode,
     pub key_back: KeyCode,
@@ -151,13 +156,14 @@ impl Default for FpsController {
 
             air_acceleration: 10.0,
             crouch_degree: 1.0,
-            lean_mod: 0.4,
+            lean_max: 0.4,
             leaning_speed: 3.0,
 
             ground_tick: 0,
             jump_tick: 0,
             height: 1.8,
             lean_degree: 0.0,
+
             acceleration: 3.5,
 
             traction_normal_cutoff: 0.6,
@@ -229,6 +235,57 @@ pub fn fps_controller_input(
 
         input.jump = key_input.pressed(controller.key_jump);
         input.crouch = key_input.pressed(controller.key_crouch);
+    }
+}
+
+fn scroll_events(
+    mut evr_scroll: EventReader<MouseWheel>,
+    mut query: Query<(&FpsController, &mut FpsControllerInput)>,
+) {
+    let mut mod_shift = 0.0;
+
+    for ev in evr_scroll.read() {
+        match ev.unit {
+            MouseScrollUnit::Line => {
+                println!(
+                    "Scroll (line units): vertical: {}, horizontal: {}",
+                    ev.y, ev.x
+                );
+                if ev.y.abs() > 0.1 {
+                    mod_shift += ev.y.signum() * 0.1;
+                }
+                if ev.x.abs() > 0.1 {
+                    mod_shift += ev.x.signum() * 0.1;
+                }
+            }
+            MouseScrollUnit::Pixel => {
+                println!(
+                    "Scroll (pixel units): vertical: {}, horizontal: {}",
+                    ev.y, ev.x
+                );
+                if ev.y.abs() > 0.1 {
+                    mod_shift += ev.y.signum() * 0.1;
+                }
+                if ev.x.abs() > 0.1 {
+                    mod_shift += ev.x.signum() * 0.1;
+                }
+            }
+        }
+        println!("MOD SHIFT {:#?}", mod_shift);
+    }
+    mod_shift = mod_shift.clamp(-1.0, 1.0);
+
+    for (controller, mut input) in query
+        .iter_mut()
+        .filter(|(controller, _)| controller.enable_input)
+    {
+        if input.crouch {
+            input.crouch_degree_mod += mod_shift;
+            input.crouch_degree_mod = input.crouch_degree_mod.clamp(0.0, 1.0);
+        } else if input.lean.abs() > 0.1 {
+            input.lean_degree_mod += mod_shift;
+            input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 1.0);
+        }
     }
 }
 
@@ -339,7 +396,7 @@ pub fn fps_controller_move(
         }
 
         // How much to lean (radians)
-        let lean_amount = controller.lean_degree * controller.lean_mod; // ~±11.5 degrees
+        let lean_amount = controller.lean_degree * controller.lean_max; // ~±11.5 degrees
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
 
@@ -421,9 +478,12 @@ pub fn fps_controller_move(
         } else {
             controller.crouch_degree -= controller.crouch_speed * dt;
         }
-        controller.crouch_degree = controller.crouch_degree.clamp(1.0, 2.0);
+        controller.crouch_degree = controller
+            .crouch_degree
+            .clamp(1.0, 2.0 - input.crouch_degree_mod);
+
         collider.set_shape(SharedShape::cylinder(
-            (controller.height / 2.0) / controller.crouch_degree,
+            (controller.height / 2.0) / (controller.crouch_degree),
             controller.radius,
         ));
     }
