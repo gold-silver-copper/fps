@@ -284,7 +284,7 @@ fn scroll_events(
             input.crouch_degree_mod = input.crouch_degree_mod.clamp(0.0, 1.0);
         } else if input.lean.abs() > 0.1 {
             input.lean_degree_mod += mod_shift;
-            input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 1.0);
+            input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 0.8);
         }
     }
 }
@@ -368,10 +368,13 @@ pub fn fps_controller_move(
         if input.lean.abs() > 0.1 {
             max_speed = controller.crouched_speed;
             controller.lean_degree += input.lean * controller.leaning_speed * dt;
-            controller.lean_degree = controller.lean_degree.clamp(-0.95, 0.95);
+            let lean_mod = 1.0 - input.lean_degree_mod;
+            controller.lean_degree = controller
+                .lean_degree
+                .clamp(-1.0 * lean_mod, 1.0 * lean_mod);
 
             // Apply sideways impulse when within lean limit
-            if controller.lean_degree.abs() < 0.9 && some_hit.is_some() {
+            if controller.lean_degree.abs() < (0.95 * lean_mod) && some_hit.is_some() {
                 let impulse = right_dir
                     * (input.lean.signum() * controller.lean_side_impulse * controller.mass);
                 external_force.apply_impulse(impulse);
