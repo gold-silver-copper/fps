@@ -342,6 +342,7 @@ pub fn fps_controller_move(
             //  println!("ADD IS {:#?}", add);
             external_force.apply_impulse(add * scale_vec);
         };
+        //LEAN
         // Always start with base yaw rotation
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
 
@@ -349,13 +350,17 @@ pub fn fps_controller_move(
             damping.0 = 2.0;
 
             if controller.lean_degree.abs() < 0.9 {
-                controller.lean_degree += input.lean * 2.0 * dt;
+                controller.lean_degree += input.lean * 3.0 * dt;
             }
         } else {
-            controller.lean_degree -= controller.lean_degree.signum() * 2.0 * dt;
+            if controller.lean_degree.abs() < 0.05 {
+                controller.lean_degree = 0.0;
+            } else {
+                controller.lean_degree -= controller.lean_degree.signum() * 3.0 * dt;
+            }
         }
         // How much to lean (radians)
-        let lean_amount = controller.lean_degree * 0.2; // ~±11.5 degrees
+        let lean_amount = controller.lean_degree * 0.4; // ~±11.5 degrees
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
     }
