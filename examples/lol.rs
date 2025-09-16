@@ -33,7 +33,13 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, mut window: Query<&mut Window>, assets: Res<AssetServer>) {
+fn setup(
+    mut commands: Commands,
+    mut window: Query<&mut Window>,
+    assets: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     let mut window = window.single_mut().unwrap();
     window.title = String::from("Minimal FPS Controller Example");
 
@@ -112,6 +118,16 @@ fn setup(mut commands: Commands, mut window: Query<&mut Window>, assets: Res<Ass
         handle: assets.load("playground.glb"),
         is_loaded: false,
     });
+
+    // A cube to move around
+    commands.spawn((
+        RigidBody::Dynamic,
+        Collider::cuboid(1.0, 1.0, 1.0),
+        Mesh3d(meshes.add(Cuboid::default())),
+        Mass(40.0),
+        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
+        Transform::from_translation(SPAWN_POINT + Vec3::new(1.0, 1.0, 1.0)),
+    ));
 
     commands.spawn((
         Text(String::from("")),

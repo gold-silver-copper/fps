@@ -34,7 +34,7 @@ use bevy::{
 /// fn my_system() { }
 /// ```
 pub struct FpsControllerPlugin;
-pub static FPS: f64 = 80.0;
+pub static FPS: f64 = 70.0;
 impl Plugin for FpsControllerPlugin {
     fn build(&self, app: &mut App) {
         use bevy::input::{gamepad, keyboard, mouse, touch};
@@ -413,17 +413,33 @@ pub fn fps_controller_move(
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
                 //  println!("ON GROUND");
                 // This is for walking up slopes well
-                wish_direction =
-                    wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
-                let add = acceleration(
-                    wish_direction,
-                    wish_speed,
-                    controller.acceleration,
-                    velocity.0,
-                    dt,
-                );
 
-                external_force.apply_impulse(add * scale_vec);
+                if !input.jump {
+                    wish_direction =
+                        wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
+                    let add = acceleration(
+                        wish_direction,
+                        wish_speed,
+                        controller.acceleration,
+                        velocity.0,
+                        dt,
+                    );
+                    external_force.apply_impulse(add * scale_vec);
+                } else {
+                    wish_speed = f32::min(wish_speed, controller.air_speed_cap);
+                    //   println!("WISH DIR IS {:#?}", wish_direction);
+
+                    let add = acceleration(
+                        wish_direction,
+                        wish_speed,
+                        controller.air_acceleration,
+                        velocity.0,
+                        dt,
+                    );
+                    //  println!("ADD IS {:#?}", add);
+                    external_force.apply_impulse(add * scale_vec);
+                }
+
                 friction.dynamic_coefficient = controller.friction;
                 friction.static_coefficient = controller.friction;
                 friction.combine_rule = CoefficientCombine::Max;
@@ -437,7 +453,7 @@ pub fn fps_controller_move(
                         velocity.0 -= normal_force;
                     }
 
-                    if input.jump && controller.jump_tick > 0 {
+                    if input.jump && controller.jump_tick > 1 {
                         let jump_force = Vec3 {
                             x: 0.0,
                             y: controller.jump_force,
