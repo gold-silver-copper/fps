@@ -268,19 +268,22 @@ pub fn fps_controller_move(
         // Always start with base yaw rotation
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // local +X is "right"
-
+        let old_degree = controller.lean_degree;
         if input.lean.abs() > 0.1 {
             max_speed = controller.crouched_speed;
+
             controller.lean_degree += input.lean * controller.leaning_speed * dt;
             let lean_mod = 1.0 - input.lean_degree_mod;
             controller.lean_degree = controller
                 .lean_degree
                 .clamp(-1.0 * lean_mod, 1.0 * lean_mod);
 
+            let degree_change = controller.lean_degree - old_degree;
+            println!("degree change {:#?}", degree_change);
+
             // Apply sideways impulse when within lean limit
             if controller.lean_degree.abs() < (0.95 * lean_mod) {
-                transform.translation +=
-                    right_dir * input.lean.signum() * controller.lean_side_impulse * dt;
+                transform.translation += right_dir * input.lean * controller.lean_side_impulse * dt;
             }
         } else {
             // Relax back to neutral
@@ -290,6 +293,8 @@ pub fn fps_controller_move(
                 max_speed = controller.crouched_speed;
                 controller.lean_degree -=
                     controller.lean_degree.signum() * controller.leaning_speed * dt;
+                let degree_change = controller.lean_degree - old_degree;
+                println!("degree change {:#?}", degree_change);
                 transform.translation -= right_dir
                     * controller.lean_degree.signum()
                     * controller.lean_side_impulse
