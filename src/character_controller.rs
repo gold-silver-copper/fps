@@ -156,7 +156,7 @@ impl Default for FpsController {
 
             air_acceleration: 10.0,
             crouch_degree: 1.0,
-            lean_max: 0.4,
+            lean_max: 0.2,
             leaning_speed: 3.0,
 
             ground_tick: 0,
@@ -171,7 +171,7 @@ impl Default for FpsController {
 
             pitch: 0.0,
             yaw: 0.0,
-            lean_side_impulse: 0.3,
+            lean_side_impulse: 3.0,
 
             enable_input: true,
             key_forward: KeyCode::KeyW,
@@ -199,102 +199,6 @@ impl Default for FpsController {
 const ANGLE_EPSILON: f32 = 0.001953125;
 
 const SLIGHT_SCALE_DOWN: f32 = 0.8;
-
-pub fn fps_controller_input(
-    key_input: Res<ButtonInput<KeyCode>>,
-    mut mouse_events: EventReader<MouseMotion>,
-    mut query: Query<(&FpsController, &mut FpsControllerInput)>,
-) {
-    for (controller, mut input) in query
-        .iter_mut()
-        .filter(|(controller, _)| controller.enable_input)
-    {
-        let mut mouse_delta = Vec2::ZERO;
-        for mouse_event in mouse_events.read() {
-            mouse_delta += mouse_event.delta;
-        }
-        mouse_delta *= controller.sensitivity;
-
-        input.pitch = (input.pitch - mouse_delta.y)
-            .clamp(-FRAC_PI_2 + ANGLE_EPSILON, FRAC_PI_2 - ANGLE_EPSILON);
-        input.yaw -= mouse_delta.x;
-        if input.yaw.abs() > PI {
-            input.yaw = input.yaw.rem_euclid(TAU);
-        }
-
-        input.movement = Vec3::new(
-            get_axis(&key_input, controller.key_right, controller.key_left),
-            0.0,
-            get_axis(&key_input, controller.key_forward, controller.key_back),
-        );
-        input.lean = get_axis(
-            &key_input,
-            controller.key_lean_right,
-            controller.key_lean_left,
-        );
-
-        input.jump = key_input.pressed(controller.key_jump);
-        input.crouch = key_input.pressed(controller.key_crouch);
-    }
-}
-
-fn scroll_events(
-    mut evr_scroll: EventReader<MouseWheel>,
-    mut query: Query<(&FpsController, &mut FpsControllerInput)>,
-) {
-    let mut mod_shift = 0.0;
-
-    for ev in evr_scroll.read() {
-        match ev.unit {
-            MouseScrollUnit::Line => {
-                println!(
-                    "Scroll (line units): vertical: {}, horizontal: {}",
-                    ev.y, ev.x
-                );
-                if ev.y.abs() > 0.1 {
-                    mod_shift += ev.y.signum() * 0.1;
-                }
-                if ev.x.abs() > 0.1 {
-                    mod_shift += ev.x.signum() * 0.1;
-                }
-            }
-            MouseScrollUnit::Pixel => {
-                println!(
-                    "Scroll (pixel units): vertical: {}, horizontal: {}",
-                    ev.y, ev.x
-                );
-                if ev.y.abs() > 0.1 {
-                    mod_shift += ev.y.signum() * 0.1;
-                }
-                if ev.x.abs() > 0.1 {
-                    mod_shift += ev.x.signum() * 0.1;
-                }
-            }
-        }
-        println!("MOD SHIFT {:#?}", mod_shift);
-    }
-    mod_shift = mod_shift.clamp(-1.0, 1.0);
-
-    for (controller, mut input) in query
-        .iter_mut()
-        .filter(|(controller, _)| controller.enable_input)
-    {
-        if input.crouch {
-            input.crouch_degree_mod += mod_shift;
-            input.crouch_degree_mod = input.crouch_degree_mod.clamp(0.0, 1.0);
-        } else if input.lean.abs() > 0.1 {
-            input.lean_degree_mod += mod_shift;
-            input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 0.8);
-        }
-    }
-}
-
-pub fn fps_controller_look(mut query: Query<(&mut FpsController, &FpsControllerInput)>) {
-    for (mut controller, input) in query.iter_mut() {
-        controller.pitch = input.pitch;
-        controller.yaw = input.yaw;
-    }
-}
 
 pub fn fps_controller_move(
     spatial_query_pipeline: Res<SpatialQueryPipeline>,
@@ -374,10 +278,9 @@ pub fn fps_controller_move(
                 .clamp(-1.0 * lean_mod, 1.0 * lean_mod);
 
             // Apply sideways impulse when within lean limit
-            if controller.lean_degree.abs() < (0.95 * lean_mod) && some_hit.is_some() {
-                let impulse = right_dir
-                    * (input.lean.signum() * controller.lean_side_impulse * controller.mass);
-                external_force.apply_impulse(impulse);
+            if controller.lean_degree.abs() < (0.95 * lean_mod) {
+                transform.translation +=
+                    right_dir * input.lean.signum() * controller.lean_side_impulse * dt;
             }
         } else {
             // Relax back to neutral
@@ -387,20 +290,15 @@ pub fn fps_controller_move(
                 max_speed = controller.crouched_speed;
                 controller.lean_degree -=
                     controller.lean_degree.signum() * controller.leaning_speed * dt;
-
-                if some_hit.is_some() {
-                    let impulse = right_dir
-                        * (-controller.lean_degree.signum()
-                            * (controller.lean_side_impulse * 0.95)
-                            * controller.mass);
-                    external_force.apply_impulse(impulse);
-                }
+                transform.translation -=
+                    right_dir * controller.lean_degree.signum() * controller.lean_side_impulse * dt;
             }
         }
 
         // How much to lean (radians)
         let lean_amount = controller.lean_degree * controller.lean_max; // ~±11.5 degrees
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
+
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
 
         wish_speed = f32::min(wish_speed, max_speed);
@@ -505,6 +403,102 @@ pub fn fps_controller_move(
             (controller.height / 2.0) / (controller.crouch_degree),
             controller.radius,
         ));
+    }
+}
+
+pub fn fps_controller_input(
+    key_input: Res<ButtonInput<KeyCode>>,
+    mut mouse_events: EventReader<MouseMotion>,
+    mut query: Query<(&FpsController, &mut FpsControllerInput)>,
+) {
+    for (controller, mut input) in query
+        .iter_mut()
+        .filter(|(controller, _)| controller.enable_input)
+    {
+        let mut mouse_delta = Vec2::ZERO;
+        for mouse_event in mouse_events.read() {
+            mouse_delta += mouse_event.delta;
+        }
+        mouse_delta *= controller.sensitivity;
+
+        input.pitch = (input.pitch - mouse_delta.y)
+            .clamp(-FRAC_PI_2 + ANGLE_EPSILON, FRAC_PI_2 - ANGLE_EPSILON);
+        input.yaw -= mouse_delta.x;
+        if input.yaw.abs() > PI {
+            input.yaw = input.yaw.rem_euclid(TAU);
+        }
+
+        input.movement = Vec3::new(
+            get_axis(&key_input, controller.key_right, controller.key_left),
+            0.0,
+            get_axis(&key_input, controller.key_forward, controller.key_back),
+        );
+        input.lean = get_axis(
+            &key_input,
+            controller.key_lean_right,
+            controller.key_lean_left,
+        );
+
+        input.jump = key_input.pressed(controller.key_jump);
+        input.crouch = key_input.pressed(controller.key_crouch);
+    }
+}
+
+fn scroll_events(
+    mut evr_scroll: EventReader<MouseWheel>,
+    mut query: Query<(&FpsController, &mut FpsControllerInput)>,
+) {
+    let mut mod_shift = 0.0;
+
+    for ev in evr_scroll.read() {
+        match ev.unit {
+            MouseScrollUnit::Line => {
+                println!(
+                    "Scroll (line units): vertical: {}, horizontal: {}",
+                    ev.y, ev.x
+                );
+                if ev.y.abs() > 0.1 {
+                    mod_shift += ev.y.signum() * 0.1;
+                }
+                if ev.x.abs() > 0.1 {
+                    mod_shift += ev.x.signum() * 0.1;
+                }
+            }
+            MouseScrollUnit::Pixel => {
+                println!(
+                    "Scroll (pixel units): vertical: {}, horizontal: {}",
+                    ev.y, ev.x
+                );
+                if ev.y.abs() > 0.1 {
+                    mod_shift += ev.y.signum() * 0.1;
+                }
+                if ev.x.abs() > 0.1 {
+                    mod_shift += ev.x.signum() * 0.1;
+                }
+            }
+        }
+        println!("MOD SHIFT {:#?}", mod_shift);
+    }
+    mod_shift = mod_shift.clamp(-1.0, 1.0);
+
+    for (controller, mut input) in query
+        .iter_mut()
+        .filter(|(controller, _)| controller.enable_input)
+    {
+        if input.crouch {
+            input.crouch_degree_mod += mod_shift;
+            input.crouch_degree_mod = input.crouch_degree_mod.clamp(0.0, 1.0);
+        } else if input.lean.abs() > 0.1 {
+            input.lean_degree_mod += mod_shift;
+            input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 0.8);
+        }
+    }
+}
+
+pub fn fps_controller_look(mut query: Query<(&mut FpsController, &FpsControllerInput)>) {
+    for (mut controller, input) in query.iter_mut() {
+        controller.pitch = input.pitch;
+        controller.yaw = input.yaw;
     }
 }
 
