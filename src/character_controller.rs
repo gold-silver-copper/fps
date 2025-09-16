@@ -34,7 +34,7 @@ use bevy::{
 /// fn my_system() { }
 /// ```
 pub struct FpsControllerPlugin;
-pub static FPS: f64 = 70.0;
+pub static FPS: f64 = 120.0;
 impl Plugin for FpsControllerPlugin {
     fn build(&self, app: &mut App) {
         use bevy::input::{gamepad, keyboard, mouse, touch};
@@ -139,12 +139,12 @@ impl Default for FpsController {
     fn default() -> Self {
         Self {
             grounded_distance: 0.04,
-            radius: 0.25,
+            radius: 0.5,
 
             walk_speed: 7.0,
             mass: 80.0,
             crouched_speed: 3.5,
-            crouch_speed: 6.0,
+            crouch_speed: 4.0,
             air_damp: 0.3,
             ground_damp: 0.99,
             air_friction: 0.1,
@@ -156,7 +156,7 @@ impl Default for FpsController {
 
             air_acceleration: 10.0,
             crouch_degree: 1.0,
-            lean_max: 0.2,
+            lean_max: 0.4,
             leaning_speed: 3.0,
 
             ground_tick: 0,
@@ -171,7 +171,7 @@ impl Default for FpsController {
 
             pitch: 0.0,
             yaw: 0.0,
-            lean_side_impulse: 3.0,
+            lean_side_impulse: 35.0,
 
             enable_input: true,
             key_forward: KeyCode::KeyW,
@@ -198,7 +198,7 @@ impl Default for FpsController {
 // Used as padding by camera pitching (up/down) to avoid spooky math problems
 const ANGLE_EPSILON: f32 = 0.001953125;
 
-const SLIGHT_SCALE_DOWN: f32 = 0.8;
+const SLIGHT_SCALE_DOWN: f32 = 0.7;
 
 pub fn fps_controller_move(
     spatial_query_pipeline: Res<SpatialQueryPipeline>,
@@ -269,6 +269,7 @@ pub fn fps_controller_move(
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // local +X is "right"
         let old_degree = controller.lean_degree;
+        let mut degree_change = 0.0;
         if input.lean.abs() > 0.1 {
             max_speed = controller.crouched_speed;
 
@@ -278,13 +279,7 @@ pub fn fps_controller_move(
                 .lean_degree
                 .clamp(-1.0 * lean_mod, 1.0 * lean_mod);
 
-            let degree_change = controller.lean_degree - old_degree;
-            println!("degree change {:#?}", degree_change);
-
-            // Apply sideways impulse when within lean limit
-            if controller.lean_degree.abs() < (0.95 * lean_mod) {
-                transform.translation += right_dir * input.lean * controller.lean_side_impulse * dt;
-            }
+            degree_change = controller.lean_degree - old_degree;
         } else {
             // Relax back to neutral
             if controller.lean_degree.abs() < 0.05 {
@@ -293,16 +288,16 @@ pub fn fps_controller_move(
                 max_speed = controller.crouched_speed;
                 controller.lean_degree -=
                     controller.lean_degree.signum() * controller.leaning_speed * dt;
-                let degree_change = controller.lean_degree - old_degree;
-                println!("degree change {:#?}", degree_change);
-                transform.translation -= right_dir
-                    * controller.lean_degree.signum()
-                    * controller.lean_side_impulse
-                    * 0.95
-                    * dt;
+                degree_change = controller.lean_degree - old_degree;
             }
         }
+        transform.translation += right_dir
+           // * controller.lean_degree.signum()
+            * controller.lean_side_impulse
 
+            * degree_change
+
+            * dt;
         // How much to lean (radians)
         let lean_amount = controller.lean_degree * controller.lean_max; // ~±11.5 degrees
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
@@ -359,7 +354,7 @@ pub fn fps_controller_move(
                         velocity.0 -= normal_force;
                     }
 
-                    if input.jump && controller.jump_tick > 1 {
+                    if input.jump && controller.jump_tick > 1 && controller.ground_tick > 1 {
                         let jump_force = Vec3 {
                             x: 0.0,
                             y: controller.jump_force,

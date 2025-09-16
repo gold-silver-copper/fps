@@ -69,7 +69,7 @@ fn setup(
     // This distinction is useful for later on if you want to add multiplayer,
     // where often time these two ideas are not exactly synced up
     let height = 1.8;
-    let radius = 0.25;
+    let radius = 0.4;
     let mass = 80.0;
     let logical_entity = commands
         .spawn((
