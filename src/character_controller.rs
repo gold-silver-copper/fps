@@ -300,14 +300,15 @@ pub fn fps_controller_move(
             // NEAR GROUND
             Some(hit) => {
                 //High Friction for controllable character
+                friction.dynamic_coefficient = controller.friction;
+                friction.static_coefficient = controller.friction;
 
-                if input.movement.length_squared() > 0.6 {
-                    friction.dynamic_coefficient = controller.air_friction;
-                    friction.static_coefficient = controller.air_friction;
-                } else {
-                    friction.dynamic_coefficient = controller.friction;
-                    friction.static_coefficient = controller.friction;
-                }
+                let jump_force = Vec3 {
+                    x: 0.0,
+                    y: -0.07,
+                    z: 0.0,
+                };
+                external_force.apply_impulse(jump_force * scale_vec);
 
                 friction.combine_rule = CoefficientCombine::Average;
                 // check if player is on walkable slope
@@ -345,16 +346,6 @@ pub fn fps_controller_move(
                     let linear_velocity = velocity.0;
                     let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
                     velocity.0 -= normal_force;
-
-                    //This fixes bug from above fix that causes friction to not apply
-                    if !input.jump {
-                        let jump_force = Vec3 {
-                            x: 0.0,
-                            y: -0.07,
-                            z: 0.0,
-                        };
-                        external_force.apply_impulse(jump_force * scale_vec);
-                    }
 
                     if input.jump && controller.jump_tick > 1 && controller.ground_tick > 1 {
                         let jump_force = Vec3 {
