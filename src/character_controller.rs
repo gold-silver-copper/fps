@@ -113,7 +113,7 @@ pub struct FpsController {
     pub friction: f32,
     pub mass: f32,
     pub lean_degree: f32,
-    pub ground_damp: f32,
+
     pub sensitivity: f32,
     pub enable_input: bool,
     pub crouch_degree: f32,
@@ -124,7 +124,7 @@ pub struct FpsController {
     pub key_back: KeyCode,
     pub key_left: KeyCode,
     pub key_right: KeyCode,
-    pub air_damp: f32,
+
     pub air_friction: f32,
     pub lean_side_impulse: f32,
     pub leaning_speed: f32,
@@ -145,8 +145,7 @@ impl Default for FpsController {
             mass: 80.0,
             crouched_speed: 3.5,
             crouch_speed: 4.0,
-            air_damp: 0.3,
-            ground_damp: 0.99,
+
             air_friction: 0.1,
             jump_force: 6.0,
 
@@ -167,7 +166,7 @@ impl Default for FpsController {
             acceleration: 3.5,
 
             traction_normal_cutoff: 0.6,
-            friction: 0.99,
+            friction: 0.9,
 
             pitch: 0.0,
             yaw: 0.0,
@@ -212,7 +211,6 @@ pub fn fps_controller_move(
             &mut LinearVelocity,
             &mut ExternalImpulse,
             &mut Friction,
-            &mut LinearDamping,
         ),
         With<LogicalPlayer>,
     >,
@@ -228,7 +226,6 @@ pub fn fps_controller_move(
         mut velocity,
         mut external_force,
         mut friction,
-        mut damping,
     ) in query.iter_mut()
     {
         // Shape cast downwards to find ground
@@ -266,6 +263,7 @@ pub fn fps_controller_move(
         } else {
             controller.walk_speed
         };
+        wish_speed = f32::min(wish_speed, max_speed);
 
         // LEAN
         // Always start with base yaw rotation
@@ -293,24 +291,31 @@ pub fn fps_controller_move(
         }
         //shift collider to facilitate looking around walls
         transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
-        // How much to lean (radians)
-        let lean_amount = controller.lean_degree * controller.lean_max; // ~±11.5 degrees
+        // How much to lean
+        let lean_amount = controller.lean_degree * controller.lean_max;
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
-
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
-
-        wish_speed = f32::min(wish_speed, max_speed);
 
         match some_hit {
             // NEAR GROUND
             Some(hit) => {
-                damping.0 = controller.ground_damp;
+                //High Friction for controllable character
+
+                if input.movement.length_squared() > 0.6 {
+                    friction.dynamic_coefficient = controller.air_friction;
+                    friction.static_coefficient = controller.air_friction;
+                } else {
+                    friction.dynamic_coefficient = controller.friction;
+                    friction.static_coefficient = controller.friction;
+                }
+
+                friction.combine_rule = CoefficientCombine::Average;
+                // check if player is on walkable slope
                 let has_traction =
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
-                //  println!("ON GROUND");
-                // This is for walking up slopes well
 
                 if !input.jump {
+                    // This is for walking up slopes well
                     wish_direction =
                         wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
                     let add = acceleration(
@@ -322,9 +327,8 @@ pub fn fps_controller_move(
                     );
                     external_force.apply_impulse(add * scale_vec);
                 } else {
+                    //When bhopping with jump held, use air accel logic for smoother movement
                     wish_speed = f32::min(wish_speed, controller.air_speed_cap);
-                    //   println!("WISH DIR IS {:#?}", wish_direction);
-
                     let add = acceleration(
                         wish_direction,
                         wish_speed,
@@ -336,17 +340,20 @@ pub fn fps_controller_move(
                     external_force.apply_impulse(add * scale_vec);
                 }
 
-                friction.dynamic_coefficient = controller.friction;
-                friction.static_coefficient = controller.friction;
-                friction.combine_rule = CoefficientCombine::Max;
-
                 if has_traction {
-                    if controller.ground_tick == 0 {
-                        let linear_velocity = velocity.0;
+                    //This fixes bug that pushes player randomly upon landing
+                    let linear_velocity = velocity.0;
+                    let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
+                    velocity.0 -= normal_force;
 
-                        let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
-
-                        velocity.0 -= normal_force;
+                    //This fixes bug from above fix that causes friction to not apply
+                    if !input.jump {
+                        let jump_force = Vec3 {
+                            x: 0.0,
+                            y: -0.07,
+                            z: 0.0,
+                        };
+                        external_force.apply_impulse(jump_force * scale_vec);
                     }
 
                     if input.jump && controller.jump_tick > 1 && controller.ground_tick > 1 {
@@ -357,8 +364,6 @@ pub fn fps_controller_move(
                         };
                         external_force.apply_impulse(jump_force * scale_vec);
                         controller.jump_tick = 0;
-
-                        println!("JUMPED");
                     } else {
                         controller.jump_tick = controller.jump_tick.saturating_add(1);
                     }
@@ -368,7 +373,6 @@ pub fn fps_controller_move(
             //IN AIR
             None => {
                 controller.ground_tick = 0;
-                damping.0 = controller.air_damp;
 
                 friction.dynamic_coefficient = controller.air_friction;
                 friction.static_coefficient = controller.air_friction;
