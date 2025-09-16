@@ -290,8 +290,11 @@ pub fn fps_controller_move(
                 max_speed = controller.crouched_speed;
                 controller.lean_degree -=
                     controller.lean_degree.signum() * controller.leaning_speed * dt;
-                transform.translation -=
-                    right_dir * controller.lean_degree.signum() * controller.lean_side_impulse * dt;
+                transform.translation -= right_dir
+                    * controller.lean_degree.signum()
+                    * controller.lean_side_impulse
+                    * 0.95
+                    * dt;
             }
         }
 

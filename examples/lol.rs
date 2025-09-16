@@ -111,7 +111,7 @@ fn setup(
             },
         ))
         .insert(CameraConfig {
-            height_offset: -0.2,
+            height_offset: -0.1,
         })
         .id();
 
