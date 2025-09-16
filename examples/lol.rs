@@ -128,6 +128,39 @@ fn setup(
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
         Transform::from_translation(SPAWN_POINT + Vec3::new(1.0, 1.0, 1.0)),
     ));
+    // rotated thing
+
+    commands.spawn((
+        Mesh3d(meshes.add(Cylinder::default())),
+        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
+        Transform {
+            translation: SPAWN_POINT + Vec3::new(3.0, -1.0, 3.0),
+            // Tilt 45 degrees around X-axis, 30 degrees around Z-axis
+            rotation: Quat::from_euler(
+                EulerRot::XYZ,
+                45_f32.to_radians(),
+                0.0,
+                0.0, //30_f32.to_radians()
+            ),
+            ..default()
+        },
+    ));
+    //unrotated things
+    commands.spawn((
+        Mesh3d(meshes.add(Cylinder::default())),
+        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.2))),
+        Transform {
+            translation: SPAWN_POINT + Vec3::new(3.0, -1.0, 3.0),
+            // Tilt 45 degrees around X-axis, 30 degrees around Z-axis
+            rotation: Quat::from_euler(
+                EulerRot::XYZ,
+                0.0,
+                0.0,
+                0.0, //30_f32.to_radians()
+            ),
+            ..default()
+        },
+    ));
 
     commands.spawn((
         Text(String::from("")),
