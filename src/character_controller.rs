@@ -156,8 +156,8 @@ impl Default for FpsController {
 
             air_acceleration: 10.0,
             crouch_degree: 1.0,
-            lean_max: 0.4,
-            leaning_speed: 3.0,
+            lean_max: 0.45,
+            leaning_speed: 2.0,
 
             ground_tick: 0,
             jump_tick: 0,
@@ -171,7 +171,7 @@ impl Default for FpsController {
 
             pitch: 0.0,
             yaw: 0.0,
-            lean_side_impulse: 35.0,
+            lean_side_impulse: 60.0,
 
             enable_input: true,
             key_forward: KeyCode::KeyW,
@@ -242,7 +242,10 @@ pub fn fps_controller_move(
             transform.translation,
             transform.rotation,
             -Dir3::Y,
-            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
+            //hack to stay grounded while leaning
+            &ShapeCastConfig::from_max_distance(
+                controller.grounded_distance + controller.lean_degree.abs() / 20.0,
+            ),
             &filter,
         );
 
@@ -257,8 +260,8 @@ pub fn fps_controller_move(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
-        //Gets touched by lean code to limit move speed while leaning
-        let mut max_speed = if input.crouch {
+        // limit move speed while leaning or crouching
+        let max_speed = if input.crouch || controller.lean_degree.abs() > 0.05 {
             controller.crouched_speed
         } else {
             controller.walk_speed
@@ -270,10 +273,9 @@ pub fn fps_controller_move(
         let right_dir = yaw_rotation * Vec3::X; // local +X is "right"
         let old_degree = controller.lean_degree;
         let mut degree_change = 0.0;
+        let lean_change = controller.leaning_speed * dt;
         if input.lean.abs() > 0.1 {
-            max_speed = controller.crouched_speed;
-
-            controller.lean_degree += input.lean * controller.leaning_speed * dt;
+            controller.lean_degree += input.lean * lean_change;
             let lean_mod = 1.0 - input.lean_degree_mod;
             controller.lean_degree = controller
                 .lean_degree
@@ -282,22 +284,15 @@ pub fn fps_controller_move(
             degree_change = controller.lean_degree - old_degree;
         } else {
             // Relax back to neutral
-            if controller.lean_degree.abs() < 0.05 {
+            if controller.lean_degree.abs() < lean_change * 1.5 {
                 controller.lean_degree = 0.0;
             } else {
-                max_speed = controller.crouched_speed;
-                controller.lean_degree -=
-                    controller.lean_degree.signum() * controller.leaning_speed * dt;
+                controller.lean_degree -= controller.lean_degree.signum() * lean_change;
                 degree_change = controller.lean_degree - old_degree;
             }
         }
-        transform.translation += right_dir
-           // * controller.lean_degree.signum()
-            * controller.lean_side_impulse
-
-            * degree_change
-
-            * dt;
+        //shift collider to facilitate looking around walls
+        transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
         // How much to lean (radians)
         let lean_amount = controller.lean_degree * controller.lean_max; // ~±11.5 degrees
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
@@ -488,12 +483,12 @@ fn scroll_events(
         .iter_mut()
         .filter(|(controller, _)| controller.enable_input)
     {
-        if input.crouch {
+        if input.lean.abs() > 0.1 {
+            input.lean_degree_mod += mod_shift;
+            input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 1.0);
+        } else if input.crouch {
             input.crouch_degree_mod += mod_shift;
             input.crouch_degree_mod = input.crouch_degree_mod.clamp(0.0, 1.0);
-        } else if input.lean.abs() > 0.1 {
-            input.lean_degree_mod += mod_shift;
-            input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 0.8);
         }
     }
 }
