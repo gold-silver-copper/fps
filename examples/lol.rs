@@ -28,9 +28,20 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(
             Update,
-            (manage_cursor, scene_colliders, display_text, respawn),
+            (
+                manage_cursor,
+                scene_colliders,
+                display_text,
+                respawn,
+                rotate_this,
+            ),
         )
         .run();
+}
+
+#[derive(Component)]
+struct RotateThis {
+    rotated: bool,
 }
 
 fn setup(
@@ -131,17 +142,12 @@ fn setup(
     // rotated thing
 
     commands.spawn((
-        Mesh3d(meshes.add(Cylinder::default())),
+        RotateThis { rotated: false },
+        Mesh3d(meshes.add(Cylinder::new(0.5, 1.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
         Transform {
             translation: SPAWN_POINT + Vec3::new(3.0, -1.0, 3.0),
             // Tilt 45 degrees around X-axis, 30 degrees around Z-axis
-            rotation: Quat::from_euler(
-                EulerRot::XYZ,
-                45_f32.to_radians(),
-                0.0,
-                0.0, //30_f32.to_radians()
-            ),
             ..default()
         },
     ));
@@ -177,6 +183,23 @@ fn setup(
             ..default()
         },
     ));
+}
+
+fn rotate_this(mut query: Query<(&mut Transform, &mut RotateThis)>) {
+    for (mut transform, mut rotate_this) in &mut query {
+        if !rotate_this.rotated {
+            transform.rotate_around(
+                SPAWN_POINT + Vec3::new(2.75, -1.5, 3.0),
+                Quat::from_euler(
+                    EulerRot::XYZ,
+                    45_f32.to_radians(),
+                    0.0,
+                    0.0, //30_f32.to_radians()
+                ),
+            );
+            rotate_this.rotated = true;
+        }
+    }
 }
 
 fn respawn(mut query: Query<(&mut Transform, &mut LinearVelocity)>) {
