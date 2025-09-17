@@ -128,7 +128,7 @@ pub struct FpsController {
     pub air_friction: f32,
     pub lean_side_impulse: f32,
     pub leaning_speed: f32,
-
+    pub move_tick: u8,
     pub key_lean_left: KeyCode,
     pub key_lean_right: KeyCode,
     pub key_crouch: KeyCode,
@@ -140,6 +140,7 @@ impl Default for FpsController {
         Self {
             grounded_distance: 0.04,
             radius: 0.5,
+            move_tick: 0,
 
             walk_speed: 7.0,
             mass: 80.0,
@@ -163,7 +164,7 @@ impl Default for FpsController {
             height: 1.8,
             lean_degree: 0.0,
 
-            acceleration: 3.5,
+            acceleration: 4.5,
 
             traction_normal_cutoff: 0.6,
             friction: 0.9,
@@ -299,18 +300,25 @@ pub fn fps_controller_move(
         match some_hit {
             // NEAR GROUND
             Some(hit) => {
+                let fun_factor = if input.movement.length_squared() > 0.1 {
+                    controller.move_tick = 0;
+                    1.0
+                } else {
+                    controller.move_tick = controller.move_tick.saturating_add(1);
+                    (30.0 / controller.move_tick as f32).clamp(3.0, 30.0)
+                };
+                let down_force = Vec3 {
+                    x: 0.0,
+                    y: -0.03 * fun_factor,
+                    z: 0.0,
+                };
+                external_force.apply_impulse(down_force * scale_vec);
+
                 //High Friction for controllable character
                 friction.dynamic_coefficient = controller.friction;
                 friction.static_coefficient = controller.friction;
+                friction.combine_rule = CoefficientCombine::GeometricMean;
 
-                let jump_force = Vec3 {
-                    x: 0.0,
-                    y: -0.07,
-                    z: 0.0,
-                };
-                external_force.apply_impulse(jump_force * scale_vec);
-
-                friction.combine_rule = CoefficientCombine::Average;
                 // check if player is on walkable slope
                 let has_traction =
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
@@ -346,6 +354,7 @@ pub fn fps_controller_move(
                     let linear_velocity = velocity.0;
                     let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
                     velocity.0 -= normal_force;
+                    //         println!("FUNNY VELOCITY {:#?}", normal_force);
 
                     if input.jump && controller.jump_tick > 1 && controller.ground_tick > 1 {
                         let jump_force = Vec3 {
@@ -364,12 +373,12 @@ pub fn fps_controller_move(
             //IN AIR
             None => {
                 controller.ground_tick = 0;
+                controller.move_tick = 0;
 
                 friction.dynamic_coefficient = controller.air_friction;
                 friction.static_coefficient = controller.air_friction;
                 friction.combine_rule = CoefficientCombine::Min;
                 wish_speed = f32::min(wish_speed, controller.air_speed_cap);
-                //   println!("WISH DIR IS {:#?}", wish_direction);
 
                 let add = acceleration(
                     wish_direction,
@@ -378,7 +387,7 @@ pub fn fps_controller_move(
                     velocity.0,
                     dt,
                 );
-                //  println!("ADD IS {:#?}", add);
+
                 external_force.apply_impulse(add * scale_vec);
             }
         }
@@ -396,6 +405,13 @@ pub fn fps_controller_move(
             (controller.height / 2.0) / (controller.crouch_degree),
             controller.radius,
         ));
+        //  Fixes wobbly velocity
+        if velocity.0.z.abs() < 0.004 {
+            velocity.0.z = 0.0;
+        }
+        if velocity.0.x.abs() < 0.004 {
+            velocity.0.x = 0.0;
+        }
     }
 }
 
