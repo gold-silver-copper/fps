@@ -107,7 +107,8 @@ pub struct FpsController {
 
     pub height: f32,
     pub ground_tick: u8,
-    pub jump_tick: u8,
+    pub air_damp: f32,
+
     pub pitch: f32,
     pub yaw: f32,
     pub friction: f32,
@@ -128,7 +129,7 @@ pub struct FpsController {
     pub air_friction: f32,
     pub lean_side_impulse: f32,
     pub leaning_speed: f32,
-    pub move_tick: u8,
+
     pub key_lean_left: KeyCode,
     pub key_lean_right: KeyCode,
     pub key_crouch: KeyCode,
@@ -138,39 +139,53 @@ pub struct FpsController {
 impl Default for FpsController {
     fn default() -> Self {
         Self {
+            //used for projecting collision to ground, to check if player has traction
             grounded_distance: 0.04,
-            radius: 0.5,
-            move_tick: 0,
+            //collider height and radius
+            radius: 0.4,
+            height: 1.8,
 
             walk_speed: 7.0,
             mass: 80.0,
+            //how fast you move when crouched
             crouched_speed: 3.5,
+            //how fast your character enters crouched position
             crouch_speed: 4.0,
 
+            //air friction is actually contact friction to objects while in air, dont change this
             air_friction: 0.1,
+            //air damp is actual air friction
+            air_damp: 0.3,
+            //force to apply when jumping, higher force = higher jumps
             jump_force: 6.0,
 
             forward_speed: 30.0,
             side_speed: 30.0,
             air_speed_cap: 2.0,
 
+            //how fast you can rotate in the air, higher value allows you to surf like in cs
             air_acceleration: 10.0,
+
+            //degrees determine the amount you are currently crouched/leaned, used for variable crouching and leaning
             crouch_degree: 1.0,
+            lean_degree: 0.0,
+            //max angle degree of leaning
             lean_max: 0.45,
+            //how fast you lean
             leaning_speed: 2.0,
 
+            //how long you have been on the ground, used for some hacky stuff
             ground_tick: 0,
-            jump_tick: 0,
-            height: 1.8,
-            lean_degree: 0.0,
 
-            acceleration: 4.5,
+            //how fast the player accelerates on the ground, a too low value can break horizontal movement when leaning
+            acceleration: 3.0,
 
             traction_normal_cutoff: 0.6,
             friction: 0.9,
 
             pitch: 0.0,
             yaw: 0.0,
+            //how much to move horizontally while leaning
             lean_side_impulse: 60.0,
 
             enable_input: true,
@@ -182,7 +197,7 @@ impl Default for FpsController {
             key_lean_right: KeyCode::KeyE,
             key_crouch: KeyCode::ShiftLeft,
             key_jump: KeyCode::Space,
-            //  key_movement_mod_up:KeyCode::M
+            //  movement sensitivity
             sensitivity: 0.001,
         }
     }
@@ -212,6 +227,7 @@ pub fn fps_controller_move(
             &mut LinearVelocity,
             &mut ExternalImpulse,
             &mut Friction,
+            &mut LinearDamping,
         ),
         With<LogicalPlayer>,
     >,
@@ -227,6 +243,7 @@ pub fn fps_controller_move(
         mut velocity,
         mut external_force,
         mut friction,
+        mut damping,
     ) in query.iter_mut()
     {
         // Shape cast downwards to find ground
@@ -300,20 +317,6 @@ pub fn fps_controller_move(
         match some_hit {
             // NEAR GROUND
             Some(hit) => {
-                let fun_factor = if input.movement.length_squared() > 0.1 {
-                    controller.move_tick = 0;
-                    1.0
-                } else {
-                    controller.move_tick = controller.move_tick.saturating_add(1);
-                    (30.0 / controller.move_tick as f32).clamp(3.0, 30.0)
-                };
-                let down_force = Vec3 {
-                    x: 0.0,
-                    y: -0.03 * fun_factor,
-                    z: 0.0,
-                };
-                external_force.apply_impulse(down_force * scale_vec);
-
                 //High Friction for controllable character
                 friction.dynamic_coefficient = controller.friction;
                 friction.static_coefficient = controller.friction;
@@ -322,11 +325,16 @@ pub fn fps_controller_move(
                 // check if player is on walkable slope
                 let has_traction =
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
+                damping.0 = controller.air_damp * 5.0;
 
                 if !input.jump {
                     // This is for walking up slopes well
                     wish_direction =
                         wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
+                    if Vec3::dot(wish_direction, hit.normal1) != 0.0 {
+                        println!("huh {:#?}", Vec3::dot(wish_direction, hit.normal1));
+                    }
+
                     let add = acceleration(
                         wish_direction,
                         wish_speed,
@@ -350,22 +358,25 @@ pub fn fps_controller_move(
                 }
 
                 if has_traction {
-                    //This fixes bug that pushes player randomly upon landing
-                    let linear_velocity = velocity.0;
-                    let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
-                    velocity.0 -= normal_force;
-                    //         println!("FUNNY VELOCITY {:#?}", normal_force);
+                    if controller.ground_tick < 3 {
+                        //This fixes bug that pushes player randomly upon landing
+                        let linear_velocity = velocity.0;
+                        let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
+                        velocity.0 -= normal_force;
+                    }
+                    if !input.jump && input.movement.length_squared() < 0.1 {
+                        damping.0 = 3.0;
+                    }
 
-                    if input.jump && controller.jump_tick > 1 && controller.ground_tick > 1 {
+                    if input.jump {
                         let jump_force = Vec3 {
                             x: 0.0,
                             y: controller.jump_force,
                             z: 0.0,
                         };
                         external_force.apply_impulse(jump_force * scale_vec);
-                        controller.jump_tick = 0;
-                    } else {
-                        controller.jump_tick = controller.jump_tick.saturating_add(1);
+
+                        println!("JUMPING");
                     }
                 }
                 controller.ground_tick = controller.ground_tick.saturating_add(1);
@@ -373,7 +384,7 @@ pub fn fps_controller_move(
             //IN AIR
             None => {
                 controller.ground_tick = 0;
-                controller.move_tick = 0;
+                damping.0 = controller.air_damp;
 
                 friction.dynamic_coefficient = controller.air_friction;
                 friction.static_coefficient = controller.air_friction;

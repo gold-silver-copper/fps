@@ -101,7 +101,7 @@ fn setup(
                 yaw: TAU * 5.0 / 8.0,
                 ..default()
             },
-            LinearDamping(0.4),
+            LinearDamping(0.5),
             FpsController {
                 radius,
                 height,
