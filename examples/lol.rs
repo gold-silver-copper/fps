@@ -138,6 +138,11 @@ fn setup(
         Mass(40.0),
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
         Transform::from_translation(SPAWN_POINT + Vec3::new(1.0, 1.0, 1.0)),
+        Friction {
+            dynamic_coefficient: 0.9,
+            static_coefficient: 0.9,
+            combine_rule: CoefficientCombine::Max,
+        },
     ));
     // rotated thing
 

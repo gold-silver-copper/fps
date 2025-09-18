@@ -129,6 +129,7 @@ pub struct FpsController {
     pub air_friction: f32,
     pub lean_side_impulse: f32,
     pub leaning_speed: f32,
+    pub just_jumped: bool,
 
     pub key_lean_left: KeyCode,
     pub key_lean_right: KeyCode,
@@ -173,6 +174,7 @@ impl Default for FpsController {
             lean_max: 0.45,
             //how fast you lean
             leaning_speed: 2.0,
+            just_jumped: false,
 
             //how long you have been on the ground, used for some hacky stuff
             ground_tick: 0,
@@ -368,15 +370,18 @@ pub fn fps_controller_move(
                         damping.0 = 3.0;
                     }
 
-                    if input.jump {
+                    if input.jump && !controller.just_jumped {
                         let jump_force = Vec3 {
                             x: 0.0,
                             y: controller.jump_force,
                             z: 0.0,
                         };
                         external_force.apply_impulse(jump_force * scale_vec);
+                        controller.just_jumped = true;
 
                         println!("JUMPING");
+                    } else {
+                        controller.just_jumped = false;
                     }
                 }
                 controller.ground_tick = controller.ground_tick.saturating_add(1);
@@ -384,6 +389,7 @@ pub fn fps_controller_move(
             //IN AIR
             None => {
                 controller.ground_tick = 0;
+                controller.just_jumped = false;
                 damping.0 = controller.air_damp;
 
                 friction.dynamic_coefficient = controller.air_friction;
