@@ -54,14 +54,18 @@ fn setup(
     let mut window = window.single_mut().unwrap();
     window.title = String::from("Minimal FPS Controller Example");
 
-    commands.spawn((
-        DirectionalLight {
-            illuminance: light_consts::lux::FULL_DAYLIGHT,
-            shadows_enabled: true,
-            ..default()
-        },
-        Transform::from_xyz(4.0, 7.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-    ));
+    let e = commands
+        .spawn((
+            DirectionalLight {
+                illuminance: light_consts::lux::FULL_DAYLIGHT,
+                shadows_enabled: true,
+                ..default()
+            },
+            Transform::from_xyz(4.0, 7.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        ))
+        .id();
+
+    println!("light ent, {:#?}", e);
 
     // Note that we have two entities for the player
     // One is a "logical" player that handles the physics computation and collision
@@ -115,18 +119,20 @@ fn setup(
         })
         .id();
 
-    commands.spawn((
-        Camera3d::default(),
-        Projection::Perspective(PerspectiveProjection {
-            fov: TAU / 5.0,
-            ..default()
-        }),
-        Exposure::SUNLIGHT,
-        RenderPlayer { logical_entity },
-    ));
-
+    let e = commands
+        .spawn((
+            Camera3d::default(),
+            Projection::Perspective(PerspectiveProjection {
+                fov: TAU / 5.0,
+                ..default()
+            }),
+            Exposure::SUNLIGHT,
+            RenderPlayer { logical_entity },
+        ))
+        .id();
+    println!("camera ent, {:#?}", e);
     commands.insert_resource(MainScene {
-        handle: assets.load("playground.glb"),
+        handle: assets.load("playground2.glb"),
         is_loaded: false,
     });
 
@@ -144,50 +150,25 @@ fn setup(
             combine_rule: CoefficientCombine::Max,
         },
     ));
-    // rotated thing
 
-    commands.spawn((
-        RotateThis { rotated: false },
-        Mesh3d(meshes.add(Cylinder::new(0.5, 1.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
-        Transform {
-            translation: SPAWN_POINT + Vec3::new(3.0, -1.0, 3.0),
-            // Tilt 45 degrees around X-axis, 30 degrees around Z-axis
-            ..default()
-        },
-    ));
-    //unrotated things
-    commands.spawn((
-        Mesh3d(meshes.add(Cylinder::default())),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.2))),
-        Transform {
-            translation: SPAWN_POINT + Vec3::new(3.0, -1.0, 3.0),
-            // Tilt 45 degrees around X-axis, 30 degrees around Z-axis
-            rotation: Quat::from_euler(
-                EulerRot::XYZ,
-                0.0,
-                0.0,
-                0.0, //30_f32.to_radians()
-            ),
-            ..default()
-        },
-    ));
-
-    commands.spawn((
-        Text(String::from("")),
-        TextFont {
-            font: assets.load("fira_mono.ttf"),
-            font_size: 24.0,
-            ..default()
-        },
-        TextColor(Color::BLACK),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(5.0),
-            left: Val::Px(5.0),
-            ..default()
-        },
-    ));
+    let e = commands
+        .spawn((
+            Text(String::from("")),
+            TextFont {
+                font: assets.load("fira_mono.ttf"),
+                font_size: 24.0,
+                ..default()
+            },
+            TextColor(Color::BLACK),
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(5.0),
+                left: Val::Px(5.0),
+                ..default()
+            },
+        ))
+        .id();
+    println!("text ent, {:#?}", e);
 }
 
 fn rotate_this(mut query: Query<(&mut Transform, &mut RotateThis)>) {
