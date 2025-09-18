@@ -168,7 +168,7 @@ impl Default for FpsController {
             air_acceleration: 10.0,
 
             //degrees determine the amount you are currently crouched/leaned, used for variable crouching and leaning
-            crouch_degree: 1.0,
+            crouch_degree: 0.0,
             lean_degree: 0.0,
             //max angle degree of leaning
             lean_max: 0.45,
@@ -251,12 +251,7 @@ pub fn fps_controller_move(
     {
         // Shape cast downwards to find ground
         // Better than a ray cast as it handles when you are near the edge of a surface
-        let mut forbid_ent_list = Vec::from([entity]);
-        for (cam_ent) in cam_query.iter() {
-            forbid_ent_list.push(cam_ent);
-            println!("cam ent {:#?}", cam_ent);
-        }
-        let filter = SpatialQueryFilter::default().with_excluded_entities(forbid_ent_list);
+        let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
             // Consider when the controller is right up against a wall
             // We do not want the shape cast to detect it,
@@ -426,16 +421,14 @@ pub fn fps_controller_move(
         /* Crouching */
         if input.crouch {
             controller.crouch_degree += controller.crouch_speed * dt;
-        } else if !top_up_hit.is_some() {
+        } else if !top_up_hit.is_some() && controller.crouch_degree > input.crouch_degree_mod {
             controller.crouch_degree -= controller.crouch_speed * dt;
         }
 
-        controller.crouch_degree = controller
-            .crouch_degree
-            .clamp(1.0, 2.0 - input.crouch_degree_mod);
+        controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
 
         collider.set_shape(SharedShape::cylinder(
-            (controller.height / 2.0) / (controller.crouch_degree),
+            (controller.height / 2.0 / (controller.crouch_degree + 1.0)),
             controller.radius,
         ));
         //  Fixes wobbly velocity
