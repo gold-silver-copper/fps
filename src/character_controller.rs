@@ -289,7 +289,32 @@ pub fn fps_controller_move(
             &ShapeCastConfig::from_max_distance(0.1),
             &filter,
         );
+        let top_right_hit = spatial_query_pipeline.cast_shape(
+            &scaled_collider_laterally(&collider, 0.1),
+            transform.translation + Vec3::new(0.0, controller.height, 0.0),
+            transform.rotation,
+            Dir3::X,
+            //hack to stay grounded while leaning
+            &ShapeCastConfig::from_max_distance(0.1),
+            &filter,
+        );
+        let top_left_hit = spatial_query_pipeline.cast_shape(
+            &scaled_collider_laterally(&collider, 0.1),
+            transform.translation + Vec3::new(0.0, controller.height, 0.0),
+            transform.rotation,
+            Dir3::NEG_X,
+            //hack to stay grounded while leaning
+            &ShapeCastConfig::from_max_distance(0.1),
+            &filter,
+        );
 
+        if top_right_hit.is_some() {
+            println!("TOP RIGHT HIT")
+        }
+
+        if top_left_hit.is_some() {
+            println!("TOP LEFT HIT")
+        }
         let scale_vec = Vec3::splat(controller.mass);
 
         let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
@@ -432,19 +457,36 @@ pub fn fps_controller_move(
         }
         /* Crouching */
 
-        if input.crouch && (controller.crouch_degree <= input.crouch_degree_mod) {
-            controller.crouch_degree += controller.crouch_speed * dt;
-            //  controller.crouch_degree = controller.crouch_degree.clamp(0.0, input.crouch_degree_mod);
-        } else if !top_up_hit.is_some() {
-            //&& !input.crouch
-            controller.crouch_degree -= controller.crouch_speed * dt;
-            controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
+        // Target crouch state: 1 = crouch, 0 = stand
+        let target_crouch = if input.crouch {
+            input.crouch_degree_mod
+        } else {
+            0.0
+        };
+
+        let epsilon = 0.01; // deadzone threshold
+
+        // Smoothly move actual crouch_degree toward target
+        if (controller.crouch_degree - target_crouch).abs() > epsilon {
+            if controller.crouch_degree < target_crouch {
+                controller.crouch_degree += controller.crouch_speed * dt;
+            } else if controller.crouch_degree > target_crouch {
+                // Only allow standing up if there's no ceiling
+                if top_up_hit.is_none() {
+                    controller.crouch_degree -= controller.crouch_speed * dt;
+                }
+            }
+        } else {
+            // Snap to target when within epsilon to avoid jitter
+            controller.crouch_degree = target_crouch;
         }
 
-        collider.set_shape(SharedShape::cylinder(
-            ((controller.height / 2.0) / (controller.crouch_degree + 1.0)),
-            controller.radius,
-        ));
+        // Clamp for safety
+        controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
+
+        // Update collider height
+        let current_height = (controller.height / 2.0) / (controller.crouch_degree + 1.0);
+        collider.set_shape(SharedShape::cylinder(current_height, controller.radius));
 
         //  Fixes wobbly velocity
         if velocity.0.z.abs() < 0.004 {
