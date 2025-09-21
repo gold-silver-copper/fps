@@ -289,32 +289,42 @@ pub fn fps_controller_move(
             &ShapeCastConfig::from_max_distance(0.1),
             &filter,
         );
-        let top_right_hit = spatial_query_pipeline.cast_shape(
-            &scaled_collider_laterally(&collider, 0.1),
-            transform.translation + Vec3::new(0.0, controller.height, 0.0),
+        // Side wall probe (shoulder / mid-torso height)
+        let probe_height = controller.height * 0.5;
+        let probe_origin = transform.translation + Vec3::Y * probe_height;
+        let probe_distance = 0.5; // how far out to check
+
+        // Construct a side-facing probe shape that matches the player's collider where possible.
+        let side_shape = Collider::sphere(controller.radius * 0.6);
+        let right_dir = transform.rotation * Vec3::X; // local +X → world-space right
+        let left_dir = transform.rotation * Vec3::NEG_X; // local -X → world-space left
+
+        // Cast to the right (+X) and left (-X). The Dir3 is interpreted relative to the `shape_rotation`.
+        let right_hit = spatial_query_pipeline.cast_shape(
+            &side_shape,
+            probe_origin,
             transform.rotation,
-            Dir3::X,
-            //hack to stay grounded while leaning
-            &ShapeCastConfig::from_max_distance(0.1),
-            &filter,
-        );
-        let top_left_hit = spatial_query_pipeline.cast_shape(
-            &scaled_collider_laterally(&collider, 0.1),
-            transform.translation + Vec3::new(0.0, controller.height, 0.0),
-            transform.rotation,
-            Dir3::NEG_X,
-            //hack to stay grounded while leaning
-            &ShapeCastConfig::from_max_distance(0.1),
+            Dir3::new(right_dir).unwrap(),
+            &ShapeCastConfig::from_max_distance(probe_distance),
             &filter,
         );
 
-        if top_right_hit.is_some() {
-            println!("TOP RIGHT HIT")
+        let left_hit = spatial_query_pipeline.cast_shape(
+            &side_shape,
+            probe_origin,
+            transform.rotation,
+            Dir3::new(left_dir).unwrap(),
+            &ShapeCastConfig::from_max_distance(probe_distance),
+            &filter,
+        );
+
+        if right_hit.is_some() {
+            println!("WALL ON RIGHT");
+        }
+        if left_hit.is_some() {
+            println!("WALL ON LEFT");
         }
 
-        if top_left_hit.is_some() {
-            println!("TOP LEFT HIT")
-        }
         let scale_vec = Vec3::splat(controller.mass);
 
         let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
