@@ -72,7 +72,7 @@ pub struct CameraConfig {
     pub height_offset: f32,
 }
 
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct FpsControllerInput {
     pub jump: bool,
     pub crouch: bool,
@@ -82,6 +82,21 @@ pub struct FpsControllerInput {
     pub lean: f32, // -1.0 left, +1.0 right
     pub lean_degree_mod: f32,
     pub crouch_degree_mod: f32,
+}
+
+impl Default for FpsControllerInput {
+    fn default() -> Self {
+        Self {
+            jump: false,
+            crouch: false,
+            pitch: 0.0,
+            yaw: 0.0,
+            movement: Vec3::ZERO,
+            lean: 0.0,
+            lean_degree_mod: 0.0,
+            crouch_degree_mod: 1.0,
+        }
+    }
 }
 
 #[derive(Component)]
@@ -99,7 +114,7 @@ pub struct FpsController {
     pub air_acceleration: f32,
 
     pub acceleration: f32,
-    pub crouched_speed: f32,
+
     pub crouch_speed: f32,
     /// If the dot product (alignment) of the normal of the surface and the upward vector,
     /// which is a value from [-1, 1], is greater than this value, ground movement is applied
@@ -148,8 +163,7 @@ impl Default for FpsController {
 
             walk_speed: 7.0,
             mass: 80.0,
-            //how fast you move when crouched
-            crouched_speed: 3.5,
+
             //how fast your character enters crouched position
             crouch_speed: 4.0,
 
@@ -272,7 +286,7 @@ pub fn fps_controller_move(
             transform.rotation,
             Dir3::Y,
             //hack to stay grounded while leaning
-            &ShapeCastConfig::from_max_distance(0.05),
+            &ShapeCastConfig::from_max_distance(0.1),
             &filter,
         );
 
@@ -288,11 +302,9 @@ pub fn fps_controller_move(
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
         // limit move speed while leaning or crouching
-        let max_speed = if input.crouch || controller.lean_degree.abs() > 0.05 {
-            controller.crouched_speed
-        } else {
-            controller.walk_speed
-        };
+        let max_speed = controller.walk_speed
+            * (1.0 - controller.crouch_degree / 2.0)
+            * (1.0 - controller.lean_degree.abs() / 2.0);
         wish_speed = f32::min(wish_speed, max_speed);
 
         // LEAN
@@ -419,18 +431,21 @@ pub fn fps_controller_move(
             }
         }
         /* Crouching */
-        if input.crouch {
+
+        if input.crouch && (controller.crouch_degree <= input.crouch_degree_mod) {
             controller.crouch_degree += controller.crouch_speed * dt;
-        } else if !top_up_hit.is_some() && controller.crouch_degree > input.crouch_degree_mod {
+            //  controller.crouch_degree = controller.crouch_degree.clamp(0.0, input.crouch_degree_mod);
+        } else if !top_up_hit.is_some() {
+            //&& !input.crouch
             controller.crouch_degree -= controller.crouch_speed * dt;
+            controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
         }
 
-        controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
-
         collider.set_shape(SharedShape::cylinder(
-            (controller.height / 2.0 / (controller.crouch_degree + 1.0)),
+            ((controller.height / 2.0) / (controller.crouch_degree + 1.0)),
             controller.radius,
         ));
+
         //  Fixes wobbly velocity
         if velocity.0.z.abs() < 0.004 {
             velocity.0.z = 0.0;
@@ -438,6 +453,9 @@ pub fn fps_controller_move(
         if velocity.0.x.abs() < 0.004 {
             velocity.0.x = 0.0;
         }
+        /* if velocity.0.y.abs() < 0.004 {
+            velocity.0.y = 0.0;
+        } */
     }
 }
 
@@ -524,7 +542,7 @@ fn scroll_events(
             input.lean_degree_mod += mod_shift;
             input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 1.0);
         } else if input.crouch {
-            input.crouch_degree_mod += mod_shift;
+            input.crouch_degree_mod -= mod_shift;
             input.crouch_degree_mod = input.crouch_degree_mod.clamp(0.0, 1.0);
         }
     }
