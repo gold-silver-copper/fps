@@ -73,7 +73,7 @@ fn setup(
     // The other is a "render" player that is what is displayed to the user
     // This distinction is useful for later on if you want to add multiplayer,
     // where often time these two ideas are not exactly synced up
-    let height = 1.8;
+    let height = 1.0;
     let radius = 0.4;
     let mass = 80.0;
     let logical_entity = commands
@@ -115,9 +115,7 @@ fn setup(
                 ..default()
             },
         ))
-        .insert(CameraConfig {
-            height_offset: -0.1,
-        })
+        .insert(CameraConfig { height_offset: 0.0 })
         .id();
 
     let e = commands

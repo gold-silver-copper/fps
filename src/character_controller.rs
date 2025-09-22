@@ -156,7 +156,7 @@ impl Default for FpsController {
     fn default() -> Self {
         Self {
             //used for projecting collision to ground, to check if player has traction
-            grounded_distance: 0.2,
+            grounded_distance: 0.15,
             //collider height and radius
             radius: 0.4,
             height: 1.8,
@@ -265,6 +265,7 @@ pub fn fps_controller_move(
         // Shape cast downwards to find ground
         // Better than a ray cast as it handles when you are near the edge of a surface
         let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
+
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
             // Consider when the controller is right up against a wall
             // We do not want the shape cast to detect it,
@@ -273,16 +274,15 @@ pub fn fps_controller_move(
             transform.translation,
             transform.rotation,
             -Dir3::Y,
-            //hack to stay grounded while leaning
             &ShapeCastConfig::from_max_distance(
-                controller.grounded_distance + controller.lean_degree.abs() / 20.0,
+                controller.grounded_distance, //+ controller.lean_degree.abs() / 20.0 hack to stay grounded while leaning
             ),
             &filter,
         );
         let top_up_hit = spatial_query_pipeline.cast_shape(
             &scaled_collider_laterally(&collider, 0.99),
             transform.translation + Vec3::new(0.0, controller.height, 0.0),
-            transform.rotation,
+            Quat::IDENTITY,
             Dir3::Y,
             //hack to stay grounded while leaning
             &ShapeCastConfig::from_max_distance(0.1),
@@ -336,9 +336,8 @@ pub fn fps_controller_move(
         controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
 
         // Update collider height
-        //
-        let height_to_use = controller.height - controller.lean_degree.abs() * 0.35;
-        let current_height = (height_to_use / 2.0) / (controller.crouch_degree + 1.0);
+
+        let current_height = (controller.height / 2.0) / (4.0 * controller.crouch_degree + 1.0);
         collider.set_shape(SharedShape::capsule_y(current_height, controller.radius));
 
         /* Leaning */
@@ -394,10 +393,10 @@ pub fn fps_controller_move(
 
         // Block intentional lean into wall
         if right_hit.is_some() && (target_lean > 0.0 || controller.lean_degree > 0.0) {
-            target_lean = 0.0;
+            target_lean = rhd;
         }
         if left_hit.is_some() && (target_lean < 0.0 || controller.lean_degree < 0.0) {
-            target_lean = 0.0;
+            target_lean = lhd;
         }
 
         // Apply lean degree modifier
@@ -651,7 +650,7 @@ fn scaled_collider_laterally(collider: &Collider, scale: f32) -> Collider {
         let new_capsule = Collider::capsule(capsule.radius * scale, capsule.half_height() * 2.0);
         new_capsule
     } else {
-        panic!("Controller must use a  capsule collider")
+        panic!("Controller must use a capsule collider")
     }
 }
 
