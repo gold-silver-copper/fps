@@ -308,21 +308,21 @@ pub fn fps_controller_move(
         wish_speed = f32::min(wish_speed, max_speed);
 
         /* Leaning */
-
+        // LEAN
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
-        let right_dir = yaw_rotation * Vec3::X;
+        let right_dir = yaw_rotation * Vec3::X; // world-space right
         let old_degree = controller.lean_degree;
-        let mut degree_change = 0.0;
-        let lean_change = controller.leaning_speed * dt;
 
-        // Probe setup
+        let lean_step = controller.leaning_speed * dt;
+        let epsilon = 0.01; // deadzone threshold
+
+        // Probe for side walls (mid-upper body height)
         let probe_height = controller.height * 0.8;
         let probe_origin = transform.translation + Vec3::Y * probe_height;
-        let probe_distance = 0.5;
-        let epsilon = 0.01;
-
+        let probe_distance = 0.8;
         let side_shape = Collider::sphere(controller.radius * 0.9);
 
+        // Right wall check
         let right_hit = spatial_query_pipeline.cast_shape(
             &side_shape,
             probe_origin,
@@ -332,6 +332,7 @@ pub fn fps_controller_move(
             &filter,
         );
 
+        // Left wall check
         let left_hit = spatial_query_pipeline.cast_shape(
             &side_shape,
             probe_origin,
@@ -340,49 +341,44 @@ pub fn fps_controller_move(
             &ShapeCastConfig::from_max_distance(probe_distance),
             &filter,
         );
+
         if right_hit.is_some() {
             println!("WALL ON RIGHT");
         }
         if left_hit.is_some() {
             println!("WALL ON LEFT");
         }
-        // Target lean state: -1 = left, +1 = right, 0 = neutral
-        let mut target_lean = 0.0;
-        if input.lean.abs() > 0.1 {
-            target_lean = input.lean.signum();
-        }
 
-        // Apply lean degree mod (limits max lean amount)
+        // Target lean: input value (but block if wall in that direction)
+        let mut target_lean = input.lean;
+        if right_hit.is_some() && target_lean > 0.0 {
+            target_lean = 0.0;
+        }
+        if left_hit.is_some() && target_lean < 0.0 {
+            target_lean = 0.0;
+        }
+        // Scale with degree mod (reduces max lean)
         target_lean *= 1.0 - input.lean_degree_mod;
 
-        // Smoothly move actual lean_degree toward target
+        // Smooth lean with epsilon deadzone
         if (controller.lean_degree - target_lean).abs() > epsilon {
             if controller.lean_degree < target_lean {
-                // Leaning right
-                if right_hit.is_none() {
-                    controller.lean_degree += controller.leaning_speed * dt;
-                }
+                controller.lean_degree += lean_step;
             } else if controller.lean_degree > target_lean {
-                // Leaning left
-                if left_hit.is_none() {
-                    controller.lean_degree -= controller.leaning_speed * dt;
-                }
+                controller.lean_degree -= lean_step;
             }
         } else {
-            // Snap to target when within epsilon
+            // Snap to target if within epsilon
             controller.lean_degree = target_lean;
         }
 
-        // Clamp safely
         controller.lean_degree = controller.lean_degree.clamp(-1.0, 1.0);
+        let degree_change = controller.lean_degree - old_degree;
 
-        // Track how much changed this frame
-        degree_change = controller.lean_degree - old_degree;
-
-        // Shift collider sideways
+        // Shift collider sideways to simulate body lean (peeking)
         transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
 
-        // Apply lean rotation
+        // Rotate to show visual lean
         let lean_amount = controller.lean_degree * controller.lean_max;
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
