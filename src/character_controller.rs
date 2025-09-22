@@ -144,7 +144,6 @@ pub struct FpsController {
     pub air_friction: f32,
     pub lean_side_impulse: f32,
     pub leaning_speed: f32,
-    pub just_jumped: bool,
 
     pub key_lean_left: KeyCode,
     pub key_lean_right: KeyCode,
@@ -185,10 +184,9 @@ impl Default for FpsController {
             crouch_degree: 0.0,
             lean_degree: 0.0,
             //max angle degree of leaning
-            lean_max: 0.45,
+            lean_max: 0.35,
             //how fast you lean
             leaning_speed: 2.0,
-            just_jumped: false,
 
             //how long you have been on the ground, used for some hacky stuff
             ground_tick: 0,
@@ -202,7 +200,7 @@ impl Default for FpsController {
             pitch: 0.0,
             yaw: 0.0,
             //how much to move horizontally while leaning
-            lean_side_impulse: 60.0,
+            lean_side_impulse: 65.0,
 
             enable_input: true,
             key_forward: KeyCode::KeyW,
@@ -349,7 +347,7 @@ pub fn fps_controller_move(
 
         let probe_origin = transform.translation + Vec3::new(0.0, current_height * 0.1, 0.0);
         let probe_distance = 1.0;
-        let side_shape = Collider::capsule(controller.radius * 0.99, current_height);
+        let side_shape = Collider::cylinder(controller.radius * 0.99, current_height);
 
         // Right wall check
         let right_hit = spatial_query_pipeline.cast_shape(
@@ -390,21 +388,14 @@ pub fn fps_controller_move(
 
         // Smooth toward target with epsilon deadzone
         if (controller.lean_degree - target_lean).abs() > epsilon {
-            if controller.lean_degree < target_lean {
-                controller.lean_degree += lean_step;
-            } else if controller.lean_degree > target_lean {
-                controller.lean_degree -= lean_step;
-            }
+            controller.lean_degree += lean_step * (target_lean - controller.lean_degree).signum();
         } else {
             controller.lean_degree = target_lean;
         }
-        controller.lean_degree = controller
-            .lean_degree
-            .clamp(
-                -1.0 * (1.0 - input.lean_degree_mod),
-                1.0 * (1.0 - input.lean_degree_mod),
-            )
-            .clamp(-1.0 * lhd, 1.0 * rhd);
+
+        let max_lean = (1.0 - input.lean_degree_mod).min(rhd);
+        let min_lean = -(1.0 - input.lean_degree_mod).max(-lhd);
+        controller.lean_degree = controller.lean_degree.clamp(min_lean, max_lean);
 
         let degree_change = controller.lean_degree - old_degree;
 
