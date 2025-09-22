@@ -315,7 +315,7 @@ pub fn fps_controller_move(
             0.0
         };
 
-        let epsilon = 0.01; // deadzone threshold
+        let epsilon = 0.01; // deadzone threshold, used for lean as well
 
         // Smoothly move actual crouch_degree toward target
         if (controller.crouch_degree - target_crouch).abs() > epsilon {
@@ -371,30 +371,17 @@ pub fn fps_controller_move(
             &filter,
         );
 
-        if right_hit.is_some() {
-            println!("WALL ON RIGHT {:#?}", right_hit.unwrap().distance);
-        };
-        if left_hit.is_some() {
-            println!("WALL ON LEFT {:#?}", left_hit.unwrap().distance);
-        }
+        let rhd = right_hit.map_or(1.0, |h| h.distance);
+        let lhd = left_hit.map_or(1.0, |h| h.distance);
 
-        let rhd = match right_hit {
-            Some(hitik) => hitik.distance,
-            None => 1.0,
-        };
-
-        let lhd = match left_hit {
-            Some(hitik) => hitik.distance,
-            None => 1.0,
-        };
         // Desired lean from input
         let mut target_lean = input.lean;
 
         // Block intentional lean into wall
-        if right_hit.is_some() && (target_lean > 0.0 || controller.lean_degree > 0.0) {
+        if right_hit.is_some() && (target_lean > 0.0) {
             target_lean = rhd;
         }
-        if left_hit.is_some() && (target_lean < 0.0 || controller.lean_degree < 0.0) {
+        if left_hit.is_some() && (target_lean < 0.0) {
             target_lean = -lhd;
         }
 
@@ -411,12 +398,6 @@ pub fn fps_controller_move(
         } else {
             controller.lean_degree = target_lean;
         }
-
-        let degree_change = controller.lean_degree - old_degree;
-
-        // Shift collider sideways to simulate body lean (peeking)
-        transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
-
         controller.lean_degree = controller
             .lean_degree
             .clamp(
@@ -424,6 +405,11 @@ pub fn fps_controller_move(
                 1.0 * (1.0 - input.lean_degree_mod),
             )
             .clamp(-1.0 * lhd, 1.0 * rhd);
+
+        let degree_change = controller.lean_degree - old_degree;
+
+        // Shift collider sideways to simulate body lean (peeking)
+        transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
 
         // Rotate to show visual lean
         let lean_amount = controller.lean_degree * controller.lean_max;
@@ -447,9 +433,6 @@ pub fn fps_controller_move(
                     // This is for walking up slopes well
                     wish_direction =
                         wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
-                    if Vec3::dot(wish_direction, hit.normal1) != 0.0 {
-                        println!("huh {:#?}", Vec3::dot(wish_direction, hit.normal1));
-                    }
 
                     let add = acceleration(
                         wish_direction,
@@ -484,26 +467,24 @@ pub fn fps_controller_move(
                         damping.0 = 3.0;
                     }
 
-                    if input.jump && !controller.just_jumped {
+                    if input.jump && velocity.0.y <= 1.0 {
                         let jump_force = Vec3 {
                             x: 0.0,
                             y: controller.jump_force,
                             z: 0.0,
                         };
                         external_force.apply_impulse(jump_force * scale_vec);
-                        controller.just_jumped = true;
 
                         println!("JUMPING");
-                    } else {
-                        controller.just_jumped = false;
                     }
                 }
                 controller.ground_tick = controller.ground_tick.saturating_add(1);
             }
+
             //IN AIR
             None => {
                 controller.ground_tick = 0;
-                controller.just_jumped = false;
+
                 damping.0 = controller.air_damp;
 
                 friction.dynamic_coefficient = controller.air_friction;
@@ -521,6 +502,10 @@ pub fn fps_controller_move(
 
                 external_force.apply_impulse(add * scale_vec);
             }
+        }
+
+        if velocity.0.y > 0.0 {
+            println!("velocity positive {:#?}", velocity.0.y);
         }
 
         //  Fixes wobbly velocity
