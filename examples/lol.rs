@@ -78,7 +78,7 @@ fn setup(
     let mass = 80.0;
     let logical_entity = commands
         .spawn((
-            Collider::cylinder(radius, height),
+            Collider::capsule(radius, height),
             // A capsule can be used but is NOT recommended
             // If you use it, you have to make sure each segment point is
             // equidistant from the translation of the player transform

@@ -156,7 +156,7 @@ impl Default for FpsController {
     fn default() -> Self {
         Self {
             //used for projecting collision to ground, to check if player has traction
-            grounded_distance: 0.04,
+            grounded_distance: 0.2,
             //collider height and radius
             radius: 0.4,
             height: 1.8,
@@ -247,7 +247,6 @@ pub fn fps_controller_move(
         ),
         With<LogicalPlayer>,
     >,
-    cam_query: Query<(Entity), With<RenderPlayer>>,
 ) {
     let dt = 1.0 / FPS as f32;
 
@@ -337,8 +336,11 @@ pub fn fps_controller_move(
         controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
 
         // Update collider height
-        let current_height = (controller.height / 2.0) / (controller.crouch_degree + 1.0);
-        collider.set_shape(SharedShape::cylinder(current_height, controller.radius));
+        //
+        let height_to_use = controller.height - controller.lean_degree.abs() * 0.35;
+        let current_height = (height_to_use / 2.0) / (controller.crouch_degree + 1.0);
+        collider.set_shape(SharedShape::capsule_y(current_height, controller.radius));
+
         /* Leaning */
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // world-space right
@@ -355,7 +357,7 @@ pub fn fps_controller_move(
         let right_hit = spatial_query_pipeline.cast_shape(
             &side_shape,
             probe_origin,
-            yaw_rotation,
+            transform.rotation,
             Dir3::new(right_dir).unwrap(),
             &ShapeCastConfig::from_max_distance(probe_distance),
             &filter,
@@ -365,7 +367,7 @@ pub fn fps_controller_move(
         let left_hit = spatial_query_pipeline.cast_shape(
             &side_shape,
             probe_origin,
-            yaw_rotation,
+            transform.rotation,
             Dir3::new(-right_dir).unwrap(),
             &ShapeCastConfig::from_max_distance(probe_distance),
             &filter,
@@ -401,14 +403,6 @@ pub fn fps_controller_move(
         // Apply lean degree modifier
         target_lean *= 1.0 - input.lean_degree_mod;
 
-        controller.lean_degree = controller
-            .lean_degree
-            .clamp(
-                -1.0 * (1.0 - input.lean_degree_mod),
-                1.0 * (1.0 - input.lean_degree_mod),
-            )
-            .clamp(-1.0 * lhd, 1.0 * rhd);
-
         // Smooth toward target with epsilon deadzone
         if (controller.lean_degree - target_lean).abs() > epsilon {
             if controller.lean_degree < target_lean {
@@ -424,6 +418,14 @@ pub fn fps_controller_move(
 
         // Shift collider sideways to simulate body lean (peeking)
         transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
+
+        controller.lean_degree = controller
+            .lean_degree
+            .clamp(
+                -1.0 * (1.0 - input.lean_degree_mod),
+                1.0 * (1.0 - input.lean_degree_mod),
+            )
+            .clamp(-1.0 * lhd, 1.0 * rhd);
 
         // Rotate to show visual lean
         let lean_amount = controller.lean_degree * controller.lean_max;
@@ -636,20 +638,20 @@ pub fn fps_controller_look(mut query: Query<(&mut FpsController, &FpsControllerI
 /// Needed for when we want to originate something at the foot of the player.
 fn collider_y_offset(collider: &Collider) -> Vec3 {
     Vec3::Y
-        * if let Some(cylinder) = collider.shape().as_cylinder() {
-            cylinder.half_height
+        * if let Some(capsule) = collider.shape().as_capsule() {
+            capsule.half_height()
         } else {
-            panic!("Controller must use a cylinder or capsule collider")
+            panic!("Controller must use a capsule  collider")
         }
 }
 
 /// Return a collider that is scaled laterally (XZ plane) but not vertically (Y axis).
 fn scaled_collider_laterally(collider: &Collider, scale: f32) -> Collider {
-    if let Some(cylinder) = collider.shape().as_cylinder() {
-        let new_cylinder = Collider::cylinder(cylinder.radius * scale, cylinder.half_height * 2.0);
-        new_cylinder
+    if let Some(capsule) = collider.shape().as_capsule() {
+        let new_capsule = Collider::capsule(capsule.radius * scale, capsule.half_height() * 2.0);
+        new_capsule
     } else {
-        panic!("Controller must use a cylinder or capsule collider")
+        panic!("Controller must use a  capsule collider")
     }
 }
 
