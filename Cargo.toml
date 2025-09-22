@@ -8,3 +8,4 @@ avian3d = { version = "0.3.0", default-features = true, features = [
     "diagnostic_ui",
 ] }
 bevy = "0.16.1"
+bevy_framepace = "0.19.1"

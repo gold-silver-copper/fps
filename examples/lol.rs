@@ -24,6 +24,7 @@ fn main() {
         .add_plugins(PhysicsPlugins::new(FixedPostUpdate))
         // .add_plugins(PhysicsDebugPlugin::default())
         .add_plugins(FpsControllerPlugin)
+        .add_plugins(bevy_framepace::FramepacePlugin)
         .add_plugins(MyInputPlugin)
         .add_systems(Startup, setup)
         .add_systems(

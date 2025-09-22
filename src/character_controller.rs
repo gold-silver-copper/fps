@@ -306,9 +306,7 @@ pub fn fps_controller_move(
             * (1.0 - controller.crouch_degree / 2.0)
             * (1.0 - controller.lean_degree.abs() / 2.0);
         wish_speed = f32::min(wish_speed, max_speed);
-
         /* Leaning */
-        // LEAN
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // world-space right
         let old_degree = controller.lean_degree;
@@ -317,7 +315,7 @@ pub fn fps_controller_move(
         let epsilon = 0.01; // deadzone threshold
 
         // Probe for side walls (mid-upper body height)
-        let probe_height = controller.height * 0.8;
+        let probe_height = controller.height * 0.6;
         let probe_origin = transform.translation + Vec3::Y * probe_height;
         let probe_distance = 0.8;
         let side_shape = Collider::sphere(controller.radius * 0.9);
@@ -349,18 +347,42 @@ pub fn fps_controller_move(
             println!("WALL ON LEFT");
         }
 
-        // Target lean: input value (but block if wall in that direction)
+        // Desired lean from input
         let mut target_lean = input.lean;
+
+        // Block intentional lean into wall
         if right_hit.is_some() && target_lean > 0.0 {
             target_lean = 0.0;
         }
         if left_hit.is_some() && target_lean < 0.0 {
             target_lean = 0.0;
         }
-        // Scale with degree mod (reduces max lean)
+
+        // Apply lean degree modifier
         target_lean *= 1.0 - input.lean_degree_mod;
 
-        // Smooth lean with epsilon deadzone
+        // --- FIXED Continuous clearance check ---
+        let mut max_safe_lean: f32 = 1.0;
+
+        if controller.lean_degree > 0.0 && right_hit.is_some() {
+            // only cancel right lean if wall on right
+            max_safe_lean = 0.0;
+        }
+        if controller.lean_degree < 0.0 && left_hit.is_some() {
+            // only cancel left lean if wall on left
+            max_safe_lean = 0.0;
+        }
+
+        controller.lean_degree = controller
+            .lean_degree
+            .clamp(-1.0, 1.0)
+            .clamp(
+                -1.0 * (1.0 - input.lean_degree_mod),
+                1.0 * (1.0 - input.lean_degree_mod),
+            )
+            .clamp(-1.0 * max_safe_lean, 1.0 * max_safe_lean);
+
+        // Smooth toward target with epsilon deadzone
         if (controller.lean_degree - target_lean).abs() > epsilon {
             if controller.lean_degree < target_lean {
                 controller.lean_degree += lean_step;
@@ -368,11 +390,9 @@ pub fn fps_controller_move(
                 controller.lean_degree -= lean_step;
             }
         } else {
-            // Snap to target if within epsilon
             controller.lean_degree = target_lean;
         }
 
-        controller.lean_degree = controller.lean_degree.clamp(-1.0, 1.0);
         let degree_change = controller.lean_degree - old_degree;
 
         // Shift collider sideways to simulate body lean (peeking)
