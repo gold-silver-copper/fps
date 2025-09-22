@@ -281,7 +281,7 @@ pub fn fps_controller_move(
             &filter,
         );
         let top_up_hit = spatial_query_pipeline.cast_shape(
-            &collider,
+            &scaled_collider_laterally(&collider, 0.99),
             transform.translation + Vec3::new(0.0, controller.height, 0.0),
             transform.rotation,
             Dir3::Y,
@@ -306,6 +306,39 @@ pub fn fps_controller_move(
             * (1.0 - controller.crouch_degree / 2.0)
             * (1.0 - controller.lean_degree.abs() / 2.0);
         wish_speed = f32::min(wish_speed, max_speed);
+
+        /* Crouching */
+
+        // Target crouch state: 1 = crouch, 0 = stand
+        let target_crouch = if input.crouch {
+            input.crouch_degree_mod
+        } else {
+            0.0
+        };
+
+        let epsilon = 0.01; // deadzone threshold
+
+        // Smoothly move actual crouch_degree toward target
+        if (controller.crouch_degree - target_crouch).abs() > epsilon {
+            if controller.crouch_degree < target_crouch {
+                controller.crouch_degree += controller.crouch_speed * dt;
+            } else if controller.crouch_degree > target_crouch {
+                // Only allow standing up if there's no ceiling
+                if top_up_hit.is_none() {
+                    controller.crouch_degree -= controller.crouch_speed * dt;
+                }
+            }
+        } else {
+            // Snap to target when within epsilon to avoid jitter
+            controller.crouch_degree = target_crouch;
+        }
+
+        // Clamp for safety
+        controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
+
+        // Update collider height
+        let current_height = (controller.height / 2.0) / (controller.crouch_degree + 1.0);
+        collider.set_shape(SharedShape::cylinder(current_height, controller.radius));
         /* Leaning */
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // world-space right
@@ -314,11 +347,9 @@ pub fn fps_controller_move(
         let lean_step = controller.leaning_speed * dt;
         let epsilon = 0.01; // deadzone threshold
 
-        // Probe for side walls (mid-upper body height)
-        let probe_height = controller.height * 0.6;
-        let probe_origin = transform.translation + Vec3::Y * probe_height;
-        let probe_distance = 0.8;
-        let side_shape = Collider::sphere(controller.radius * 0.9);
+        let probe_origin = transform.translation + Vec3::new(0.0, current_height * 0.1, 0.0);
+        let probe_distance = 1.0;
+        let side_shape = Collider::cylinder(controller.radius * 0.99, current_height);
 
         // Right wall check
         let right_hit = spatial_query_pipeline.cast_shape(
@@ -341,46 +372,42 @@ pub fn fps_controller_move(
         );
 
         if right_hit.is_some() {
-            println!("WALL ON RIGHT");
-        }
+            println!("WALL ON RIGHT {:#?}", right_hit.unwrap().distance);
+        };
         if left_hit.is_some() {
-            println!("WALL ON LEFT");
+            println!("WALL ON LEFT {:#?}", left_hit.unwrap().distance);
         }
 
+        let rhd = match right_hit {
+            Some(hitik) => hitik.distance,
+            None => 1.0,
+        };
+
+        let lhd = match left_hit {
+            Some(hitik) => hitik.distance,
+            None => 1.0,
+        };
         // Desired lean from input
         let mut target_lean = input.lean;
 
         // Block intentional lean into wall
-        if right_hit.is_some() && target_lean > 0.0 {
+        if right_hit.is_some() && (target_lean > 0.0 || controller.lean_degree > 0.0) {
             target_lean = 0.0;
         }
-        if left_hit.is_some() && target_lean < 0.0 {
+        if left_hit.is_some() && (target_lean < 0.0 || controller.lean_degree < 0.0) {
             target_lean = 0.0;
         }
 
         // Apply lean degree modifier
         target_lean *= 1.0 - input.lean_degree_mod;
 
-        // --- FIXED Continuous clearance check ---
-        let mut max_safe_lean: f32 = 1.0;
-
-        if controller.lean_degree > 0.0 && right_hit.is_some() {
-            // only cancel right lean if wall on right
-            max_safe_lean = 0.0;
-        }
-        if controller.lean_degree < 0.0 && left_hit.is_some() {
-            // only cancel left lean if wall on left
-            max_safe_lean = 0.0;
-        }
-
         controller.lean_degree = controller
             .lean_degree
-            .clamp(-1.0, 1.0)
             .clamp(
                 -1.0 * (1.0 - input.lean_degree_mod),
                 1.0 * (1.0 - input.lean_degree_mod),
             )
-            .clamp(-1.0 * max_safe_lean, 1.0 * max_safe_lean);
+            .clamp(-1.0 * lhd, 1.0 * rhd);
 
         // Smooth toward target with epsilon deadzone
         if (controller.lean_degree - target_lean).abs() > epsilon {
@@ -495,38 +522,6 @@ pub fn fps_controller_move(
                 external_force.apply_impulse(add * scale_vec);
             }
         }
-        /* Crouching */
-
-        // Target crouch state: 1 = crouch, 0 = stand
-        let target_crouch = if input.crouch {
-            input.crouch_degree_mod
-        } else {
-            0.0
-        };
-
-        let epsilon = 0.01; // deadzone threshold
-
-        // Smoothly move actual crouch_degree toward target
-        if (controller.crouch_degree - target_crouch).abs() > epsilon {
-            if controller.crouch_degree < target_crouch {
-                controller.crouch_degree += controller.crouch_speed * dt;
-            } else if controller.crouch_degree > target_crouch {
-                // Only allow standing up if there's no ceiling
-                if top_up_hit.is_none() {
-                    controller.crouch_degree -= controller.crouch_speed * dt;
-                }
-            }
-        } else {
-            // Snap to target when within epsilon to avoid jitter
-            controller.crouch_degree = target_crouch;
-        }
-
-        // Clamp for safety
-        controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
-
-        // Update collider height
-        let current_height = (controller.height / 2.0) / (controller.crouch_degree + 1.0);
-        collider.set_shape(SharedShape::cylinder(current_height, controller.radius));
 
         //  Fixes wobbly velocity
         if velocity.0.z.abs() < 0.004 {
