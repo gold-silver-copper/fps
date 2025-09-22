@@ -346,11 +346,10 @@ pub fn fps_controller_move(
         let old_degree = controller.lean_degree;
 
         let lean_step = controller.leaning_speed * dt;
-        let epsilon = 0.01; // deadzone threshold
 
         let probe_origin = transform.translation + Vec3::new(0.0, current_height * 0.1, 0.0);
         let probe_distance = 1.0;
-        let side_shape = Collider::cylinder(controller.radius * 0.99, current_height);
+        let side_shape = Collider::capsule(controller.radius * 0.99, current_height);
 
         // Right wall check
         let right_hit = spatial_query_pipeline.cast_shape(
@@ -396,7 +395,7 @@ pub fn fps_controller_move(
             target_lean = rhd;
         }
         if left_hit.is_some() && (target_lean < 0.0 || controller.lean_degree < 0.0) {
-            target_lean = lhd;
+            target_lean = -lhd;
         }
 
         // Apply lean degree modifier
