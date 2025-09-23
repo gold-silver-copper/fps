@@ -1,41 +1,13 @@
 use std::f32::consts::*;
 
-use avian3d::{
-    parry::{math::Point, shape::SharedShape},
-    prelude::*,
-};
+use avian3d::{parry::shape::SharedShape, prelude::*};
 use bevy::input::mouse::MouseScrollUnit;
 use bevy::input::mouse::MouseWheel;
-use bevy::{
-    input::mouse::MouseMotion,
-    math::{Vec3Swizzles, VectorSpace},
-    prelude::*,
-};
+use bevy::{input::mouse::MouseMotion, prelude::*};
 
-/// Manages the FPS controllers. Executes in `PreUpdate`, after bevy's internal
-/// input processing is finished.
-///
-/// If you need a system in `PreUpdate` to execute after FPS Controller's systems,
-/// Do it like so:
-///
-/// ```
-/// # use bevy::prelude::*;
-///
-/// struct MyPlugin;
-/// impl Plugin for MyPlugin {
-///     fn build(&self, app: &mut App) {
-///         app.add_systems(
-///             PreUpdate,
-///             my_system.after(bevy_fps_controller::controller::fps_controller_render),
-///         );
-///     }
-/// }
-///
-/// fn my_system() { }
-/// ```
-pub struct FpsControllerPlugin;
+pub struct GoldenControllerPlugin;
 pub static FPS: f64 = 120.0;
-impl Plugin for FpsControllerPlugin {
+impl Plugin for GoldenControllerPlugin {
     fn build(&self, app: &mut App) {
         use bevy::input::{gamepad, keyboard, mouse, touch};
 
@@ -73,7 +45,7 @@ pub struct CameraConfig {
 }
 
 #[derive(Component)]
-pub struct FpsControllerInput {
+pub struct GoldenControllerInput {
     pub jump: bool,
     pub crouch: bool,
     pub pitch: f32,
@@ -84,7 +56,7 @@ pub struct FpsControllerInput {
     pub crouch_degree_mod: f32,
 }
 
-impl Default for FpsControllerInput {
+impl Default for GoldenControllerInput {
     fn default() -> Self {
         Self {
             jump: false,
@@ -100,7 +72,7 @@ impl Default for FpsControllerInput {
 }
 
 #[derive(Component)]
-pub struct FpsController {
+pub struct GoldenController {
     pub radius: f32,
 
     /// If the distance to the ground is less than this value, the player is considered grounded
@@ -151,14 +123,14 @@ pub struct FpsController {
     pub key_jump: KeyCode,
 }
 
-impl Default for FpsController {
+impl Default for GoldenController {
     fn default() -> Self {
         Self {
             //used for projecting collision to ground, to check if player has traction
             grounded_distance: 0.15,
             //collider height and radius
             radius: 0.4,
-            height: 1.8,
+            height: 1.0,
 
             walk_speed: 7.0,
             mass: 80.0,
@@ -183,7 +155,7 @@ impl Default for FpsController {
             //degrees determine the amount you are currently crouched/leaned, used for variable crouching and leaning
             crouch_degree: 0.0,
             lean_degree: 0.0,
-            //max angle degree of leaning
+            //max angle degree of leaning, if it is too high there can be clipping bugs when turning fast, very bad
             lean_max: 0.35,
             //how fast you lean
             leaning_speed: 2.0,
@@ -234,8 +206,8 @@ pub fn fps_controller_move(
     mut query: Query<
         (
             Entity,
-            &FpsControllerInput,
-            &mut FpsController,
+            &GoldenControllerInput,
+            &mut GoldenController,
             &mut Collider,
             &mut Transform,
             &mut LinearVelocity,
@@ -407,6 +379,32 @@ pub fn fps_controller_move(
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
 
+        /* STEPS */
+
+        let front_dir = yaw_rotation * -Vec3::Z; // world-space right
+
+        let front_feet_shape = Collider::cylinder(controller.radius * 0.99, 0.2);
+        let probe_origin = transform.translation + Vec3::new(0.0, 0.01, 0.0);
+
+        // Right wall check
+        let front_feet_hit = spatial_query_pipeline.cast_shape(
+            &front_feet_shape,
+            probe_origin,
+            Quat::IDENTITY,
+            Dir3::new(front_dir).unwrap(),
+            &ShapeCastConfig::from_max_distance(0.5),
+            &filter,
+        );
+        if front_feet_hit.is_some() {
+            let jump_force = Vec3 {
+                x: 0.0,
+                y: controller.jump_force,
+                z: 0.0,
+            };
+            external_force.apply_impulse(jump_force * scale_vec);
+            println!("FRONT FEET HIT")
+        }
+
         match bottom_down_hit {
             // NEAR GROUND
             Some(hit) => {
@@ -443,7 +441,7 @@ pub fn fps_controller_move(
                         velocity.0,
                         dt,
                     );
-                    //  println!("ADD IS {:#?}", add);
+
                     external_force.apply_impulse(add * scale_vec);
                 }
 
@@ -455,18 +453,16 @@ pub fn fps_controller_move(
                         velocity.0 -= normal_force;
                     }
                     if !input.jump && input.movement.length_squared() < 0.1 {
-                        damping.0 = 3.0;
+                        damping.0 = controller.air_damp * 10.0;
                     }
 
-                    if input.jump && velocity.0.y <= 1.0 {
+                    if input.jump && velocity.0.y < 1.0 {
                         let jump_force = Vec3 {
                             x: 0.0,
                             y: controller.jump_force,
                             z: 0.0,
                         };
                         external_force.apply_impulse(jump_force * scale_vec);
-
-                        println!("JUMPING");
                     }
                 }
                 controller.ground_tick = controller.ground_tick.saturating_add(1);
@@ -495,10 +491,6 @@ pub fn fps_controller_move(
             }
         }
 
-        if velocity.0.y > 0.0 {
-            println!("velocity positive {:#?}", velocity.0.y);
-        }
-
         //  Fixes wobbly velocity
         if velocity.0.z.abs() < 0.004 {
             velocity.0.z = 0.0;
@@ -506,16 +498,13 @@ pub fn fps_controller_move(
         if velocity.0.x.abs() < 0.004 {
             velocity.0.x = 0.0;
         }
-        /* if velocity.0.y.abs() < 0.004 {
-            velocity.0.y = 0.0;
-        } */
     }
 }
 
 pub fn fps_controller_input(
     key_input: Res<ButtonInput<KeyCode>>,
     mut mouse_events: EventReader<MouseMotion>,
-    mut query: Query<(&FpsController, &mut FpsControllerInput)>,
+    mut query: Query<(&GoldenController, &mut GoldenControllerInput)>,
 ) {
     for (controller, mut input) in query
         .iter_mut()
@@ -552,17 +541,13 @@ pub fn fps_controller_input(
 
 fn scroll_events(
     mut evr_scroll: EventReader<MouseWheel>,
-    mut query: Query<(&FpsController, &mut FpsControllerInput)>,
+    mut query: Query<(&GoldenController, &mut GoldenControllerInput)>,
 ) {
     let mut mod_shift = 0.0;
 
     for ev in evr_scroll.read() {
         match ev.unit {
             MouseScrollUnit::Line => {
-                println!(
-                    "Scroll (line units): vertical: {}, horizontal: {}",
-                    ev.y, ev.x
-                );
                 if ev.y.abs() > 0.1 {
                     mod_shift += ev.y.signum() * 0.1;
                 }
@@ -571,10 +556,6 @@ fn scroll_events(
                 }
             }
             MouseScrollUnit::Pixel => {
-                println!(
-                    "Scroll (pixel units): vertical: {}, horizontal: {}",
-                    ev.y, ev.x
-                );
                 if ev.y.abs() > 0.1 {
                     mod_shift += ev.y.signum() * 0.1;
                 }
@@ -583,7 +564,6 @@ fn scroll_events(
                 }
             }
         }
-        println!("MOD SHIFT {:#?}", mod_shift);
     }
     mod_shift = mod_shift.clamp(-1.0, 1.0);
 
@@ -601,7 +581,7 @@ fn scroll_events(
     }
 }
 
-pub fn fps_controller_look(mut query: Query<(&mut FpsController, &FpsControllerInput)>) {
+pub fn fps_controller_look(mut query: Query<(&mut GoldenController, &GoldenControllerInput)>) {
     for (mut controller, input) in query.iter_mut() {
         controller.pitch = input.pitch;
         controller.yaw = input.yaw;
@@ -664,7 +644,7 @@ fn get_axis(key_input: &Res<ButtonInput<KeyCode>>, key_pos: KeyCode, key_neg: Ke
 pub fn fps_controller_render(
     mut render_query: Query<(&mut Transform, &RenderPlayer), With<RenderPlayer>>,
     logical_query: Query<
-        (&Transform, &Collider, &FpsController, &CameraConfig),
+        (&Transform, &Collider, &GoldenController, &CameraConfig),
         (With<LogicalPlayer>, Without<RenderPlayer>),
     >,
 ) {

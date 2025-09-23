@@ -20,10 +20,10 @@ fn main() {
             affects_lightmapped_meshes: true,
         })
         .insert_resource(ClearColor(Color::linear_rgb(0.83, 0.96, 0.96)))
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, PhysicsDebugPlugin::default()))
         .add_plugins(PhysicsPlugins::new(FixedPostUpdate))
         // .add_plugins(PhysicsDebugPlugin::default())
-        .add_plugins(FpsControllerPlugin)
+        .add_plugins(GoldenControllerPlugin)
         .add_plugins(bevy_framepace::FramepacePlugin)
         .add_plugins(MyInputPlugin)
         .add_systems(Startup, setup)
@@ -101,13 +101,13 @@ fn setup(
             GravityScale(1.0),
             Transform::from_translation(SPAWN_POINT),
             LogicalPlayer,
-            FpsControllerInput {
+            GoldenControllerInput {
                 pitch: -TAU / 12.0,
                 yaw: TAU * 5.0 / 8.0,
                 ..default()
             },
             LinearDamping(0.5),
-            FpsController {
+            GoldenController {
                 radius,
                 height,
                 mass,
@@ -244,7 +244,7 @@ fn manage_cursor(
     btn: Res<ButtonInput<MouseButton>>,
     key: Res<ButtonInput<KeyCode>>,
     mut window_query: Query<&mut Window>,
-    mut controller_query: Query<&mut FpsController>,
+    mut controller_query: Query<&mut GoldenController>,
 ) {
     for mut window in &mut window_query {
         if btn.just_pressed(MouseButton::Left) {

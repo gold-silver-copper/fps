@@ -1,6 +1,3 @@
-use crate::character_controller::*;
-use avian3d::math::*;
-
 use bevy::prelude::*;
 pub struct MyInputPlugin;
 
