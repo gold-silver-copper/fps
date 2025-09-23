@@ -249,13 +249,13 @@ pub fn fps_controller_move(
             ),
             &filter,
         );
+        // the top hit should be at least the stair height so that the player isnt translated inside a roof
         let top_up_hit = spatial_query_pipeline.cast_shape(
             &scaled_collider_laterally(&collider, 0.99),
             transform.translation + Vec3::new(0.0, controller.height, 0.0),
             Quat::IDENTITY,
             Dir3::Y,
-            //hack to stay grounded while leaning
-            &ShapeCastConfig::from_max_distance(0.1),
+            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
             &filter,
         );
 
@@ -379,32 +379,6 @@ pub fn fps_controller_move(
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
 
-        /* STEPS */
-
-        let front_dir = yaw_rotation * -Vec3::Z; // world-space right
-
-        let front_feet_shape = Collider::cylinder(controller.radius * 0.99, 0.2);
-        let probe_origin = transform.translation + Vec3::new(0.0, 0.01, 0.0);
-
-        // Right wall check
-        let front_feet_hit = spatial_query_pipeline.cast_shape(
-            &front_feet_shape,
-            probe_origin,
-            Quat::IDENTITY,
-            Dir3::new(front_dir).unwrap(),
-            &ShapeCastConfig::from_max_distance(0.5),
-            &filter,
-        );
-        if front_feet_hit.is_some() {
-            let jump_force = Vec3 {
-                x: 0.0,
-                y: controller.jump_force,
-                z: 0.0,
-            };
-            external_force.apply_impulse(jump_force * scale_vec);
-            println!("FRONT FEET HIT")
-        }
-
         match bottom_down_hit {
             // NEAR GROUND
             Some(hit) => {
@@ -446,6 +420,57 @@ pub fn fps_controller_move(
                 }
 
                 if has_traction {
+                    if controller.ground_tick > 7
+                        && top_up_hit.is_none()
+                        && input.movement.length_squared() > 0.1
+                    {
+                        /* STEPS */
+
+                        let front_dir = yaw_rotation * -Vec3::Z; // world-space right
+
+                        let front_feet_shape = Collider::cylinder(
+                            controller.radius * 0.99,
+                            controller.grounded_distance,
+                        );
+                        let front_body_shape =
+                            Collider::cylinder(controller.radius * 0.99, controller.height);
+                        let feet_origin = transform.translation - collider_y_offset(&collider)
+                            + Vec3::new(0.0, controller.grounded_distance * 1.5, 0.0);
+                        let stair_body_origin = transform.translation;
+
+                        if input.lean.abs() > 0.1 {
+                            println!("leaning")
+                        }
+
+                        // Right wall check
+                        let front_feet_hit = spatial_query_pipeline.cast_shape(
+                            &front_feet_shape,
+                            feet_origin,
+                            Quat::IDENTITY,
+                            Dir3::new(front_dir).unwrap(),
+                            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
+                            &filter,
+                        );
+
+                        // Right wall check
+                        let front_body_hit = spatial_query_pipeline.cast_shape(
+                            &front_body_shape,
+                            stair_body_origin,
+                            Quat::IDENTITY,
+                            Dir3::new(front_dir).unwrap(),
+                            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
+                            &filter,
+                        );
+
+                        if front_feet_hit.is_some() && front_body_hit.is_none() {
+                            transform.translation +=
+                                Vec3::new(0.0, controller.grounded_distance, 0.0);
+                            controller.crouch_degree += controller.grounded_distance;
+
+                            println!("FRONT FEET HIT")
+                        }
+                    }
+
                     if controller.ground_tick < 3 {
                         //This fixes bug that pushes player randomly upon landing
                         let linear_velocity = velocity.0;
@@ -593,7 +618,7 @@ pub fn fps_controller_look(mut query: Query<(&mut GoldenController, &GoldenContr
 fn collider_y_offset(collider: &Collider) -> Vec3 {
     Vec3::Y
         * if let Some(capsule) = collider.shape().as_capsule() {
-            capsule.half_height()
+            capsule.half_height() + capsule.radius
         } else {
             panic!("Controller must use a capsule  collider")
         }
@@ -602,7 +627,7 @@ fn collider_y_offset(collider: &Collider) -> Vec3 {
 /// Return a collider that is scaled laterally (XZ plane) but not vertically (Y axis).
 fn scaled_collider_laterally(collider: &Collider, scale: f32) -> Collider {
     if let Some(capsule) = collider.shape().as_capsule() {
-        let new_capsule = Collider::capsule(capsule.radius * scale, capsule.half_height() * 2.0);
+        let new_capsule = Collider::capsule(capsule.radius * scale, capsule.segment.length());
         new_capsule
     } else {
         panic!("Controller must use a capsule collider")
@@ -656,10 +681,6 @@ pub fn fps_controller_render(
             let camera_offset = Vec3::Y * camera_config.height_offset;
             render_transform.translation =
                 logical_transform.translation + collider_offset + camera_offset;
-            // just copy logical rotation instead of rebuilding
-            /*let zetik = logical_transform.rotation.xyz().z;
-
-            */
             let pitch_quat = Quat::from_euler(EulerRot::YXZ, 0.0, controller.pitch, 0.0);
             render_transform.rotation = logical_transform.rotation.mul_quat(pitch_quat);
         }

@@ -115,7 +115,9 @@ fn setup(
                 ..default()
             },
         ))
-        .insert(CameraConfig { height_offset: 0.0 })
+        .insert(CameraConfig {
+            height_offset: -0.2,
+        })
         .id();
 
     let e = commands
@@ -142,7 +144,7 @@ fn setup(
         Mesh3d(meshes.add(Cuboid::default())),
         Mass(40.0),
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
-        Transform::from_translation(SPAWN_POINT + Vec3::new(1.0, 1.0, 1.0)),
+        Transform::from_translation(SPAWN_POINT + Vec3::new(10.0, 10.0, 10.0)),
         Friction {
             dynamic_coefficient: 0.9,
             static_coefficient: 0.9,
