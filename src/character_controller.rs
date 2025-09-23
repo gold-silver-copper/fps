@@ -127,7 +127,7 @@ impl Default for GoldenController {
     fn default() -> Self {
         Self {
             //used for projecting collision to ground, to check if player has traction
-            grounded_distance: 0.15,
+            grounded_distance: 0.22,
             //collider height and radius
             radius: 0.4,
             height: 1.0,
@@ -391,9 +391,10 @@ pub fn fps_controller_move(
                 let has_traction =
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
                 damping.0 = controller.air_damp * 5.0;
-
+                let old_wish_dir = wish_direction;
                 if !input.jump {
                     // This is for walking up slopes well
+
                     wish_direction =
                         wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
 
@@ -420,7 +421,7 @@ pub fn fps_controller_move(
                 }
 
                 if has_traction {
-                    if controller.ground_tick > 7
+                    if controller.ground_tick > 1
                         && top_up_hit.is_none()
                         && input.movement.length_squared() > 0.1
                     {
@@ -433,39 +434,45 @@ pub fn fps_controller_move(
                             controller.grounded_distance,
                         );
                         let front_body_shape =
-                            Collider::cylinder(controller.radius * 0.99, controller.height);
+                            Collider::cylinder(controller.radius * 0.99, current_height);
                         let feet_origin = transform.translation - collider_y_offset(&collider)
-                            + Vec3::new(0.0, controller.grounded_distance * 1.5, 0.0);
-                        let stair_body_origin = transform.translation;
+                            + Vec3::new(0.0, controller.grounded_distance * 1.0, 0.0);
+                        let stair_body_origin = transform.translation
+                            + Vec3::new(0.0, controller.grounded_distance * 1.0, 0.0);
 
                         if input.lean.abs() > 0.1 {
                             println!("leaning")
                         }
 
-                        // Right wall check
                         let front_feet_hit = spatial_query_pipeline.cast_shape(
                             &front_feet_shape,
                             feet_origin,
                             Quat::IDENTITY,
-                            Dir3::new(front_dir).unwrap(),
+                            Dir3::new(old_wish_dir).unwrap(),
                             &ShapeCastConfig::from_max_distance(controller.grounded_distance),
                             &filter,
                         );
 
-                        // Right wall check
                         let front_body_hit = spatial_query_pipeline.cast_shape(
                             &front_body_shape,
                             stair_body_origin,
                             Quat::IDENTITY,
-                            Dir3::new(front_dir).unwrap(),
+                            Dir3::new(old_wish_dir).unwrap(),
                             &ShapeCastConfig::from_max_distance(controller.grounded_distance),
                             &filter,
                         );
 
                         if front_feet_hit.is_some() && front_body_hit.is_none() {
+                            controller.ground_tick = 0;
                             transform.translation +=
                                 Vec3::new(0.0, controller.grounded_distance, 0.0);
                             controller.crouch_degree += controller.grounded_distance;
+                            /*    let jump_force = Vec3 {
+                                x: 0.0,
+                                y: -controller.jump_force,
+                                z: 0.0,
+                            };
+                            external_force.apply_impulse(jump_force); */
 
                             println!("FRONT FEET HIT")
                         }

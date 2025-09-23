@@ -133,7 +133,7 @@ fn setup(
         .id();
     println!("camera ent, {:#?}", e);
     commands.insert_resource(MainScene {
-        handle: assets.load("playground2.glb"),
+        handle: assets.load("playground3.glb"),
         is_loaded: false,
     });
 
