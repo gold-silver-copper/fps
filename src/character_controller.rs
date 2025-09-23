@@ -167,7 +167,7 @@ impl Default for GoldenController {
         }
     }
 }
-
+// should probably add normal keybinds for scrolling/lean degree
 #[derive(Component)]
 pub struct GoldenControllerKeys {
     pub key_forward: KeyCode,
@@ -618,7 +618,7 @@ pub fn fps_controller_input(
 
 fn scroll_events(
     mut evr_scroll: EventReader<MouseWheel>,
-    mut query: Query<(&GoldenControllerKeys, &mut GoldenControllerInput)>,
+    mut query: Query<(&mut GoldenControllerInput)>,
 ) {
     let mut mod_shift = 0.0;
 
@@ -644,7 +644,7 @@ fn scroll_events(
     }
     mod_shift = mod_shift.clamp(-1.0, 1.0);
 
-    for (controller, mut input) in query.iter_mut() {
+    for mut input in query.iter_mut() {
         if input.lean.abs() > 0.1 {
             input.lean_degree_mod += mod_shift;
             input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 1.0);

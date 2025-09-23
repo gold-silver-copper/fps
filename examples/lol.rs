@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use avian3d::{parry::math::DEFAULT_EPSILON, prelude::*};
+use avian3d::prelude::*;
 use bevy::{
     gltf::{Gltf, GltfMesh, GltfNode},
     math::Vec3Swizzles,
@@ -20,8 +20,7 @@ fn main() {
             affects_lightmapped_meshes: true,
         })
         .insert_resource(ClearColor(Color::linear_rgb(0.83, 0.96, 0.96)))
-        //        .add_plugins((PhysicsDebugPlugin::default()))
-        .add_plugins((DefaultPlugins,))
+        .add_plugins((DefaultPlugins))
         .add_plugins(PhysicsPlugins::new(FixedPostUpdate))
         // .add_plugins(PhysicsDebugPlugin::default())
         .add_plugins(GoldenControllerPlugin)
