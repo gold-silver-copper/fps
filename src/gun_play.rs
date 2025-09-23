@@ -1,12 +1,6 @@
-use std::f32::consts::TAU;
-use std::f32::consts::*;
-
 use avian3d::{parry::shape::SharedShape, prelude::*};
-use bevy::input::mouse::MouseScrollUnit;
-use bevy::input::mouse::MouseWheel;
-use bevy::{input::mouse::MouseMotion, prelude::*};
 
-use crate::GoldenControllerInput;
+use bevy::{input::mouse::MouseMotion, prelude::*};
 
 pub struct GunPlayPlugin;
 

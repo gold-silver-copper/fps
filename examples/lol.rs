@@ -35,7 +35,7 @@ fn main() {
             affects_lightmapped_meshes: true,
         })
         .insert_resource(ClearColor(Color::linear_rgb(0.83, 0.96, 0.96)))
-        .add_plugins((DefaultPlugins))
+        .add_plugins((DefaultPlugins.set(ImagePlugin::default_nearest())))
         .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugins(bevy::diagnostic::EntityCountDiagnosticsPlugin)
         .add_plugins(bevy::diagnostic::SystemInformationDiagnosticsPlugin)
