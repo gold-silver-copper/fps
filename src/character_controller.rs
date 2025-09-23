@@ -431,11 +431,9 @@ pub fn fps_controller_move(
                     // Only try steps when grounded, moving, and not blocked above
                     if top_up_hit.is_none() && input.movement.length_squared() > 0.1 && !input.jump
                     {
-                        // Origins
-
                         let feet_origin = transform.translation - collider_y_offset(&collider)
                             + Vec3::new(0.0, controller.grounded_distance, 0.0);
-                        let body_origin = feet_origin + Vec3::Y * controller.step_height * 2.0;
+                        let body_origin = feet_origin + Vec3::Y * controller.step_height * 1.5;
 
                         let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
 
@@ -451,33 +449,22 @@ pub fn fps_controller_move(
                             &ShapeCastConfig::from_max_distance(controller.step_height),
                             &filter,
                         ) {
-                            println!("foot normal {:#?}", foot_hit.normal1);
-                            println!("hit normal {:#?}", hit.normal1);
-                            println!("Feet hit");
-                            // Cast again at body level
+                            if foot_hit.normal1.y < 0.1 {
+                                let body_hit = spatial_query_pipeline.cast_shape(
+                                    &body_shape,
+                                    body_origin,
+                                    Quat::IDENTITY,
+                                    Dir3::new(wish_direction).unwrap(),
+                                    &ShapeCastConfig::from_max_distance(controller.step_height),
+                                    &filter,
+                                );
 
-                            let body_hit = spatial_query_pipeline.cast_shape(
-                                &body_shape,
-                                body_origin,
-                                Quat::IDENTITY,
-                                Dir3::new(wish_direction).unwrap(),
-                                &ShapeCastConfig::from_max_distance(controller.step_height),
-                                &filter,
-                            );
+                                // If foot hits but body does not → step up
+                                if body_hit.is_none() {
+                                    controller.step_offset = controller.step_height;
 
-                            if body_hit.is_some() {
-                                println!("body hit");
-                            }
-                            // If foot hits but body does not → step up
-                            if body_hit.is_none() && foot_hit.normal1.y < 0.1 {
-                                controller.ground_tick = 0;
-                                //     transform.translation.y += controller.step_height;
-                                //   controller.crouch_degree += 0.1;
-                                /*  */
-
-                                controller.step_offset = controller.step_height;
-
-                                println!("Stepped up!");
+                                    println!("Stepped up!");
+                                }
                             }
                         }
                     }
@@ -528,7 +515,8 @@ pub fn fps_controller_move(
         }
 
         if controller.step_offset > 0.0 {
-            let step_speed = 20.0; // larger = faster snap
+            controller.ground_tick = 0;
+            let step_speed = 15.0; // larger = faster snap
             let offset_change = controller.step_offset * dt * step_speed;
 
             // Apply part of the offset
@@ -543,6 +531,7 @@ pub fn fps_controller_move(
                     z: 0.0,
                 };
                 external_force.apply_impulse(down_force);
+                // if not set back to 0.0 it will keep getting smaller but not to zero
                 controller.step_offset = 0.0;
             }
         }
