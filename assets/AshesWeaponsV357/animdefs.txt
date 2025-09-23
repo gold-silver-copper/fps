@@ -1,0 +1,8 @@
+// ASHES menu cursor
+texture optional M_SKULL1
+pic M_SKULL1 tics 3
+pic M_SKULL2 tics 3
+pic M_SKULL3 tics 3
+pic M_SKULL4 tics 3
+pic M_SKULL5 tics 3
+pic M_SKULL6 tics 3

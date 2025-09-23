@@ -1,0 +1,412 @@
+ACTOR BandolierUpgrade : Inventory
+{
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.InterHubAmount 1
+    -INVBAR
+}
+ACTOR PouchUpgrade : Inventory
+{
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.InterHubAmount 1
+    -INVBAR
+}
+actor RandomBackPackKit:  RandomSpawner replaces backpack
+{
+ DropItem "AshesBackpack", 255, 3
+ DropItem "ItemModkit", 255, 1
+ }
+ actor AshesBackpack : Backpack
+{
+  Inventory.PickupMessage "Got the expanded backpack!"
+  Inventory.PickupSound "items/bakpakpk"
+  scale 0.8
+  +COUNTITEM
+  states
+  {
+  Spawn:
+    BPAK A 10
+	BPAK A 1 bright
+    loop
+  }
+}
+ACTOR Ashesmap : MapRevealer replaces Allmap
+{
+  +COUNTITEM
+  +INVENTORY.FANCYPICKUPSOUND
+  +INVENTORY.ALWAYSPICKUP
+  Inventory.MaxAmount 0
+  scale 0.8
+  Inventory.PickupSound "items/armorpickup"
+  Inventory.PickupMessage "Got the area map."
+  States
+  {
+  Spawn:
+    PMAP A 10
+	PMAP A 10 Bright
+    loop
+  }
+}
+ACTOR StimHealthUp : PowerupGiver
+{
+  +INVENTORY.INTERHUBSTRIP
+  +INVENTORY.AUTOACTIVATE
+  Inventory.PickupMessage " "
+  Tag " "
+  Powerup.Duration -30
+  Powerup.Color None
+  Powerup.Type Regeneration
+  States
+  {
+  Spawn:
+    TNT1 A 1
+    Loop
+  }
+}
+Actor Purgeeffect : PowerupGiver
+{
+  Powerup.Type "powerironfeet"
+  Powerup.Duration -30
+  Powerup.Color 180, 180, 64, 0.125
+  States
+  {
+  Spawn:
+    TNT1 A 11
+    LOOP
+  }
+}
+ACTOR Powerrage : PowerupGiver replaces Berserk
+{
+  +COUNTITEM
+  +INVENTORY.BIGPOWERUP
+  +INVENTORY.FANCYPICKUPSOUND
+  +Inventory.InvBar
+  Powerup.Duration -30
+  Powerup.Color 255, 0, 0, 0.125
+   Inventory.MaxAmount 10
+  Inventory.Interhubamount 10
+  Inventory.Icon "INVFA0"
+   Inventory.PickupMessage "Got the BRUTE Stim. "
+   inventory.usesound "items/stimuse3"
+  Tag "BRUTE Stim"
+  Powerup.Type "PowerDoubleFiringSpeed"
+   Scale 0.75
+  States
+  {
+ Spawn:
+    PSTR A 10
+	PSTR A 10 Bright
+    LOOP
+  }
+}
+Actor RegenStimpack : PowerupGiver replaces soulsphere
+{
+  Inventory.PickupMessage "Got the REGEN Stim."
+  Powerup.Type Regeneration
+  Powerup.Duration -30
+  Inventory.MaxAmount 10
+  Inventory.Interhubamount 10
+  Inventory.Icon "INVRA0"
+  +Inventory.InvBar
+  +CountItem
+  +INVENTORY.BIGPOWERUP
+  +INVENTORY.FANCYPICKUPSOUND
+  inventory.usesound "items/stimuse"
+  Tag "REGEN Stim"
+  Scale 0.75
+  States
+  {
+  Spawn:
+    SOUL A 10
+	SOUL A 10 Bright
+    LOOP
+  }
+}
+Actor PurgeStimpack : CustomInventory replaces radsuit
+{
+  Inventory.PickupMessage "Got the PURGE Stim."
+  Inventory.MaxAmount 10
+  Inventory.Interhubamount 10
+  Inventory.Icon "INVPA0"
+  +Inventory.InvBar
+  +CountItem
+  +INVENTORY.BIGPOWERUP
+  +INVENTORY.FANCYPICKUPSOUND
+  Inventory.PickupSound "misc/p_pkup"
+  inventory.usesound "items/stimuse2"
+  Tag "PURGE Stim"
+  Scale 0.8
+  States
+  {
+  Spawn:
+    SUIT A 10
+	SUIT A 10 Bright
+    LOOP
+  Use:
+    TNT1 A 0 A_GiveInventory("Powerironfeet")
+	TNT1 A 0
+	stop
+  }
+}
+ACTOR TitanStimpack : CustomInventory replaces InvulnerabilitySphere
+{
+	+INVENTORY.INVBAR
+	+INVENTORY.BIGPOWERUP
+	+COUNTITEM
+	Inventory.MaxAmount 1
+    Inventory.Interhubamount 1
+	+INVENTORY.PICKUPFLASH
+	Inventory.MaxAmount 1
+	Inventory.Icon "INVTA0"
+	Inventory.PickupSound "misc/p_pkup"
+	inventory.usesound "items/stimuse4"
+	Inventory.PickupMessage "Got the TITAN stim!"
+	Tag "TITAN STIM"
+	States
+	{
+		Spawn:
+			PINV A 10
+			PINV A 10 bright
+			Loop
+		Use:
+			TNT1 A 0 A_GiveInventory ("TitanProtection", 1)
+			TNT1 A 0 A_GiveInventory ("TitanToughness", 1)
+			Stop
+	}
+}
+Actor TitanProtection : PowerProtection
+{
+	Powerup.Color "30 30 100", 0.5
+	Powerup.Colormap 1.0, 0.0, 0.0, 0.0, 0.0, 1.0
+	Powerup.Duration -30
+	DamageFactor "normal", 0.33
+}
+ACTOR TitanToughness : PowerupGiver 12222
+{
+  +COUNTITEM
+  +INVENTORY.AUTOACTIVATE
+  +INVENTORY.ALWAYSPICKUP
+  +INVENTORY.BIGPOWERUP
+  Inventory.MaxAmount 0
+  Powerup.Type "Buddha"
+  Powerup.Duration -30
+  Inventory.PickupSound "items/stimuse4"
+}
+ACTOR NightvisorBattery : CustomInventory
+{
++COUNTITEM
++INVENTORY.INVBAR
+Inventory.Amount 1
+Inventory.MaxAmount 5
+Inventory.PickupFlash "PickupFlash"
+Inventory.Icon "CELLA0" 
+Inventory.PickupSound "misc/p_pkup"
+Inventory.PickupMessage "Got the Nighvision Battery!"
+Tag "Nighvision Battery"
+States
+{
+Spawn:
+CELL A -1
+
+Use:
+TNT1 A 0 A_GiveInventory("Nightvisor",120)
+Stop
+}
+}
+ACTOR NVGSwitch: Inventory  //Quest One
+{
+    Inventory.Amount 1
+    Inventory.MaxAmount 1
+	Inventory.InterHubAmount 0
+    -INVBAR
+}
+ACTOR Nightvisor : CustomInventory replaces Infrared
+    {
+    +COUNTITEM
+    +INVENTORY.INVBAR
+    +INVENTORY.KEEPDEPLETED
+    +INVENTORY.FANCYPICKUPSOUND
+	+INVENTORY.NOSCREENBLINK
+    Inventory.Amount 120
+    Inventory.MaxAmount 120
+	Inventory.InterHubAmount 120
+    Inventory.PickupFlash "PickupFlash"
+    Inventory.Icon "INVNA0" 
+    Inventory.PickupSound "misc/p_pkup"
+    Inventory.PickupMessage "Got the Nighvision Goggles!"
+    Tag "Nighvision Goggles"
+    States
+    {
+    Spawn:
+    NVIS A 6 Bright
+    NVIS A 6
+    Loop
+
+    Use:
+	 TNT1 A 0
+    {
+	If(CountInv("Nvgswitch")<1) //Can toggled off by pressing button BT_USER1
+       {
+          A_giveInventory("nvgswitch");
+		  A_playsound("items/nightvisionon");
+		  Return state("");
+		  }
+		  else
+		  {
+		  A_takeInventory("nvgswitch");
+		  A_playsound("items/nightvisionoff");
+		  Return state("");
+		  }
+		 }		  
+    TNT1 A 0 A_GiveInventory("Colorize")
+    TNT1 A 0 A_Overlay(5,"NightVisorOn",1)
+    Stop
+
+    NightVisorOn:
+    TNT1 A 0 A_OverlayFlags(5,PSPF_RENDERSTYLE|PSPF_ALPHA,1)
+    TNT1 A 0 A_OverlayRenderStyle(5,STYLE_translucent)
+    TNT1 A 0 A_OverlayAlpha(5,1.0)
+    PVIS A 12
+    NightVisorWork:
+    TNT1 A 0
+    {
+    If(CountInv("Nightvisor")<1||CountInv("Nvgswitch")<1) //Can toggled off by pressing button BT_USER1
+       {
+          A_TakeInventory("Colorize");
+          A_TakeInventory("PowerNightVision");
+          Return state("Null");
+       }
+    Else
+       {
+          If(CountInv("PowerNightVision")>0){Return state("");}
+          Else
+             {
+                A_GiveInventory("PowerNightVision",1);
+                A_TakeInventory("Nightvisor",1);
+                Return state("");
+             }
+       }
+
+    }
+    PVIS ABC 2
+    Loop
+	}
+	}
+
+    ACTOR PowerNightVision : Powerup
+    {
+	+INVENTORY.NOSCREENBLINK
+    Powerup.Duration -3 //Nightvision depletion speed, 1 per second by default
+    }
+
+    ACTOR Colorize : Powerup
+    {
+	+INVENTORY.NOSCREENBLINK
+    Powerup.Color DarkGreen,0.4 //Coloring of nightvision
+    Powerup.Duration 0x7FFFFFFF
+	powerup.Colormap 0.0, 0.0, 0.0, 0.0, 0.3, 0.0
+    }
+	
+ACTOR ItemModKit : CustomInventory
+    {
+    +COUNTITEM
+    +INVENTORY.INVBAR
+    +INVENTORY.FANCYPICKUPSOUND
+	+INVENTORY.NOSCREENBLINK
+    Inventory.Amount 1
+    Inventory.MaxAmount 5
+    Inventory.PickupFlash "PickupFlash"
+    Inventory.Icon "IKITA0" 
+    Inventory.PickupSound "misc/p_pkup"
+    Inventory.PickupMessage "Got the Weapon Mod Kit!"
+    Tag "Mod Kit"
+	scale 0.7
+    States
+	{
+	Spawn:
+    MKIT A 6 Bright
+    MKIT A 6
+    Loop
+	
+	Use:
+	TNT1 A 0 ACS_NAMEDEXECUTEWITHRESULT("ModkitCheck",0)
+	TNT1 A 0
+	Fail
+	}
+}
+Actor PowerVestProtect: powerprotection
+{
+  DamageFactor "normal", 0.85
+  +Inventory.Persistentpower
+  +Inventory.Hubpower
+  +Inventory.Undroppable
+  +Inventory.Untossable
+  seesound "items/armorpickup"
+  Powerup.duration 0x7FFFFFFF
+}
+Actor VestUpgrade : powerupgiver
+{
+Inventory.PickupMessage "Got the vest armor upgrade!"
+inventory.Maxamount 0
+Powerup.Type  "VestProtect"
+Powerup.duration 0x7FFFFFFF
++Inventory.Persistentpower
+  +Inventory.Hubpower
++AUTOACTIVATE
++ALWAYSPICKUP
+States
+{
+spawn:
+ARM1 A 4 BRIGHT
+loop
+}
+}
+Actor PowerJacketProtect: powerprotection
+{
+  DamageFactor "fire", 0.75
+  DamageFactor "slime", 0.66
+  DamageFactor "rads", 0.66
+  DamageFactor "explosion", 0.80
+  DamageFactor "acid", 0.75
+  +Inventory.Persistentpower
+  +Inventory.Hubpower
+  +Inventory.Undroppable
+  +Inventory.Untossable
+  seesound "items/armorpickup"
+  Powerup.duration 0x7FFFFFFF
+}
+Actor JacketUpgrade : powerupgiver
+{
+Inventory.PickupMessage "Got the Jacket armor upgrade!"
+inventory.Maxamount 0
+Powerup.Type  "JacketProtect"
+Powerup.duration 0x7FFFFFFF
++Inventory.Persistentpower
+  +Inventory.Hubpower
++AUTOACTIVATE
++ALWAYSPICKUP
+States
+{
+spawn:
+ARM3 A 4 BRIGHT
+loop
+}
+}
+ ACTOR BlackWaterVial : UpgradeStamina replaces Blursphere
+ {
+   Inventory.Amount 25
+   Inventory.MaxAmount 100
+   Inventory.PickupMessage "You got the Black Water Vial! Health increased!"
+   Inventory.PickupSound "items/BWVuse"
+    +CountItem
+  +INVENTORY.BIGPOWERUP
+  Scale 0.8
+   states
+   {
+   Spawn:
+      BWVI A 10
+	BWVI A 10 Bright
+    LOOP
+   }
+ }

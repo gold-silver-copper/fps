@@ -1,0 +1,53 @@
+//==============================================================================
+// Ashes Episode Two Decorate
+//==============================================================================
+// Effects
+//==============================================================================
+#Include Actors/Effects/Effects.txt //Misc specials
+//==============================================================================
+// Weapons
+//==============================================================================
+#Include Actors/Weapons/Crowbar.txt //Cro-bar
+#Include Actors/Weapons/Hammer.txt //Pile Bunker/jackhammer
+#Include Actors/Weapons/Revolver.txt //.45 Revolver
+#Include Actors/Weapons/Glock.txt //9mm Autoloader
+#Include Actors/Weapons/Shotgun.txt //Pump-action
+#Include Actors/Weapons/Levergun.txt //Lever-action
+#Include Actors/Weapons/Sawedoff.txt //Sawed-off
+#Include Actors/Weapons/Ingram.txt //Machine Pistol
+#Include Actors/Weapons/Greaser.txt //Machiner Pistolerier
+#Include Actors/Weapons/MBlaster.txt //Master Blaster
+#Include Actors/Weapons/Musket.txt //Junker Musket
+#Include Actors/Weapons/PipeBomb.txt //Pipe Bombs
+#Include Actors/Weapons/AR15.txt //Military Rifle
+#Include Actors/Weapons/KillerPig.txt //Killer P.I.G.
+#Include Actors/Weapons/Lantern.txt //Solar Lantern
+#Include Actors/Weapons/Lazergun.txt //uselessjokeweapon
+#Include Actors/Weapons/FAL.txt //battlerifle
+#Include Actors/Weapons/XBOW.txt //bolt caster
+#Include Actors/Weapons/Thumper.txt //blast from the past!
+//==============================================================================
+// Items
+//==============================================================================
+#Include Actors/Items/Ammo.txt //Ammunition pickups
+#Include Actors/Items/Armor.txt //Armor pickups
+#Include Actors/Items/Health.txt //Health pickups
+#Include Actors/Items/Power.txt //Inventory and powerups
+//==============================================================================
+// Actors
+//==============================================================================
+#Include Actors/Player/Player.txt //The Good
+#Include Actors/Player/Tesla79.txt //and the horse you rode in on
+#Include Actors/Player/LUCY.txt //and your little dog too
+//==============================================================================
+
+
+Actor primefiretoggled: Inventory
+{
+   Inventory.MaxAmount 1
+}
+Actor Altfiretoggled: Inventory
+{
+   Inventory.MaxAmount 1
+}
+

@@ -1,0 +1,543 @@
+ACTOR PumpySpawn : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.6
+	Inventory.Icon "GRIGA0"
+	Inventory.PickupMessage "Got the Pump-action shotgun."
+	Inventory.PickupSound "items/gunspickup"
+	States
+	{
+	Spawn:
+		GRZP A 10
+		GRZP A 1 bright
+		loop
+	Pickup:
+	    TNT1 A 0 A_JumpIfInventory("pumpaction3", 1, 4) //Skips giving you the normal shotgun if you have the upgrade
+		TNT1 A 0 A_JumpIfInventory("pumpaction2", 1, 3) //Skips giving you the normal shotgun if you have the upgrade
+		TNT1 A 0 A_GiveInventory("pumpaction")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("shotgunAmmo", 2)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR PumpgunBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "GRZPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		GRZP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("pumpaction2")
+		TNT1 A 0 A_takeInventory("pumpaction")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR PumpgunBuild3 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "GRZPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		GRZP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("pumpaction3")
+		TNT1 A 0 A_takeInventory("pumpaction")
+		TNT1 A 0 A_takeInventory("pumpaction2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR grizzlyfired : Ammo
+{
+ Inventory.MaxAmount 6
+ Ammo.BackpackMaxAmount 6
+ +IGNORESKILL
+}
+ACTOR pumpaction : weapon 
+{
+  SpawnID 27
+  Weapon.SelectionOrder 1300
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 0
+  Weapon.AmmoGive1 0
+  Weapon.AmmoGive2 2
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.AmmoType2 "Shotgunammo"
+  Weapon.AmmoType1 "grizzlyfired"
+  Inventory.PickupMessage "Got the Pump Action Shotgun!"
+  Inventory.PickupSound "items/gunspickup"
+   Inventory.Icon "GRIGA0"
+  weapon.slotnumber 3
+  Weapon.Kickback 120
+  +AMMO_CHECKBOTH
+  +NOALERT
+  scale 0.6
+  weapon.upsound "weapons/grizlydeploy"
+  Obituary "%o practices being %k's clay pigeon."
+  Tag "Pump-action shotgun"
+  States
+  {
+  Ready:
+    GRIZ A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+    Loop
+  Deselect:
+    "----" A 0 A_lower
+    "----" A 1 A_Lower
+    Loop
+  Select:
+     TNT1 A 0 A_takeInventory("flashlit")
+    GRIZ A 0 A_TakeInventory("lightlit",1)
+    GRIZ A 1 A_Raise
+	GRIZ A 0 A_Raise
+    Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("grizzlyfired",1,"FireReal")
+    Goto Reload
+  FireReal:
+	TNT1 A 0 A_PlaySound ("weapons/grizlygun", CHAN_WEAPON)
+    GRIF A 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireBullets (3, 3, 6, 14, "hitpuff", FBF_NORANDOM | FBF_USEAMMO)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	GRIF B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light0
+    GRIF C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	GRIP C 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	GRIP B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_AlertMonsters
+	GRIP A 0 A_JumpIfInventory("grizzlyfired",1,"Pump")
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	GRIP A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+    GRIP A 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	GRIZ A 0 A_checkreload
+	GRIP A 2 A_refire("empty")
+	Goto ready
+  Pump:
+	TNT1 A 0 A_PlaySound ("weapons/grizcock1", CHAN_ITEM)
+	GRIP ABCDEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("grizzlySpawner",0,0,30,-8)
+	GRIP H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/grizcock2", CHAN_ITEM)
+    GRIP IJKLM 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	GRIZ A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    Goto Ready
+  Reload:
+		GRIZ A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("grizzlyfired",6,"Ready")
+        TNT1 A 0 A_JumpIfInventory("shotgunammo",1,"Reloadpump")
+        Goto Ready
+	Reloadpump:
+	    TNT1 A 0
+		GRIR A 0 a_JumpIfInventory("grizzlyfired",1,"reloadstart")
+		GRIP ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_PlaySound ("weapons/grizcock1", CHAN_ITEM)
+	    GRIP DEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_FireCustomMissile("grizzlySpawner",0,0,30,-8)
+	    GRIP H 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_PlaySound ("weapons/grizcock2", CHAN_ITEM)
+        GRIP IJKLM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    GRIZ A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_PlaySound ("weapons/grizlyout",CHAN_ITEM)
+		GRIR ABCDEF 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR H 4 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR I 3 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR G 0 A_PlaySound ("weapons/grizlyfill",CHAN_ITEM)
+		GRIR J 6 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR A 0 A_Giveinventory("grizzlyfired",1)
+		GRIR A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		GRIR KL 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR MNNNN 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound ("weapons/grizcock2", CHAN_ITEM)
+		GRIR OPPP 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR A 0 a_JumpIfInventory("shotgunammo",1,"reloadloop")
+		Goto Reloaddone
+	ReloadStart:
+	    TNT1 A 0 A_PlaySound ("weapons/grizlyout",CHAN_ITEM)
+		GRIR ABCDE 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR Z 3 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR P 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR A 0 a_JumpIfInventory("shotgunammo",1,"reloadloop")
+		Goto Reloaddone
+	Reloadloop:    
+		GRIR PQRS 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GRIR G 0 A_PlaySound ("weapons/grizlyfill",CHAN_ITEM)
+		GRIR TUV 1 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		GRIR W 2  A_refire("reloaddone")
+		GRIR XY 1 A_refire("reloaddone")
+		GRIR A 0 A_Giveinventory("grizzlyfired",1)
+		GRIR A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		GRIR A 0 a_JumpIfInventory("grizzlyfired",6,"ReloadDone")
+		INGG B 0 A_refire("reloaddone")
+		GRIR A 0 a_JumpIfInventory("shotgunammo",1,"Reloadloop")
+        Goto ReloadDone
+	ReloadDone:
+	    TNT1 A 0 A_PlaySound ("weapons/grizlyload",CHAN_ITEM)
+        GRIR PZ 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	    GRIR E 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        GRIR DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        GRIR B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		GRIR A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        Goto Ready
+	 Altfire:
+        GRIZ ABCD 1
+		TNT1 A 2
+        GRIM ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(4, 8) * 5, TRUE, 0, "bashPuff", 80)
+	    GRIM EFG 1	
+		TNT1 A 10 A_PlaySound ("weapons/grizldeploy",CHAN_ITEM)
+		GRIZ DCBA 2
+		goto ready
+	empty:
+        GRIZ A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+        GRIZ A 0  a_refire("empty")
+        goto ready
+    User1:	
+	    GRIZ BCDE 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		GRIZ EDCB 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	Zoom:
+	    GRIZ A 0  A_giveinventory("lightlit",1)
+	    GRIZ A 0  A_SelectWeapon("crowbar")
+		GRIZ A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  Spawn:
+    GRZP A 10
+	GRZP A 1 bright
+    loop
+  }
+}
+ACTOR pumpaction2 : PumpAction
+{
+  Inventory.PickupMessage "Got the Bladed Pump!"
+   Inventory.Icon "GRIGB0"
+  Obituary "%o practices being %k's clay pigeon."
+  Tag "Bladed Pump"
+  +CHEATNOTWEAPON
+  -AMMO_CHECKBOTH
+  +AMMO_OPTIONAL
+  States
+  {
+  Ready:
+    GR2Z A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+    Loop
+  Deselect:
+    "----" A 0 A_lower
+    "----" A 1 A_Lower
+    Loop
+  Select:
+    TNT1 A 0 A_takeInventory("flashlit")
+    TNT1 A 0 A_TakeInventory("Pumpaction",1)
+    GR2Z A 1 A_Raise
+	GR2Z A 0 A_Raise
+    Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("grizzlyfired",1,"FireReal")
+    Goto Reload
+  FireReal:
+	TNT1 A 0 A_PlaySound ("weapons/grizlygun", CHAN_WEAPON)
+    GR2F A 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireBullets (3, 3, 7, 12, "hitpuff", FBF_NORANDOM | FBF_USEAMMO)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	GR2F B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light0
+    GR2F C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	GR2F D 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	GR2F E 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_AlertMonsters
+	GR2Z A 0 A_JumpIfInventory("grizzlyfired",1,"Pump")
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	GR2P K 2 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+    GR2P L 3 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH)
+	GR2Z A 0 A_checkreload
+	GR2P M 2 A_refire("empty")
+	Goto ready
+  Pump:
+	TNT1 A 0 A_PlaySound ("weapons/grizcock1", CHAN_ITEM)
+	GR2P DEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("grizzlySpawner",0,0,30,-8)
+	GR2P H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/grizcock2", CHAN_ITEM)
+    GR2P IJKLM 1 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH)
+	GR2Z A 1  A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH)
+    Goto Ready
+  Reload:
+		GR2Z A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("grizzlyfired",6,"Ready")
+        TNT1 A 0 A_JumpIfInventory("shotgunammo",1,"Reloadpump")
+        Goto Ready
+	Reloadpump:
+	    TNT1 A 0
+		GR2R A 0 a_JumpIfInventory("grizzlyfired",1,"reloadstart")
+		GR2P ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_PlaySound ("weapons/grizcock1", CHAN_ITEM)
+	    GR2P DEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_FireCustomMissile("grizzlySpawner",0,0,30,-8)
+	    GR2P H 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_PlaySound ("weapons/grizcock2", CHAN_ITEM)
+        GR2P IJKLM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    GR2Z A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_PlaySound ("weapons/grizlyout",CHAN_ITEM)
+		GR2R ABCDEF 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R H 4 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R I 3 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R G 0 A_PlaySound ("weapons/grizlyfill",CHAN_ITEM)
+		GR2R J 6 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R A 0 A_Giveinventory("grizzlyfired",1)
+		GR2R A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		GR2R KL 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R MNNNN 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound ("weapons/grizcock2", CHAN_ITEM)
+		GR2R OPPP 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R A 0 a_JumpIfInventory("shotgunammo",1,"reloadloop")
+		Goto Reloaddone
+	ReloadStart:
+	    TNT1 A 0 A_PlaySound ("weapons/grizlyout",CHAN_ITEM)
+		GR2R ABCDE 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R Z 3 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R P 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R A 0 a_JumpIfInventory("shotgunammo",1,"reloadloop")
+		Goto Reloaddone
+	Reloadloop:    
+		GR2R PQRS 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R G 0 A_PlaySound ("weapons/grizlyfill",CHAN_ITEM)
+		GR2R TUV 1 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		GR2R W 2  A_refire("reloaddone")
+		GR2R XY 1 A_refire("reloaddone")
+		GR2R A 0 A_Giveinventory("grizzlyfired",1)
+		GR2R A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		GR2R A 0 a_JumpIfInventory("grizzlyfired",6,"ReloadDone")
+		GR2R B 0 A_refire("reloaddone")
+		GR2R A 0 a_JumpIfInventory("shotgunammo",1,"Reloadloop")
+        Goto ReloadDone
+	ReloadDone:
+	    TNT1 A 0 A_PlaySound ("weapons/grizlyload",CHAN_ITEM)
+        GR2R PZ 3 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	    GR2R E 2 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        GR2R DC 2 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        GR2R B 2 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		GR2R A 1 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        Goto Ready
+	 Altfire:
+        GR2Z ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_RECOIL(-2)
+        GR2B ABDEGG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_RECOIL(-10)
+	    GR2B HHHH 1 A_CustomPunch(random(10, 18), TRUE, 0, "knifePuff", 100)
+		GR2B HGFEDCBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 3
+		GR2Z DCBA 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	empty:
+        GR2Z A 1  A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+        GR2Z A 0  a_refire("empty")
+        goto ready
+	 User1:	
+	    GR2Z BCDE 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		GR2Z EDCB 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	Zoom:
+	    GR2Z A 0  A_giveinventory("lightlit",1)
+	    GR2Z A 0  A_SelectWeapon("crowbar")
+		GR2Z A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  Spawn:
+    GZ2P A 10
+	GZ2P A 1 bright
+    loop
+  }
+}
+ACTOR pumpaction3 : PumpAction
+{
+  Inventory.PickupMessage "Got the Desert Pump!"
+   Inventory.Icon "GRIGB0"
+  Obituary "%o practices being %k's clay pigeon."
+  Tag "Desert Pump"
+  +CHEATNOTWEAPON
+  -AMMO_CHECKBOTH
+  +AMMO_OPTIONAL
+  States
+  {
+  Ready:
+    GR3Z A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+    Loop
+  Deselect:
+    "----" A 0 A_lower
+    "----" A 1 A_Lower
+    Loop
+  Select:
+    TNT1 A 0 A_takeInventory("flashlit")
+    TNT1 A 0 A_TakeInventory("Pumpaction",1)
+	TNT1 A 0 A_TakeInventory("Pumpaction2",1)
+    GR3Z A 1 A_Raise
+	GR3Z A 0 A_Raise
+    Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("grizzlyfired",1,"FireReal")
+    Goto Reload
+  FireReal:
+	TNT1 A 0 A_PlaySound ("weapons/grizlygun", CHAN_WEAPON)
+    GR3F A 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireBullets (3, 3, 7, 12, "hitpuff", FBF_NORANDOM | FBF_USEAMMO)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	GR3F B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light0
+    GR3F C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	GR3F D 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	GR3F E 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_AlertMonsters
+	GR3F A 0 A_JumpIfInventory("grizzlyfired",1,"Pump")
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	GR3P K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+    GR3P L 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	GR3Z A 0 A_checkreload
+	GR3P M 2 A_refire("empty")
+	Goto ready
+  Pump:
+	TNT1 A 0 A_PlaySound ("weapons/grizcock1", CHAN_ITEM)
+	GR3P DEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("grizzlySpawner",0,0,30,-8)
+	GR3P H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/grizcock2", CHAN_ITEM)
+    GR3P IJKLM 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	GR3Z A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    Goto Ready
+  Reload:
+		GR3Z A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("grizzlyfired",6,"Ready")
+        TNT1 A 0 A_JumpIfInventory("shotgunammo",1,"Reloadpump")
+        Goto Ready
+	Reloadpump:
+	    TNT1 A 0
+		GR3R A 0 a_JumpIfInventory("grizzlyfired",1,"reloadstart")
+		GR3P ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_PlaySound ("weapons/grizcock1", CHAN_ITEM)
+	    GR3P DEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_FireCustomMissile("grizzlySpawner",0,0,30,-8)
+	    GR3P H 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_PlaySound ("weapons/grizcock2", CHAN_ITEM)
+        GR3P IJKLM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    GR3R A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_PlaySound ("weapons/grizlyout",CHAN_ITEM)
+		GR3R ABCDEF 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR3R H 4 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR3R I 3 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR3R G 0 A_PlaySound ("weapons/grizlyfill",CHAN_ITEM)
+		GR3R J 6 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR3R A 0 A_Giveinventory("grizzlyfired",1)
+		GR3R A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		GR3R KL 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR3R MNNNN 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound ("weapons/grizcock2", CHAN_ITEM)
+		GR3R OPPP 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR2R A 0 a_JumpIfInventory("shotgunammo",1,"reloadmag")
+		Goto Reloaddone
+	ReloadStart:
+	    TNT1 A 0 A_PlaySound ("weapons/grizlyout",CHAN_ITEM)
+		GR3R ABCD 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR3R P 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR3R A 0 a_JumpIfInventory("shotgunammo",1,"reloadmag")
+		Goto Reloaddone
+	Reloadmag:    
+		GR3R PQRSTU 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		GR3R G 0 A_PlaySound ("weapons/ingramin",CHAN_ITEM)
+		GR3R V 2 A_WeaponReady(WRF_NOPRIMARY|WRF_NOSWITCH)
+		GR3R W 2  A_refire("reloaddone")
+		GR3R XY 1 A_refire("reloaddone")
+	Reloadloop:    
+		GR3R A 0 A_Giveinventory("grizzlyfired",1)
+		GR3R A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		GR3R A 0 a_JumpIfInventory("grizzlyfired",6,"ReloadDone")
+		GR3R B 0 A_refire("reloaddone")
+		GR3R A 0 a_JumpIfInventory("shotgunammo",1,"Reloadloop")
+        Goto ReloadDone
+	ReloadDone:
+        GR3M AABCC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound ("weapons/grimelmiss",CHAN_ITEM|WRF_ALLOWUSER1)
+	    GR3M FGHI 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		GR3M IIJK 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        GR3R DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        GR3R B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		GR3R A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        Goto Ready
+	 Altfire:
+        GR3Z ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_RECOIL(-2)
+        GR3B ABDEGG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_RECOIL(-10)
+	    GR3B HHHHH 1 A_CustomPunch(random(6, 12), TRUE, 0, "knifePuff", 100)
+		GR3B GFEDCBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 3
+		GR3Z DCBA 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	empty:
+        GR3Z A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+        GR3Z A 0  a_refire("empty")
+        goto ready
+	 User1:	
+	    GR3Z BCDE 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		GR3Z EDCB 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	Zoom:
+	    GR3Z A 0  A_giveinventory("lightlit",1)
+	    GR3Z A 0  A_SelectWeapon("crowbar")
+		GR3Z A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  Spawn:
+    GZ3P A 10
+	GZ3P A 1 bright
+    loop
+  }
+}

@@ -1,0 +1,11 @@
+gameinfo
+{
+playerclasses = "Scavenger"
+ menufontcolor_title = "GOLD"
+   menufontcolor_label = "WHITE"
+   menufontcolor_value = "WHITE"   
+   menufontcolor_action = "GOLD"
+   menufontcolor_header = "GOLD"
+   menufontcolor_highlight = "GOLD"
+   menufontcolor_selection = "WHITE"
+}

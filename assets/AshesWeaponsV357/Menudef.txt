@@ -1,0 +1,61 @@
+AddOptionMenu "OptionsMenu"
+{
+	StaticText "Weapon Spawn Options", Gold
+	Option "9mm Handguns", "PistolChoice", "PIS"
+	Option "Single Shotguns", "ActionChoice", "SIN"
+	Option "Double Shotguns", "SawedChoice", "SSH"
+	Option "SMGs", "SMGChoice", "SMG"
+	Option "Assault Rifles", "RifleChoice", "RIF"
+	Option "Napalm Launchers", "NapalmChoice", "NLA"
+	Option "Long Guns", "SniperChoice", "SNP"
+	Option "Heavy Guns", "BFGChoice", "BFG"
+}
+OptionValue "PIS"
+{
+	0, "ALL"
+	1, "9mm Autoloader"
+	2, "Police Pistol"
+}
+OptionValue "SIN"
+{
+	0, "ALL"
+	1, "Pump-action Shotgun"
+	2, "Lever-action Shotgun"
+}
+OptionValue "SSH"
+{
+	0, "ALL"
+	1, "Sawed-Off Shotgun"
+	2, "Hunter Shotgun"
+}
+OptionValue "SMG"
+{
+	0, "ALL"
+	1, "Machine-Pistol"
+	2, "Greaser"
+}
+OptionValue "RIF"
+{
+	0, "ALL"
+	1, "Military Rifle"
+	2, "Battle Rifle"
+	3, "Modular Rifle"
+}
+OptionValue "NLA"
+{
+	0, "ALL"
+	1, "Master Blaster"
+	2, "Proto Blaster"
+}
+OptionValue "SNP"
+{
+	0, "ALL"
+	1, "Junker Musket"
+	2, "Bolt Caster"
+}
+OptionValue "BFG"
+{
+	0, "ALL"
+	1, "Killer P.I.G."
+	2, "Thumper"
+}

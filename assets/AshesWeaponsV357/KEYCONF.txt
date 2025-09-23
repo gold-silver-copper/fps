@@ -1,0 +1,8 @@
+AddKeySection "Ashes Controls" "Ashes Controls"
+
+AddMenuKey "Lantern" +zoom
+AddMenuKey "Bootknife" +user1
+AddMenuKey "Switch Hud Style" +hud_switch
+Alias +hud_switch "pukename Hud_switch"
+Alias -hud_switch "pukename Hud_switchoff"
+

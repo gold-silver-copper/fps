@@ -7,3 +7,6 @@ pub use gun_play::*;
 
 mod input_plugin;
 pub use input_plugin::*;
+
+mod ui;
+pub use ui::*;

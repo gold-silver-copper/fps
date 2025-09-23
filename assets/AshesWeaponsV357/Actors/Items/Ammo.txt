@@ -1,0 +1,242 @@
+ACTOR fortyfiveAmmo : Ammo 
+{
+ Inventory.Amount 3
+ Inventory.MaxAmount 120
+ Ammo.BackpackAmount 12 
+ Ammo.BackpackMaxAmount 180
+ Inventory.Icon "CLIPA0"
+  Inventory.PickupSound "items/pickuploose"
+ Inventory.PickupMessage "Got heavy bullets."
+ scale 0.5
+ States
+ {
+ Spawn:
+  LOOS A 10
+  LOOS A 1 bright
+  loop
+ }
+}
+ACTOR fortyfiveLoose : Fortyfiveammo
+{
+ Inventory.Amount 4
+ Inventory.PickupSound "items/pickuploose"
+ Inventory.PickupMessage "Got the heavy bullets."
+ scale 0.6
+ +ignoreskill
+ States
+ {
+ Spawn:
+  LOOS A 10
+  LOOS A 1 bright
+  loop
+ }
+}
+ACTOR fortyfiveBox : Fortyfiveammo
+{
+ Inventory.Amount 18
+ Inventory.PickupSound "items/pickupclip"
+ Inventory.PickupMessage "Got the box of heavy bullets."
+ scale 0.6
+ +ignoreskill
+ States
+ {
+ Spawn:
+  CLIP A 10
+  CLIP A 1 bright
+  loop
+ }
+}
+ACTOR Shotgunammo : Ammo replaces Shell
+{
+ Inventory.Amount 4 
+ Inventory.MaxAmount 90
+ Ammo.BackpackAmount 8 
+ Ammo.BackpackMaxAmount 150 
+ Inventory.PickupSound "items/ammopickup"
+ Inventory.Icon "SBOXA0"
+ Inventory.PickupMessage "Got the shotgun shells."
+ scale 0.4
+  +ignoreskill
+ States
+ {
+ Spawn:
+  SHEL A 10
+  SHEL A 1 bright
+  loop
+ }
+}
+ACTOR Shotgunbox : Shotgunammo replaces Shellbox
+{
+  Inventory.Amount 16
+  Inventory.PickupMessage "Got the box of shells."
+  Inventory.PickupSound "items/pickupclip"
+  scale 0.7
+   -ignoreskill
+ States
+ {
+ Spawn:
+  SBOX A 10
+  SBOX A 1 bright
+  loop
+ }
+}
+ACTOR NineMilAmmo : Ammo
+{
+ Inventory.Amount 32
+ Inventory.MaxAmount 320
+ Ammo.BackpackAmount 48 
+ Ammo.BackpackMaxAmount 480
+ Inventory.Icon "AMMOA0"
+ Inventory.PickupSound "items/ammopickup"
+ Inventory.PickupMessage "Got the light bullets."
+ scale 0.5
+
+ States
+ {
+ Spawn:
+  AMMO A 10
+  AMMO A 1 bright
+  loop
+ }
+}
+ACTOR RifleAmmo : Ammo 13056
+{
+ Inventory.Amount 30 
+ Inventory.MaxAmount 150
+ Ammo.BackpackAmount 30 
+ Ammo.BackpackMaxAmount 240
+ Inventory.Icon "556AA0" 
+ Inventory.PickupSound "items/pickupclip"
+ Inventory.PickupMessage "Got the rifle cartridges."
+ scale 0.6
+ States
+ {
+ Spawn:
+   556A A 10
+  556A A 1 bright
+  loop
+ }
+}
+ACTOR PipeAmmo : Ammo
+{
+   Inventory.Amount 1
+   Inventory.MaxAmount 10
+   Ammo.BackpackAmount 0
+   Ammo.BackpackMaxAmount 15
+   Inventory.PickupSound "items/ammopickup"
+   Inventory.PickupMessage "Got the Pipebomb."
+   Inventory.Icon "ROCKA0"
+   Scale 0.6
+   +IGNORESKILL
+   States
+   {
+   Spawn:
+      ROCK A 10
+	  ROCK A 1 bright
+      Loop
+   }
+}
+ACTOR Napalmammo: Ammo replaces RocketBox
+{
+  Inventory.Amount 6
+   Inventory.MaxAmount 48
+   Ammo.BackpackAmount 6
+   Ammo.BackpackMaxAmount 72
+   Inventory.PickupSound "items/ammopickup"
+   Inventory.Icon "BROKA0"
+  Inventory.PickupMessage "Got the fuel canister."
+  scale 0.8
+ States
+ {
+ Spawn:
+  BROK A 10
+  BROK A 1 bright
+  loop
+ }
+}
+ACTOR Slugammo: Ammo
+{
+  Inventory.Amount 4
+   Inventory.MaxAmount 60
+   Ammo.BackpackAmount 8
+   Ammo.BackpackMaxAmount 90
+   Inventory.PickupSound "items/ammopickup"
+   Inventory.Icon "CELLA0"
+  Inventory.PickupMessage "Got the slugs."
+  scale 0.6
+  +ignoreskill
+ States
+ {
+ Spawn:
+  CELL A 10 
+  CELL A 1 bright
+  loop
+ }
+}
+ACTOR Slugpack : Slugammo
+{
+  Inventory.Amount 20
+  Inventory.PickupMessage "Got the pack of slugs."
+  Inventory.PickupSound "items/pickupclip"
+  scale 0.7
+   -ignoreskill
+ States
+ {
+ Spawn:
+  CELP A 10
+  CELP A 1 bright
+  loop
+ }
+}
+ACTOR XbowAmmo: Ammo
+{
+  Inventory.Amount 1
+   Inventory.MaxAmount 40
+   Ammo.BackpackAmount 4
+   Ammo.BackpackMaxAmount 60
+   Inventory.PickupSound "items/ammopickup"
+   Inventory.Icon "BELLA0"
+  Inventory.PickupMessage "Got the crossbow bolt."
+  scale 0.6
+  +ignoreskill
+ States
+ {
+ Spawn:
+  BELL A 10 
+  BELL A 1 bright
+  loop
+ }
+}
+ACTOR Xbowpack : XbowAmmo
+{
+  Inventory.Amount 6
+  Inventory.PickupMessage "Got the pack of crossbow bolts."
+  Inventory.PickupSound "items/pickupclip"
+  scale 0.7
+  +ignoreskill
+ States
+ {
+ Spawn:
+  BELP A 10
+  BELP A 1 bright
+  loop
+ }
+}
+ACTOR Thumperammo: Ammo 
+{
+  Inventory.Amount 6
+   Inventory.MaxAmount 20
+   Ammo.BackpackAmount 1
+   Ammo.BackpackMaxAmount 40
+   Inventory.PickupSound "items/ammopickup"
+   Inventory.Icon "40MMA0"
+  Inventory.PickupMessage "Got the HE Grenades."
+  scale 0.6
+ States
+ {
+ Spawn:
+  40MM A 10
+  40MM A 1 bright
+  loop
+ }
+}

@@ -1,0 +1,43 @@
+#library "FIRECHECK"
+#include "zcommon.acs"
+
+script 990 ENTER // firebutton check
+{
+ int buttons;
+
+ while (TRUE)
+ {
+   buttons = GetPlayerInput(-1, INPUT_BUTTONS);
+
+   if (buttons & BT_ALTATTACK)
+   {
+     giveinventory("altfiretoggled", 1);
+   }
+   
+   else
+   {
+   takeinventory("altfiretoggled", 1);
+  }
+
+   delay(1);
+ }}
+ script 991 ENTER // firebutton check
+{
+ int buttons;
+
+ while (TRUE)
+ {
+   buttons = GetPlayerInput(-1, INPUT_BUTTONS);
+
+   if (buttons & BT_ATTACK)
+   {
+     giveinventory("primefiretoggled", 1);
+   }
+   
+   else
+   {
+   takeinventory("primefiretoggled", 1);
+  }
+
+   delay(1);
+ }}

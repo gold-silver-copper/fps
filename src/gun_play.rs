@@ -35,7 +35,7 @@ fn shoot_bullet(
             let spawn_pos = global.translation() + forward * 1.0; // 1 unit in front
 
             // Bullet speed
-            let speed = 800.0;
+            let speed = 400.0;
             // First, create an emissive material
             let emissive_material = materials.add(StandardMaterial {
                 base_color: Color::srgb(0.8, 0.7, 0.6),
@@ -60,7 +60,7 @@ fn shoot_bullet(
                 GravityScale(1.0),
                 // Optional: frictionless
                 Friction::new(0.0),
-                Restitution::new(0.99),
+                Restitution::new(0.8),
                 LinearDamping(0.01),
             ));
         }

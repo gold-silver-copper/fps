@@ -1,0 +1,70 @@
+ACTOR ArmorScrap : Armorbonus replaces armorbonus
+{
+  armor.maxsaveamount 200
+  armor.savepercent 40
+  armor.saveamount 2
+  scale 0.5
+  inventory.icon "BON2A0"
+  -INVENTORY.ALWAYSPICKUP
+  -countitem
+  Inventory.PickupSound "items/shardpickup"
+  Inventory.PickupMessage "Got the armor scraps."
+  states
+  {
+  Spawn:
+    BON2 A 10
+	BON2 A 1 bright
+	loop
+  }
+}
+ACTOR ArmorLeather : Armorscrap replaces greenarmor
+{
+  armor.maxsaveamount 100
+  armor.savepercent 40
+  armor.saveamount 100
+  inventory.icon "ARM1A0"
+  scale 1
+  Inventory.PickupSound "items/armorpickup"
+  -INVENTORY.ALWAYSPICKUP
+  -COUNTITEM
+  Inventory.PickupMessage "Got the Leather Armor."
+  states
+  {
+  Spawn:
+    ARM1 A 10
+	ARM1 A 1 bright
+	loop
+  }
+}
+ACTOR ArmorCombat : Armorscrap replaces bluearmor
+{
+  armor.maxsaveamount 200
+  armor.savepercent 40
+  armor.saveamount 200
+  inventory.icon "ARM2A0"
+  scale 1
+  Inventory.PickupSound "items/armorpickup2"
+  -INVENTORY.ALWAYSPICKUP
+  -COUNTITEM
+  Inventory.PickupMessage "Got the Metal Armor."
+  states
+  {
+  Spawn:
+    ARM2 A 10
+	ARM2 A 1 bright
+	loop
+  }
+}
+Actor ArmorLegendary: MegaSphere replaces Megasphere
+{
+   Inventory.PickupSound "items/Legendpickup"
+   scale 1
+   Inventory.PickupMessage "Got the Legendary Armor!!"
+  states
+  {
+  Spawn:
+    ARM3 A 10
+	ARM3 A 10 Bright
+    loop
+  }
+}

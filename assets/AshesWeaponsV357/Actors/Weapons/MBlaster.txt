@@ -1,0 +1,917 @@
+ACTOR NapalmLoaded : Ammo
+{
+ Inventory.MaxAmount 9
+ +IGNORESKILL
+}
+ACTOR NapalmMaxxed : Ammo
+{
+ Inventory.MaxAmount 12
+ +IGNORESKILL
+}
+ACTOR ProtoLoaded : Ammo
+{
+ Inventory.MaxAmount 9
+ +IGNORESKILL
+}
+ACTOR NapalmSelector : actor replaces rocketlauncher
+{
+States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(GetCVar("NapalmChoice") == 0, "Weapon1")
+		TNT1 A 0 A_JumpIf(GetCVar("NapalmChoice") == 1, "Weapon2")
+		TNT1 A 0 A_JumpIf(GetCVar("NapalmChoice") == 2, "Weapon3")
+		Stop
+    Weapon1:
+		TNT1 A 0 A_jump(96,"Weapon3")
+	Weapon2:
+		TNT1 A 0 A_SpawnItem("NapalmSpawn")
+		Stop
+	Weapon3:
+		TNT1 A 0 A_SpawnItem("ProtoSpawn")
+		Stop
+	}
+}
+ACTOR NapalmSpawn : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "LAUNA0"
+	Inventory.PickupMessage "Got the Master Blaster!"
+	Inventory.PickupSound "items/gunspickup"
+	States
+	{
+	Spawn:
+		LAUP A 10
+		LAUP A 1 bright
+		loop
+	Pickup:
+	    TNT1 A 0 A_JumpIfInventory("NapalmGun3", 1, 4) //Skips giving you the normal blaster if you have the upgrade
+		TNT1 A 0 A_JumpIfInventory("NapalmGun2", 1, 3) //Skips giving you the normal blaster if you have the upgrade
+		TNT1 A 0 A_GiveInventory("NapalmGun")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("NapalmAmmo", 6)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR ProtoSpawn : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "PRBIA0"
+	Inventory.PickupMessage "Got the Proto Blaster!"
+	Inventory.PickupSound "items/gunspickup"
+	States
+	{
+	Spawn:
+		PRBP A 10
+		PRBP A 1 bright
+		loop
+	Pickup:
+	    TNT1 A 0 A_JumpIfInventory("ProtoGun3", 1, 4) //Skips giving you the normal blaster if you have the upgrade
+		TNT1 A 0 A_JumpIfInventory("ProtoGun2", 1, 3) //Skips giving you the normal blaster if you have the upgrade
+		TNT1 A 0 A_GiveInventory("ProtoGun")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("NapalmAmmo", 6)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR NapalmBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "LAUPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		LAUP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("napalmgun2")
+		TNT1 A 0 A_takeInventory("napalmgun")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR NapalmBuild3 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "LAUPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		LAUP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("napalmgun3")
+		TNT1 A 0 A_takeInventory("napalmgun")
+		TNT1 A 0 A_takeInventory("napalmgun2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR ProtoBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "PR2IA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		LAUP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Protogun2")
+		TNT1 A 2 
+		TNT1 A 0 A_selectweapon("Protogun2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 2
+		Stop
+	}
+}
+ACTOR ProtoBuild3 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "PR3IA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		LAUP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Protogun3")
+		TNT1 A 2 
+		TNT1 A 0 A_selectweapon("Protogun3")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 2
+		Stop
+	}
+}
+ACTOR NapalmGun : Weapon
+{
+  SpawnID 29
+  Radius 20
+  Height 16
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.Selectionorder 2500
+  +WEAPON.NOAUTOAIM //That just looked ridiculous
+  +AMMO_CHECKBOTH
+  +NOALERT
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+ Weapon.AmmoGive2 6
+ Weapon.AmmoType1 "NapalmLoaded"
+ Weapon.AmmoType2 "NapalmAmmo"
+ weapon.upsound "weapons/napalmup"
+  Weapon.Kickback 100
+  Weapon.SlotNumber 5 
+  scale 0.8
+  Inventory.PickupMessage "Got the Master Blaster!"
+  Tag "Master Blaster"
+  Inventory.PickupSound "items/gunspickup"
+  Inventory.Icon "LAUNA0"
+  States
+  {
+  Spawn:
+    LAUP A 10
+	LAUP A 1 bright
+    loop
+  Ready:
+    NPLM A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+    Loop
+  Deselect:
+    NPLM A 0 A_lower
+    NPLM A 1 A_Lower
+    Loop
+  Select: 
+   TNT1 A 0 A_takeInventory("flashlit")
+    NPLM A 0 a_JumpIfInventory("NapalmLoaded",7,"CheetReset")
+    NPLM A 1 A_Raise
+	NPLM A 0 A_Raise
+    Loop
+  CheetReset:
+    NPLM A 1 A_Raise
+	NPLM A 0 A_takeinventory("NapalmLoaded",9)
+	NPLM A 0 A_giveinventory("NapalmLoaded",6)
+	NPLM A 0 A_Raise
+	Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("NapalmLoaded",1,"FireReal")
+    Goto Reload
+  FireReal: 
+	NPLM A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_FireCustomMissile ("AshesFirebomb", 0, 1, 15, -5, 0, 3)
+	NPLM B 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_SetPitch(Pitch-8.0)
+	NPLM C 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	NPLM D 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	TNT1 A 0 A_AlertMonsters
+	NPLM E 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	NPLM F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	NPLM G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPLM H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPLM I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPLM J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPLM K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPLM L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    NPLM A 0 A_JumpIfInventory("NapalmLoaded",1,"ready")
+    Goto Reload
+   Reload:
+		NPLM A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("NapalmLoaded",6,"Ready")
+        TNT1 A 0 A_JumpIfInventory("NapalmAmmo",1,"Work1")
+        Goto Ready
+	Work1:
+		NPLM MNOP 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_PlaySound("weapons/boomerreload", CHAN_ITEM, 1.5)
+		NPLM QRSST 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	ReloadLoop:
+		TNT1 A 0 a_JumpIfInventory("NapalmLoaded",6,"ReloadDone")
+		TNT1 A 0 A_Giveinventory("NapalmLoaded",1)
+		TNT1 A 0 A_TakeInventory("NapalmAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 a_JumpIfInventory("NapalmAmmo",1,"Reloadloop")
+        Goto ReloadDone
+ ReloadDone:
+  NPLM TTTTTTTT 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  NPLM SRQPONM 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  NPLM A 0 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  goto ready
+  Altfire:
+         TNT1 A 0 a_JumpIfInventory("NapalmLoaded",1,1)
+         Goto Reload
+		 NPLM A 0 A_PlaySound("weapons/flamestart", CHAN_WEAPON, 1.5)
+  AltfireReal:
+        TNT1 A 0 a_JumpIfInventory("NapalmLoaded",1,2)
+		NPLM A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+        Goto Reload
+        TNT1 A 0 A_TakeInventory("NapalmLoaded",1,TIF_NOTAKEINFINITE)
+        NPLM A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+		NPL3 A 0 A_PlaySound("weapons/flamestream", CHAN_item, 1)
+	    TNT1 A 0 A_FireProjectile("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPLM U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPLM V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+		TNT1 A 0 A_AlertMonsters
+	    NPLM U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPLM V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPLM U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+	    NPLM V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPLM U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+		NPLM I 2 A_refire("altfirereal")
+		NPLM J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		NPL2 A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+	    NPLM K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    NPLM L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	 User1:
+        NPLM WXYZ 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 3
+        KNIF ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1
+		TNT1 A 10
+		NPLM ZYXW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	Zoom:
+	    NPLM A 0  A_giveinventory("lightlit",1)
+	    NPLM A 0  A_SelectWeapon("crowbar")
+		NPLM A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  }
+}
+ACTOR NapalmGun2 : Napalmgun
+{
+  +CHEATNOTWEAPON
+ weapon.Ammogive1 6
+ Weapon.AmmoGive2 3
+  Weapon.SlotNumber 5 
+  Inventory.PickupMessage "Got the Master Blaster Mk2!"
+  Tag "Master Blaster MkII"
+  Inventory.Icon "LAUNB0"
+  States
+  {
+  Spawn:
+    LA2P A 10
+	LA2P A 1 bright
+    loop
+  Ready:
+    NPL2 A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+    Loop
+  Deselect:
+    NPL2 A 0 A_lower
+    NPL2 A 1 A_Lower
+    Loop
+  Select: 
+   TNT1 A 0 A_takeInventory("flashlit")
+    TNT1 A 0 A_TakeInventory("NapalmGun",1)
+    NPL2 A 1 A_Raise
+	NPL2 A 0 A_Raise
+    Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("NapalmLoaded",1,"FireReal")
+    Goto Reload
+  FireReal: 
+	NPL2 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_FireCustomMissile ("AshesFirebomb", 0, 1, 15, -5, 0, 3)
+	NPL2 B 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_SetPitch(Pitch-8.0)
+	NPL2 C 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	NPL2 D 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	TNT1 A 0 A_AlertMonsters
+	NPL2 E 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	NPL2 F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	NPL2 G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL2 H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL2 I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL2 J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL2 K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL2 L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    NPL2 A 0 A_JumpIfInventory("NapalmLoaded",1,"ready")
+    Goto Reload
+   Reload:
+		NPL2 A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("NapalmLoaded",9,"Ready")
+        TNT1 A 0 A_JumpIfInventory("NapalmAmmo",1,"Work1")
+        Goto Ready
+	Work1:
+		NPL2 MNOP 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_PlaySound("weapons/boomerreload", CHAN_ITEM, 1.5)
+		NPL2 QRSST 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	ReloadLoop:
+		TNT1 A 0 a_JumpIfInventory("NapalmLoaded",9,"ReloadDone")
+		TNT1 A 0 A_Giveinventory("NapalmLoaded",1)
+		TNT1 A 0 A_TakeInventory("NapalmAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 a_JumpIfInventory("NapalmAmmo",1,"Reloadloop")
+        Goto ReloadDone
+ ReloadDone:
+  NPL2 TTTTTTTT 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  NPL2 SRQPONM 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  NPL2 A 0 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  goto ready
+  Altfire:
+         TNT1 A 0 a_JumpIfInventory("NapalmLoaded",1,"1")
+         Goto Reload
+		 NPL2 A 0 A_PlaySound("weapons/flamestart", CHAN_WEAPON, 1.5)
+  AltfireReal:
+        TNT1 A 0 a_JumpIfInventory("NapalmLoaded",1,"2")
+		NPL3 A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+        Goto Reload
+        TNT1 A 0 A_TakeInventory("NapalmLoaded",1,TIF_NOTAKEINFINITE)
+        NPL2 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+		NPL3 A 0 A_PlaySound("weapons/flamestream", CHAN_item, 1)
+	    TNT1 A 0 A_FireProjectile("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPL2 U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPL2 V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+		TNT1 A 0 A_AlertMonsters
+	    NPL2 U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPL2 V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPL2 U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+	    NPL2 V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	    NPL2 U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+		NPL2 I 2 A_refire("altfirereal")
+		NPL2 J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		NPL2 A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+	    NPL2 K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    NPL2 L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	User1:
+        NPL2 WXYZ 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 3
+        KNIF ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1
+		TNT1 A 10
+		NPL2 ZYXW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	Zoom:
+	    NPL2 A 0  A_giveinventory("lightlit",1)
+	    NPL2 A 0  A_SelectWeapon("crowbar")
+		NPL2 A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  }
+}
+ACTOR NapalmGun3 : Napalmgun
+{
+  +CHEATNOTWEAPON
+ weapon.Ammogive1 6
+ Weapon.AmmoGive2 3 
+  Inventory.PickupMessage "Got the Master Blaster Mk3!"
+  Tag "Master Blaster MkIII"
+  Inventory.Icon "LAUNC0"
+  States
+  {
+  Spawn:
+    LA3P A 10
+	LA3P A 1 bright
+    loop
+  Ready:
+    NPL3 A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+    Loop
+  Deselect:
+    NPL3 A 0 A_lower
+    NPL3 A 1 A_Lower
+    Loop
+  Select:
+   TNT1 A 0 A_takeInventory("flashlit")
+    TNT1 A 0 A_TakeInventory("NapalmGun2",1)
+    TNT1 A 0 A_TakeInventory("NapalmGun",1)
+    NPL3 A 1 A_Raise
+	NPL3 A 0 A_Raise
+    Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("NapalmLoaded",1,"FireReal")
+    Goto Reload
+  FireReal: 
+	NPL3 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_FireCustomMissile ("AshesFirebombHiPres", 0, 1, 15, -5, 0, 3)
+	NPL3 B 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_SetPitch(Pitch-8.0)
+	NPL3 C 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	NPL3 D 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	TNT1 A 0 A_AlertMonsters
+	NPL3 E 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	NPL3 F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	NPL3 G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL3 H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL3 I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL3 J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL3 K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	NPL3 L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    NPL3 A 0 A_JumpIfInventory("NapalmLoaded",1,"ready")
+    Goto Reload
+   Reload:
+		NPL3 A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("NapalmLoaded",9,"Ready")
+        TNT1 A 0 A_JumpIfInventory("NapalmAmmo",1,"Work1")
+        Goto Ready
+	Work1:
+		NPL3 MNOP 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_PlaySound("weapons/boomerreload", CHAN_ITEM, 1.5)
+		NPL3 QRSST 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	ReloadLoop:
+		TNT1 A 0 a_JumpIfInventory("NapalmLoaded",9,"ReloadDone")
+		TNT1 A 0 A_Giveinventory("NapalmLoaded",1)
+		TNT1 A 0 A_TakeInventory("NapalmAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 a_JumpIfInventory("NapalmAmmo",1,"Reloadloop")
+        Goto ReloadDone
+ ReloadDone:
+  NPL3 TTTTTTTT 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  NPL3 SRQPONM 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  NPL3 A 0 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  goto ready
+  Altfire:
+         TNT1 A 0 a_JumpIfInventory("NapalmLoaded",1,"1")
+		 Goto Reload
+		 NPL3 A 0 A_PlaySound("weapons/flamestart", CHAN_WEAPON, 1.5)
+  AltfireReal:
+        TNT1 A 0 a_JumpIfInventory("NapalmLoaded",1,"2")
+		NPL3 A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+        Goto Reload
+        TNT1 A 0 A_TakeInventory("NapalmLoaded",1,TIF_NOTAKEINFINITE)
+        NPL3 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	    TNT1 A 0 A_FireProjectile("FireStreamHiPres", Random(1, -1), 0, 5, -5, 0, Random(1, -1))
+		NPL3 A 0 A_PlaySound("weapons/flamestream", CHAN_item, 1)
+	    NPL3 U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_FireProjectile ("FireStreamHiPres", Random(1, -1), 0, 5, -5, 0, Random(1, -1))
+	    NPL3 V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStreamHiPres", Random(1, -1), 0, 5, -5, 0, Random(1, -1))
+		TNT1 A 0 A_AlertMonsters
+	    NPL3 U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStreamHiPres", Random(1, -1), 0, 5, -5, 0, Random(1, -1))
+	    NPL3 V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStreamHiPres", Random(1, -1), 0, 5, -5, 0, Random(1, -1))
+	    NPL3 U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_FireProjectile ("FireStreamHiPres", Random(1, -1), 0, 5,-5, 0, Random(1, -1))
+	    NPL3 V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStreamHiPres", Random(1, -1), 0, 5, -5, 0, Random(1, -1))
+	    NPL3 U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+		TNT1 A 0 A_FireProjectile ("FireStreamHiPres", Random(1, -1), 0, 5,-5, 0, Random(1, -1))
+		NPL3 I 2 A_refire("altfirereal")
+		NPL3 J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		NPL3 A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+	    NPL3 K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    NPL3 L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	User1:
+        NPL3 WXYZ 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 3
+        KNIF ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1
+		TNT1 A 10
+		NPL3 ZYXW 2  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	Zoom:
+	    NPL2 A 0  A_giveinventory("lightlit",1)
+	    NPL2 A 0  A_SelectWeapon("crowbar")
+		NPL2 A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  }
+}
+ACTOR ProtoGun : Weapon
+{
+  SpawnID 29
+  Radius 20
+  Height 16
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.Selectionorder 2500
+  +WEAPON.NOAUTOAIM //That just looked ridiculous
+  +AMMO_CHECKBOTH
+ +AMMO_OPTIONAL
+  +NOALERT
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+ Weapon.AmmoGive2 6
+ Weapon.AmmoType1 "ProtoLoaded"
+ Weapon.AmmoType2 "NapalmAmmo"
+ weapon.upsound "weapons/napalmup"
+  Weapon.Kickback 100
+  Weapon.SlotNumber 5 
+  scale 0.8
+  Inventory.PickupMessage "Got the Proto Blaster!"
+  Tag "Proto Blaster"
+  Inventory.PickupSound "items/gunspickup"
+  Inventory.Icon "PRBIA0"
+  States
+  {
+  Spawn:
+    PRBP A 10
+	PRBP A 1 bright
+    loop
+  Ready:
+    PBLM A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  Deselect:
+    PBLM A 0 A_lower
+    PBLM A 1 A_Lower
+    Loop
+  Select: 
+   TNT1 A 0 A_takeInventory("flashlit")
+    PBLM A 0 A_takeinventory("lightlit",1)
+    PBLM A 0 a_JumpIfInventory("ProtoLoaded",7,"CheetReset")
+    PBLM A 1 A_Raise
+	PBLM A 0 A_Raise
+    Loop
+  CheetReset:
+    PBLM A 1 A_Raise
+	PBLM A 0 A_takeinventory("ProtoLoaded",9)
+	PBLM A 0 A_giveinventory("ProtoLoaded",6)
+	PBLM A 0 A_Raise
+	Loop
+  Fire:
+    PBLM A 0 a_JumpIfInventory("ProtoLoaded",1,1)
+    Goto Reload
+	PBLM A 0 A_PlaySound("weapons/flamestart", CHAN_WEAPON, 1.5)
+  FireReal:
+    TNT1 A 0 a_JumpIfInventory("ProtoLoaded",1,2)
+    PBLM A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+    Goto Reload
+    TNT1 A 0 A_TakeInventory("ProtoLoaded",1,TIF_NOTAKEINFINITE)
+    PBLM A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    PBLM A 0 A_PlaySound("weapons/flamestream", CHAN_item, 1)
+	TNT1 A 0 A_FireProjectile("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	PBLM U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	PBLM V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	TNT1 A 0 A_AlertMonsters
+	PBLM U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	PBLM V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	PBLM U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+	PBLM V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+    PBLM U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	TNT1 A 0 A_FireProjectile ("FireStream", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+    PBLM I 2 A_refire("firereal")
+	PBLM J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	PBLM A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+	PBLM K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	PBLM L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+   Reload:
+		PBLM A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("ProtoLoaded",6,"Ready")
+        TNT1 A 0 A_JumpIfInventory("NapalmAmmo",1,"Work1")
+        Goto Ready
+	Work1:
+		PBLM MNOP 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_PlaySound("weapons/boomerreload", CHAN_ITEM, 1.5)
+		PBLM QRSST 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	ReloadLoop:
+		TNT1 A 0 a_JumpIfInventory("ProtoLoaded",6,"ReloadDone")
+		TNT1 A 0 A_Giveinventory("ProtoLoaded",1)
+		TNT1 A 0 A_TakeInventory("NapalmAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 a_JumpIfInventory("NapalmAmmo",1,"Reloadloop")
+        Goto ReloadDone
+ ReloadDone:
+  PBLM TTTTTTTT 4 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+  PBLM SRQPONM 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+  PBLM A 0 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+  goto ready
+	 User1:
+        PBLM WXYZ 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 3
+        KNIF ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1
+		TNT1 A 10
+		PBLM ZYXW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  }
+}
+ACTOR ProtoGun2 : Protogun
+{
+  +CHEATNOTWEAPON
+   +WEAPON.ALT_AMMO_OPTIONAL
+  Weapon.Selectionorder 2200
+  weapon.Ammogive1 6
+  Weapon.AmmoGive2 3
+  Weapon.SlotNumber 5 
+  Inventory.PickupMessage "Got the Mega Blaster!"
+  Tag "Mega Blaster"
+  Inventory.Icon "PR2IA0"
+  States
+  {
+  Spawn:
+    PR2P A 10
+	PR2P A 1 bright
+    loop
+  Ready:
+    PBL2 A 0 a_JumpIfInventory("NapalmMaxxed",12,"ReadyCharged")
+    PBL2 A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  ReadyCharged:
+    PBL3 A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  Deselect:
+    PBL2 A 0 A_lower
+    PBL2 A 1 A_Lower
+    Loop
+  Select: 
+   TNT1 A 0 A_takeInventory("flashlit")
+    PBL2 A 0 A_takeinventory("lightlit",1)
+    TNT1 A 0 A_TakeInventory("ProtoGun",1)
+    PBL2 A 1 A_Raise
+	PBL2 A 0 A_Raise
+    Loop
+  Fire:
+   "####" A 0 a_JumpIfInventory("ProtoLoaded",1,"1")
+    Goto Reload
+    "####" A 0 A_PlaySound("weapons/flamestart", CHAN_WEAPON, 1.5)
+  FireReal:
+     "####" A 0 a_JumpIfInventory("NapalmMaxxed",12,"FireCharged")
+    PBL2 A 0 a_JumpIfInventory("ProtoLoaded",1,"firesequence")
+	PBL2 A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+    Goto Reload
+   Firecharged:
+    PBL3 A 0 a_JumpIfInventory("ProtoLoaded",1,"firesequence")
+	PBL3 A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+    Goto Reload
+  firesequence:
+    "####" A 0 A_TakeInventory("ProtoLoaded",1,TIF_NOTAKEINFINITE)
+    "####" A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    "####" A 0 A_PlaySound("weapons/flamestream", CHAN_item, 1)
+	"####" A 0 A_FireProjectile("FirestreamMega", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    "####" A 0 A_FireProjectile ("FirestreamMega", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamMega", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" A 0 A_AlertMonsters
+	"####" U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	"####" A 0 A_FireProjectile ("FirestreamMega", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamMega", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamMega", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+	"####" V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamMega", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamMega", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+	"####" a 0 A_Giveinventory("Napalmmaxxed",1)
+	"####" I 2 A_refire("firereal")
+	"####" J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+	"####" K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+   Reload:
+		"####" A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		"####" A 0 A_JumpIfInventory("ProtoLoaded",9,"Ready")
+        "####" A 0 A_JumpIfInventory("NapalmAmmo",1,"Work1")
+        Goto Ready
+	Work1:
+		"####" MNOP 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		"####" A 0 A_PlaySound("weapons/boomerreload", CHAN_ITEM, 1.5)
+		"####" QRSST 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	ReloadLoop:
+		"####" A 0 a_JumpIfInventory("ProtoLoaded",9,"ReloadDone")
+		"####" A 0 A_Giveinventory("ProtoLoaded",1)
+		"####" A 0 A_TakeInventory("NapalmAmmo",1,TIF_NOTAKEINFINITE)
+		"####" A 0 a_JumpIfInventory("NapalmAmmo",1,"Reloadloop")
+        Goto ReloadDone
+ ReloadDone:
+  "####" TTTTTTTT 4 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+ "####" SRQPONM 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+  "####" A 0 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+  goto ready
+	User1:
+        "####" WXYZ 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		"####" A 3
+       TNT1 A 3
+        KNIF ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1
+		TNT1 A 10
+		PBL2 ZYXW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  Altfire:
+       "####" A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+       "####" A 0 A_JumpIfInventory("NapalmMaxxed",12,"AltfireReal")
+	   "####" A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	   goto ready
+ AltfireReal:
+        "####" A 0 A_playsound("weapons/napalmburst", CHAN_AUTO, 1)
+        "####" A 0 A_TakeInventory("NapalmMaxxed",12)
+		 "####" A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+		"####" A 0 A_FireProjectile("Napalmblast", 25, 0, 10, -5, 0, Random(1, -1))
+		 PBL3 B 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		 "####" A 0 A_FireProjectile("Napalmblast", 0, 0, 10, -5, 0, Random(1, -1))
+		 PBL3 C 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		  "####" A 0 A_FireProjectile("Napalmblast", -25, 0, 10, -5, 0, Random(1, -1))
+		 PBL3 DEFGHH 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		 PBL3 IJKLM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		 goto ready 
+  }
+}
+ACTOR ProtoGun3 : Protogun
+{
+  +CHEATNOTWEAPON
+   +WEAPON.ALT_AMMO_OPTIONAL
+  Weapon.Selectionorder 2100
+  weapon.Ammogive1 6
+  Weapon.AmmoGive2 3
+  Weapon.SlotNumber 5 
+  Inventory.PickupMessage "Got the Hyper Blaster!"
+  Tag "Hyper Blaster"
+  Inventory.Icon "PR3IA0"
+  States
+  {
+  Spawn:
+    PR3P A 10
+	PR3P A 1 bright
+    loop
+  Ready:
+    PBL4 A 0 a_JumpIfInventory("NapalmMaxxed",9,"ReadyCharged")
+    PBL4 A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  ReadyCharged:
+    PBL5 A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  Deselect:
+    PBL4 A 0 A_lower
+    PBL4 A 1 A_Lower
+    Loop
+  Select: 
+   TNT1 A 0 A_takeInventory("flashlit")
+    PBL4 A 0 A_takeinventory("lightlit",1)
+    TNT1 A 0 A_TakeInventory("ProtoGun",1)
+	TNT1 A 0 A_TakeInventory("ProtoGun2",1)
+    PBL4 A 1 A_Raise
+	PBL4 A 0 A_Raise
+    Loop
+  Fire:
+   "####" A 0 a_JumpIfInventory("ProtoLoaded",1,"1")
+    Goto Reload
+    "####" A 0 A_PlaySound("weapons/flamestart", CHAN_WEAPON, 1.5)
+  FireReal:
+     "####" A 0 a_JumpIfInventory("NapalmMaxxed",9,"FireCharged")
+    PBL4 A 0 a_JumpIfInventory("ProtoLoaded",1,"firesequence")
+	PBL4 A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+    Goto Reload
+   Firecharged:
+    PBL5 A 0 a_JumpIfInventory("ProtoLoaded",1,"firesequence")
+	PBL5 A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+    Goto Reload
+  firesequence:
+    "####" A 0 A_TakeInventory("ProtoLoaded",1,TIF_NOTAKEINFINITE)
+    "####" A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    "####" A 0 A_PlaySound("weapons/flamestream", CHAN_item, 1)
+	"####" A 0 A_FireProjectile("FirestreamHIPRES", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    "####" A 0 A_FireProjectile ("FirestreamHIPRES", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamHIPRES", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" A 0 A_AlertMonsters
+	"####" U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	"####" A 0 A_FireProjectile ("FirestreamHIPRES", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamHIPRES", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamHIPRES", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+	"####" V 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamHIPRES", Random(1, -1), 0, 10, -5, 0, Random(1, -1))
+	"####" U 2 bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+    "####" A 0 A_FireProjectile ("FirestreamHIPRES", Random(1, -1), 0, 10,-5, 0, Random(1, -1))
+	"####" a 0 A_Giveinventory("Napalmmaxxed",1)
+	"####" I 2 A_refire("firereal")
+	"####" J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_PlaySound("weapons/flamestop", CHAN_WEAPON, 1.5)
+	"####" K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+   Reload:
+		"####" A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		"####" A 0 A_JumpIfInventory("ProtoLoaded",9,"Ready")
+        "####" A 0 A_JumpIfInventory("NapalmAmmo",1,"Work1")
+        Goto Ready
+	Work1:
+		"####" MNOP 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		"####" A 0 A_PlaySound("weapons/boomerreload", CHAN_ITEM, 1.5)
+		"####" QRSST 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	ReloadLoop:
+		"####" A 0 a_JumpIfInventory("ProtoLoaded",9,"ReloadDone")
+		"####" A 0 A_Giveinventory("ProtoLoaded",1)
+		"####" A 0 A_TakeInventory("NapalmAmmo",1,TIF_NOTAKEINFINITE)
+		"####" A 0 a_JumpIfInventory("NapalmAmmo",1,"Reloadloop")
+        Goto ReloadDone
+ ReloadDone:
+  "####" TTTTTTTT 4 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+ "####" SRQPONM 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+  "####" A 0 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+  goto ready
+	User1:
+        "####" WXYZ 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		"####" A 3
+      TNT1 A 3
+        KNIF ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1
+		TNT1 A 10
+		NPL4 ZYXW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  Altfire:
+       "####" A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+       "####" A 0 A_JumpIfInventory("NapalmMaxxed",9,"AltfireReal")
+	   "####" A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	   goto ready
+ AltfireReal:
+        "####" A 0 A_playsound("weapons/napalmburst", CHAN_AUTO, 1)
+        "####" A 0 A_TakeInventory("NapalmMaxxed",12)
+		 "####" A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+		"####" A 0 A_FireProjectile("HyperNapalmblast", 25, 0, 10, -5, 0, Random(1, -1))
+		 PBL4 B 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		 "####" A 0 A_FireProjectile("HyperNapalmblast", 0, 0, 10, -5, 0, Random(1, -1))
+		 PBL4 C 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		  "####" A 0 A_FireProjectile("HyperNapalmblast", -25, 0, 10, -5, 0, Random(1, -1))
+		 PBL4 DEFGHH 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		 PBL4 IJKLM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		 goto ready 
+  }
+}

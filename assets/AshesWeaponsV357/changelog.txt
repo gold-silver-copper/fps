@@ -1,0 +1,34 @@
+
+
+Weapons pack 2.20 changes-
+-removed bulletpuff replacement, which would add jank to certain monsters.
+-ditto with firebomb which would nerf cyberdemons.
+-rpg icon should no longer appear.
+-Shotgun magazine reload now uses less intrusive sound file (old grenade launcher cocking sound).
+-When using infinite ammo cheat, lantern should be infinite and weapon special functions should not deplete ammo.
+-Battle Rifle added to weapons pack - fully compatible with modkits, starting from naked fal and ending with DMW-Fal.
+-Regular CLIP pickups have a chance to spawn 9mm Autoloaders instead.
+-Plasmarifle spawns have a chance of spawning either a Junker Musket or Military Rifle. 
+-Cell ammo spawns have a chance of spawning either 5.56mm or small slug ammo.
+-BFG9000 spawns have a chance of spawning either a Battle Rifle or Killer P.I.G.
+-Cellpack spawns have a chance of spawning either 7.62mm or large slug ammo.
+-The Lazer gun is now awarded with give weapon/all cheats.
+
+2.23-
+-Fixes to enemy projectiles and bullet puffs by PlasmaZippo incorporated into pk3.
+-Buff to FAL to balance and represent higher power of rarer .308 cartridge.
+-First aid kids no longer affect secrets count.
+-Sawed off shotgun no longer automatically reloads on empty, and can be reload-cancelled with altfire or switching weapon.
+
+3.57 - 
+-Added all weapons developed for Ashes: Hard Reset.
+-Added a toggle within the options menu so you can control which weapons spawn - either Hard Reset weapons, Afterglow weapons, or both!
+-Changed the lantern code so it handled by an external script rather than internal weapon spawners- should stop flickering now.
+-Added the new Greaser weapon, which is an optional .45cal replacement for the Machine-pistol, with it's own upgrade path.
+-Mod kits now spawn as a random chance replacement for backpacks, instead of replacing Blursphere(invisibility). This should make them more common.
+-Blurspheres are now replaced by Black Water Vials. This (watered down :) ) variant of the chemical grants a permanent 25 point boost to max health, up to a maximum of 200.
+-Buffed shotgun weapons and assault rifle weapons so that they remain viable later into the game and on maps with higher enemy counts.
+-All flame stream weapons (the flamethrower attack from Master/Proto blasters) have been given the RIPPER effect, allowing them to deal damage to crowds more effectively.
+-Expanded HUD to show 40mm HE grenades and crossbow bolts as available ammo.
+-FAL now uses 5.56mm, same as the other rifles, in order to reduce bloat and spawn chance issues. Sadness...
+

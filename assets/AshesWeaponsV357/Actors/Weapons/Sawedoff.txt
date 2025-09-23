@@ -1,0 +1,1914 @@
+ACTOR SawedOffSelector : actor replaces SuperShotgun
+{
+States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(GetCVar("SawedChoice") == 0, "Weapon1")
+		TNT1 A 0 A_JumpIf(GetCVar("SawedChoice") == 1, "Weapon2")
+		TNT1 A 0 A_JumpIf(GetCVar("SawedChoice") == 2, "Weapon3")
+		Stop
+    Weapon1:
+		TNT1 A 0 A_jump(96,"Weapon3")
+	Weapon2:
+		TNT1 A 0 A_SpawnItem("ShortySpawn")
+		Stop
+	Weapon3:
+		TNT1 A 0 A_SpawnItem("HunterSpawn")
+		Stop
+	}
+}
+ACTOR shortySpawn : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.6
+	Inventory.Icon "SHOTA0"
+	Inventory.PickupMessage "Got the Sawed-off shotgun."
+	Inventory.PickupSound "items/gunspickup"
+	+DROPPED
+	States
+	{
+	Spawn:
+		SAWP A 10
+		SAWP A 1 bright
+		loop
+	Pickup:
+	TNT1 A 0 A_JumpIfInventory("sawedoff3", 1, 4) //Skips giving you the normal sawed-off if you have the upgrade
+		TNT1 A 0 A_JumpIfInventory("sawedoff2", 1, 3) //Skips giving you the normal sawed-off if you have the upgrade
+		TNT1 A 0 A_GiveInventory("sawedoff")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("shotgunAmmo", 4)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR HunterSpawn : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.6
+	Inventory.Icon "HNSIA0"
+	Inventory.PickupMessage "Got the Hunter shotgun."
+	Inventory.PickupSound "items/gunspickup"
+	+DROPPED
+	States
+	{
+	Spawn:
+		HNSP A 10
+		HNSP A 1 bright
+		loop
+	Pickup:
+	    TNT1 A 0 A_JumpIfInventory("HunterShotgun3", 1, 4) //Skips giving you the normal HunterShotgun if you have the upgrade
+		TNT1 A 0 A_JumpIfInventory("HunterShotgun2", 1, 3) //Skips giving you the normal HunterShotgun if you have the upgrade
+		TNT1 A 0 A_GiveInventory("HunterShotgun")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("shotgunAmmo", 4)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR SawedoffBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "SAWPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		SAWP A 10
+		loop
+	Pickup:
+	    TNT1 A 0 A_GiveInventory("sawedoff2")
+		TNT1 A 0 A_takeInventory("sawedoff")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR SawedoffBuild3 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "SAWPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		SAWP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("sawedoff3")
+		TNT1 A 0 A_takeInventory("sawedoff")
+		TNT1 A 0 A_takeInventory("sawedoff2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR HunterShotgunBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "HNSIB0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		HNSP B 10
+		loop
+	Pickup:
+	    TNT1 A 0 A_GiveInventory("HunterShotgun2")
+		TNT1 A 2 
+		TNT1 A 0 A_selectweapon("Huntershotgun2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 2
+		Stop
+	}
+}
+ACTOR HunterShotgunBuild3 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "HNSIC0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		HNSP C 10
+		loop
+	Pickup:
+	    TNT1 A 0 A_GiveInventory("HunterShotgun3")
+		TNT1 A 2 
+		TNT1 A 0 A_selectweapon("Huntershotgun3")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 2
+		Stop
+	}
+}
+ACTOR ShotgunLoaded : Ammo
+{
+ Inventory.MaxAmount 3
+  Ammo.BackPackMaxAmount 3
+ +IGNORESKILL
+}
+ACTOR ShotgunChambered : Ammo
+{
+ Inventory.MaxAmount 3
+  Ammo.BackPackMaxAmount 3
+ +IGNORESKILL
+}
+ACTOR HunterLoaded : Ammo
+{
+ Inventory.MaxAmount 2
+  Ammo.BackPackMaxAmount 2
+ +IGNORESKILL
+}
+ACTOR HunterChambered : Ammo
+{
+ Inventory.MaxAmount 2
+  Ammo.BackPackMaxAmount 2
+ +IGNORESKILL
+}
+ACTOR HunterFound : Ammo
+{
+ Inventory.MaxAmount 1
+  Ammo.BackPackMaxAmount 1
+ +IGNORESKILL
+}
+ACTOR Flashlit : Ammo
+{
+ Inventory.MaxAmount 1
+ Ammo.BackPackMaxAmount 1
+ +IGNORESKILL
+}
+ACTOR SawedOff : Weapon 
+{
+  SpawnID 27
+  Weapon.Kickback 150
+  Weapon.SelectionOrder 1200
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+  Weapon.AmmoGive2 4
+  Weapon.AmmoType2 "shotgunammo"
+  Weapon.AmmoType1 "shotgunLoaded"
+  Weapon.BobStyle Alpha
+  Weapon.BobSpeed 1.5
+  Weapon.BobRangeX .2
+  Weapon.BobRangeY .5
+  Weapon.Kickback 120
+  Obituary "%o chewed on %k's boomstick."
+  Tag "Sawed-off Shotgun"
+  weapon.slotnumber 3
+  scale 0.6
+  weapon.upsound "weapons/sawedoffdeploy"
+  +AMMO_CHECKBOTH
+  +NOALERT
+  +weapon.meleeweapon
+  Inventory.Pickupmessage "Got the Sawed-off shotgun!"
+  Inventory.PickupSound "items/gunspickup"
+  Inventory.Icon "SHOTA0"
+  States
+  {
+  Ready:
+  SAWN A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+  Loop
+  Deselect:
+    SAWN A 1 A_Lower
+	SAWN A 0 A_Lower
+    Loop
+  Select: 
+     TNT1 A 0 A_takeInventory("flashlit")
+    SAWN A 0 a_JumpIfInventory("ShotgunLoaded",3,"CheetReset")
+    SAWN A 1 A_Raise
+	SAWN A 0 A_Raise
+    Loop
+  CheetReset:
+    SAWN A 1 A_Raise
+	SAWN A 0 A_takeinventory("Shotgunloaded",3)
+	SAWN A 0 A_giveinventory("ShotgunLoaded",2)
+	SAWN A 0 A_Raise
+	Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("Shotgunloaded",1,"FireReal")
+    Goto Reload
+  FireReal:
+	TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (7, 7, 6, 12, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 a_JumpIfInventory("ShotgunLoaded",2,10)
+	TNT1 A 0 A_TakeInventory("shotgunloaded",1,TIF_NOTAKEINFINITE)
+    SAWF A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    SAWF B 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_jump(256, 5)
+	TNT1 A 0 A_TakeInventory("shotgunloaded",1,TIF_NOTAKEINFINITE)
+	SAWF C 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-1)
+    SAWF D 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	SAWF E 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	TNT1 A 0 A_AlertMonsters
+	SAWF F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	SAWF G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SAWN A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	SAWN A 0 A_checkreload
+	Goto Ready
+  Reload:
+    SAWN A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_jumpifinventory("Shotgunammo", 1, 1)
+	goto ready
+    TNT1 A 0 A_JumpIfInventory("shotgunLoaded",2,"Ready")
+	TNT1 A 0 A_JumpIfInventory("shotgunloaded",1,"Work2")
+ Work1:
+    TNT1 A 0 A_JumpIfInventory("shotgunChambered",2,"Work3")
+     SAWR AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	SAWS CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SAWS EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 8
+	SAWR H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SAWR IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SAWR L 5 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SAWR M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+Work2:
+    SAWR AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	SAWS CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SAWH EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 8
+	SAWH H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SAWH IJ 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SAWR K 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SAWR L 5 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SAWR M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+work3:
+    SAWR AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	SAWR CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SAWR EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,12,-3)
+    TNT1 A 8
+	SAWR H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SAWR IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SAWR L 5 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SAWR M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+  ReloadLoop:
+	TNT1 A 0 A_Giveinventory("Shotgunloaded",1)
+	TNT1 A 0 A_Giveinventory("Shotgunchambered",1)
+	TNT1 A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+	TNT1 A 0 a_JumpIfInventory("shotgunloaded",2,"Reloaddone2")
+	TNT1 A 0 a_JumpIfInventory("shotgunammo",1,"Reloadloop")
+    Goto ReloadDone1
+  ReloadDone1:
+    TNT1 A 4
+    SAWS N 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SAWS DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    SAWR A 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SAWF EFG 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SAWN A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone2:
+    TNT1 A 4
+    SAWR N 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SAWR DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    SAWR A 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SAWF EFG 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SAWN A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+    Goto Ready
+  Altfire:
+    TNT1 A 0 a_JumpIfInventory("Shotgunloaded",2,"FireDouble")
+	TNT1 A 0 a_JumpIfInventory("Shotgunloaded",1,"FireReal")
+    Goto Reload
+  FireDouble:
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (7, 7, 6, 14, "hitpuff", FBF_NORANDOM)
+	SAWF A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	SAWD A 1 BRIGHT A_WEAPONREADY(WRF_NOFIRE|WRF_NOSWITCH)
+	 TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (7, 7, 6, 16, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("shotgunLoaded",2,TIF_NOTAKEINFINITE)
+    SAWD A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light(3)
+	TNT1 A 0 A_SetPitch(Pitch-4)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    SAWF B 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-3)
+	SAWD B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SAWD C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SAWD C 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	SAWF F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	SAWF G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2)
+	SAWN A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SAWN A 0 A_checkreload
+	Goto ready
+   User1:	
+	    SAWN ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		SAWN DCBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+   Zoom:
+	    SAWN A 0  A_giveinventory("lightlit",1)
+	    SAWN A 0  A_SelectWeapon("crowbar")
+		SAWN A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+    Spawn:
+		SAWP A 10
+		SAWP A 1 bright
+		loop
+  }
+}
+ACTOR SawedOff2 : Sawedoff
+{
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+  weapon.ammogive1 3
+  Weapon.AmmoGive2 1
+  Obituary "%o chewed on %k's triple boomstick."
+  Tag "Super Sawed-off"
+  weapon.slotnumber 3
+  Inventory.Pickupmessage "Got the Super Sawed-off!"
+  Inventory.Icon "SHOTB0"
+  +CHEATNOTWEAPON
+  States
+  {
+  Ready:
+  SA2N A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+  Loop
+  Deselect:
+    SA2N A 1 A_Lower
+	SA2N A 0 A_Lower
+    Loop
+  Select:
+    TNT1 A 0 A_takeInventory("flashlit")
+    TNT1 A 0 A_TakeInventory("sawedoff",1)
+    SA2N A 1 A_Raise
+	SA2N A 0 A_Raise
+    Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("Shotgunloaded",1,"FireReal")
+    Goto Reload
+  FireReal:
+	TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (7, 7, 6, 12, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 a_JumpIfInventory("ShotgunLoaded",3,17)
+	TNT1 A 0 a_JumpIfInventory("ShotgunLoaded",2,9)
+    SA2F A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    SA2F B 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_jump(256, 7)
+    SA2F C 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-1)
+    SA2F D 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_jump(256, 7)
+	SA2F E 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-1)
+    SA2F F 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_TakeInventory("shotgunloaded",1,TIF_NOTAKEINFINITE)
+	SA2F G 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	TNT1 A 0 A_AlertMonsters
+	SA2F H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	SA2F I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA2N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	SA2N A 0 A_checkreload
+	Goto Ready
+  Reload:
+    SA2N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_jumpifinventory("Shotgunammo", 1, 1)
+	goto ready
+    TNT1 A 0 A_JumpIfInventory("shotgunLoaded",3,"Ready")
+    TNT1 A 0 A_JumpIfInventory("shotgunloaded",2,"Work3")
+	TNT1 A 0 A_JumpIfInventory("shotgunloaded",1,"Work2")
+  Work1:
+    TNT1 A 0 A_JumpIfInventory("shotgunChambered",3,"Work4")
+	TNT1 A 0 A_JumpIfInventory("shotgunChambered",2,"Work5")
+    SA2R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA2S CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2S EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 8
+	SA2R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA2R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA2R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+  Work2:
+    TNT1 A 0 A_JumpIfInventory("shotgunChambered",3,"Work6")
+	TNT1 A 0 A_JumpIfInventory("shotgunChambered",2,"Work7")
+    SA2R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA2S CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2W EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    TNT1 A 8
+	SA2R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA2R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA2R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work3:
+    TNT1 A 0 A_JumpIfInventory("shotgunChambered",3,"Work8")
+    SA2R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA2D CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2B EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    TNT1 A 8
+	SA2R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA2R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA2R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work4:
+    SA2R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA2R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2R EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA2R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA2R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA2R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work5:
+    SA2R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA2D CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2D EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA2R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA2R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA2R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work6:
+    SA2R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA2R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2T EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA2R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA2R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA2R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work7:
+    SA2R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA2D CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2N EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA2R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA2R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA2R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work8:
+    SA2R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA2R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2O EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA2R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA2R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA2R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA2R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+  ReloadLoop:
+	TNT1 A 0 A_Giveinventory("Shotgunloaded",1)
+	TNT1 A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+	TNT1 A 0 A_TakeInventory("shotgunchambered",3)
+	TNT1 A 0 a_JumpIfInventory("shotgunloaded",3,"Reloaddone3")
+	TNT1 A 0 a_JumpIfInventory("shotgunammo",1,"Reloadloop")
+	TNT1 A 0 a_JumpIfInventory("shotgunloaded",2,"Reloaddone2")
+    Goto ReloadDone1
+  ReloadDone1:
+    TNT1 A 4
+    TNT1 A 0 A_GiveInventory("shotgunchambered",1)
+    SA2S N 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA2S DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    SA2R BBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA2N A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone2:
+    TNT1 A 4
+	TNT1 A 0 A_GiveInventory("shotgunchambered",2)
+    SA2D N 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA2D DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    SA2R BBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA2N A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone3:
+    TNT1 A 4
+	TNT1 A 0 A_GiveInventory("shotgunchambered",3)
+    SA2R N 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA2R DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    SA2R BBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA2N A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+    Goto Ready
+  Altfire:
+    TNT1 A 0 a_JumpIfInventory("Shotgunloaded",3,"FireTriple")
+    TNT1 A 0 a_JumpIfInventory("Shotgunloaded",2,"FireDouble")
+	TNT1 A 0 a_JumpIfInventory("Shotgunloaded",1,"FireReal")
+    Goto Reload
+  FireTriple:
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (14, 14, 6, 16, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("shotgunLoaded",3,TIF_NOTAKEINFINITE)
+    SA2F M 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-6)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (10, 10, 12, 16, "hitpuff", FBF_NORANDOM)
+    SA2F N 3 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-6)
+	SA2F L 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA2F K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA2F G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	SA2F H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2)
+	SA2F I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+3)
+	SA2N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2)
+	SA2N A 0 A_checkreload
+	Goto Ready
+  FireDouble:
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (10, 7, 12, 14, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("shotgunLoaded",2,TIF_NOTAKEINFINITE)
+    SA2F J 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-4)
+    SA2F K 3 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-3)
+	SA2F L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA2F G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA2F H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	SA2F I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	SA2F I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2)
+	SA2N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	SA3N A 0 A_checkreload
+	Goto Ready
+   User1:	
+	    SA2N ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		SA2N DCBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	Zoom:
+	    SA2N A 0  A_giveinventory("lightlit",1)
+	    SA2N A 0  A_SelectWeapon("crowbar")
+		SA2N A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  Spawn:
+		S2WP A 10
+		S2WP A 1 bright
+		loop
+  }
+}
+ACTOR SawedOff3 : Sawedoff
+{
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+  weapon.ammogive1 3
+  Weapon.AmmoGive2 1
+  Obituary "%o chewed on %k's triple boomstick."
+  Tag "SuperDuper Sawed-off"
+  weapon.slotnumber 3
+  Inventory.Pickupmessage "Got the SuperDuper Sawed-off!"
+  Inventory.Icon "SHOTB0"
+  +CHEATNOTWEAPON
+  States
+  {
+  Ready:
+  SA3N A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+  Loop
+  Deselect:
+    SA3N A 1 A_Lower
+	SA3N A 0 A_Lower
+    Loop
+  Select:
+     TNT1 A 0 A_takeInventory("flashlit")
+    TNT1 A 0 A_TakeInventory("sawedoff",1)
+	TNT1 A 0 A_TakeInventory("sawedoff2",1)
+    SA3N A 1 A_Raise
+	SA3N A 0 A_Raise
+    Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("Shotgunloaded",1,"FireReal")
+    Goto Reload
+  FireReal:
+	TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (6, 6, 6, 12, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 a_JumpIfInventory("ShotgunLoaded",3,16)
+	TNT1 A 0 a_JumpIfInventory("ShotgunLoaded",2,8)
+    SA3F A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    SA3F B 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_jump(256, 6)
+    SA3F C 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-1)
+    SA3F D 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_jump(256, 6)
+	SA3F E 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+    SA3F F 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_TakeInventory("shotgunloaded",1,TIF_NOTAKEINFINITE)
+	SA3F G 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	TNT1 A 0 A_AlertMonsters
+	SA3F H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	SA3F I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA3N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	SA3N A 0 A_checkreload
+	Goto Ready
+  Reload:
+    SA3N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_jumpifinventory("Shotgunammo", 1, 1)
+	goto ready
+    TNT1 A 0 A_JumpIfInventory("shotgunLoaded",3,"Ready")
+    TNT1 A 0 A_JumpIfInventory("shotgunloaded",2,"Work3")
+	TNT1 A 0 A_JumpIfInventory("shotgunloaded",1,"Work2")
+  Work1:
+    TNT1 A 0 A_JumpIfInventory("shotgunChambered",3,"Work4")
+	TNT1 A 0 A_JumpIfInventory("shotgunChambered",2,"Work5")
+    SA3R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA3S CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3S EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 8
+	SA3R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA3R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA3R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+  Work2:
+    TNT1 A 0 A_JumpIfInventory("shotgunChambered",3,"Work6")
+	TNT1 A 0 A_JumpIfInventory("shotgunChambered",2,"Work7")
+    SA3R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA3S CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3W EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    TNT1 A 8
+	SA3R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA3R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA3R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work3:
+    TNT1 A 0 A_JumpIfInventory("shotgunChambered",3,"Work8")
+    SA3R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA3D CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3B EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    TNT1 A 8
+	SA3R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA3R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA3R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work4:
+    SA3R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA3R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3R EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA3R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA3R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA3R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work5:
+    SA3R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA3D CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3D EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA3R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA3R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA3R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work6:
+    SA3R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA3R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3T EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA3R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA3R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA3R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work7:
+    SA3R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA3D CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3N EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA3R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA3R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA3R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+   Work8:
+    SA3R AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen")
+	SA3R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3O EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+    TNT1 A 8
+	SA3R H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    SA3R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	SA3R L 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	SA3R M 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	goto ReloadLoop
+  ReloadLoop:
+	TNT1 A 0 A_Giveinventory("Shotgunloaded",1)
+	TNT1 A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+	TNT1 A 0 A_TakeInventory("shotgunchambered",3)
+	TNT1 A 0 a_JumpIfInventory("shotgunloaded",3,"Reloaddone3")
+	TNT1 A 0 a_JumpIfInventory("shotgunammo",1,"Reloadloop")
+	TNT1 A 0 a_JumpIfInventory("shotgunloaded",2,"Reloaddone2")
+    Goto ReloadDone1
+  ReloadDone1:
+    TNT1 A 4
+    TNT1 A 0 A_GiveInventory("shotgunchambered",1)
+    SA3S N 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA3S DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    SA3R BBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA3N A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone2:
+    TNT1 A 4
+	TNT1 A 0 A_GiveInventory("shotgunchambered",2)
+    SA3D N 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA3D DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    SA3R BBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA3N A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone3:
+    TNT1 A 4
+	TNT1 A 0 A_GiveInventory("shotgunchambered",3)
+    SA3R N 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA3R DC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    SA3R BBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	SA3N A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+    Goto Ready
+  Altfire:
+    TNT1 A 0 a_JumpIfInventory("Shotgunloaded",3,"FireTriple")
+    TNT1 A 0 a_JumpIfInventory("Shotgunloaded",2,"FireDouble")
+	TNT1 A 0 a_JumpIfInventory("Shotgunloaded",1,"FireReal")
+    Goto Reload
+  FireTriple:
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (7, 7, 6, 16, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("shotgunLoaded",3,TIF_NOTAKEINFINITE)
+    SA3F M 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-3)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (7, 7, 12, 18, "hitpuff", FBF_NORANDOM)
+    SA3F N 3 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-3)
+	SA3F L 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA3F K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA3F G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	SA3F H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA3F I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA3N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA3N A 0 A_checkreload
+	Goto Ready
+  FireDouble:
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (7, 7, 12, 14, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("shotgunLoaded",2,TIF_NOTAKEINFINITE)
+    SA3F J 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-2)
+    SA3F K 3 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	SA3F L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	SA3F G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA3F H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	SA3F I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA3F I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	SA3N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	SA3N A 0 A_checkreload
+	Goto Ready
+   User1:	
+	    SA3N ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		SA3N DCBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	Zoom:
+	    SA3N A 0  A_giveinventory("lightlit",1)
+	    SA3N A 0  A_SelectWeapon("crowbar")
+		SA3N A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  Spawn:
+		S3WP A 10
+		S3WP A 1 bright
+		loop
+  }
+}
+ACTOR HunterShotgun : Weapon 
+{
+  SpawnID 27
+  Weapon.Kickback 170
+  Weapon.SelectionOrder 1200
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+  Weapon.AmmoGive2 4
+  Weapon.AmmoType2 "shotgunammo"
+  Weapon.AmmoType1 "HunterLoaded"
+  Weapon.BobStyle Alpha
+  Weapon.BobSpeed 1.5
+  Weapon.BobRangeX .2
+  Weapon.BobRangeY .5
+  Weapon.Kickback 120
+  Obituary "%o chewed on %k's hunter shotgun."
+  Tag "Hunter Shotgun"
+  weapon.slotnumber 3
+  Inventory.Pickupmessage "Got the Hunter shotgun!"
+  scale 0.6
+  weapon.upsound "weapons/sawedoffdeploy"
+  +AMMO_CHECKBOTH
+  +NOALERT
+  +weapon.meleeweapon
+  Inventory.PickupSound "items/gunspickup"
+  Inventory.Icon "HNSIA0"
+  States
+  {
+  Ready:
+  HNSN A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+  Loop
+  Deselect:
+    HNSN A 1 A_Lower
+	HNSN A 0 A_Lower
+    Loop
+  Select: 
+    MR1G A 0 A_takeinventory("flashlit",1)
+    HNSN A 1 A_Raise
+	HNSN A 0 A_Raise
+    Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("Hunterloaded",1,"FireReal")
+    Goto Reload
+  FireReal:
+	TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (2.5, 2.5, 6, 16, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 a_JumpIfInventory("HunterLoaded",2,10)
+	TNT1 A 0 A_TakeInventory("Hunterloaded",1,TIF_NOTAKEINFINITE)
+    HNSF A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    HNSF B 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_jump(256, 5)
+	TNT1 A 0 A_TakeInventory("Hunterloaded",1,TIF_NOTAKEINFINITE)
+	HNSF C 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-1)
+    HNSF D 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	HNSF E 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	TNT1 A 0 A_AlertMonsters
+	HNSF F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	HNSF G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	HNSN A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HNSN A 0 A_checkreload
+	Goto Ready
+  Reload:
+    HNSN A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_jumpifinventory("Shotgunammo", 1, 1)
+	goto ready
+    TNT1 A 0 A_JumpIfInventory("HunterLoaded",2,"Ready")
+	TNT1 A 0 A_JumpIfInventory("Hunterloaded",1,"Work2")
+	TNT1 A 0 A_JumpIfInventory("HunterFound",1,"work1")
+  FirstLoad:
+     HNSR AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	HNSS CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    HNSS EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_Giveinventory("Hunterfound",1)
+	TNT1 A 8
+	HNSR H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    HNSR IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	HNSR L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HNSR M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+  Work1:
+    TNT1 A 0 A_JumpIfInventory("HunterChambered",2,"Work3")
+     HNSR AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	HNSS CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    HNSS EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 16
+	HNSR HHHH 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    HNSR IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	HNSR L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HNSR M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+Work2:
+    HNSR AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	HNSS CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    HNSH EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 16
+	HNSH HHHH 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    HNSH IJ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HNSR K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	HNSR L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HNSR M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+work3:
+    HNSR AABBBB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	HNSR CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    HNSR EEFFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,12,-3)
+    TNT1 A 16
+	HNSR HHHH 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    HNSR IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	HNSR L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HNSR M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ReloadLoop:
+	TNT1 A 0 A_Giveinventory("Hunterloaded",1)
+	TNT1 A 0 A_Giveinventory("Hunterchambered",1)
+	TNT1 A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+	TNT1 A 0 a_JumpIfInventory("Hunterloaded",2,"Reloaddone2")
+	TNT1 A 0 a_JumpIfInventory("shotgunammo",1,"Reloadloop")
+    Goto ReloadDone1
+  ReloadDone1:
+    TNT1 A 4
+    HNSS N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	HNSS OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    HNSS Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	HNSR RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	HNSR U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone2:
+    TNT1 A 4
+    HNSR N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	HNSR OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    HNSR Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	HNSR RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	HNSR U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+  Altfire:
+    TNT1 A 0 a_JumpIfInventory("Hunterloaded",2,"FireDouble")
+	TNT1 A 0 a_JumpIfInventory("Hunterloaded",1,"FireReal")
+    Goto Reload
+  FireDouble:
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	HNSF A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	HNSD A 1 BRIGHT A_WEAPONREADY(WRF_NOFIRE|WRF_NOSWITCH)
+	 TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("HunterLoaded",2,TIF_NOTAKEINFINITE)
+    HNSD A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light(3)
+	TNT1 A 0 A_SetPitch(Pitch-4)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    HNSF B 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-3)
+	HNSD B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	HNSD C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	HNSD C 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	HNSF F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	HNSF G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2)
+	HNSN A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	HNSN A 0 A_checkreload
+	Goto Ready
+   User1:	
+	    HNSN ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		HNSN DCBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	Zoom:
+	    HNSN A 0  A_giveinventory("flashlit",1)
+	    HNSN A 0  A_SelectWeapon("crowbar")
+		HNSN A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+    Spawn:
+		HNSP A 10
+		HNSP A 1 bright
+		loop
+  }
+}
+ACTOR HunterShotgun2 : Weapon 
+{
+  SpawnID 27
+  Weapon.Kickback 170
+  Weapon.SelectionOrder 1200
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+  Weapon.AmmoGive2 4
+  Weapon.AmmoType2 "shotgunammo"
+  Weapon.AmmoType1 "HunterLoaded"
+  Weapon.BobStyle Alpha
+  Weapon.BobSpeed 1.5
+  Weapon.BobRangeX .2
+  Weapon.BobRangeY .5
+  Weapon.Kickback 120
+  Obituary "%o chewed on %k's stacked hunter shotgun."
+  Tag "Stacked Hunter Shotgun"
+  weapon.slotnumber 3
+  Inventory.Pickupmessage "Got the Stacked Hunter shotgun!"
+  scale 0.6
+  weapon.upsound "weapons/sawedoffdeploy"
+  +AMMO_CHECKBOTH
+  +NOALERT
+  +CHEATNOTWEAPON
+  +weapon.meleeweapon
+  Inventory.PickupSound "items/gunspickup"
+  Inventory.Icon "HNSIB0"
+  States
+  {
+  Ready:
+  TNT1 A 0 a_JumpIfInventory("shotgunammo",2,"ReadyStacked")
+  H20N A 5 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+  Loop
+  ReadyStacked:
+  H22N A 5 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+  Loop
+  Deselect:
+    "----" #  1 A_Lower
+	"----" #  0 A_Lower
+    Loop
+  Select: 
+    H20N A 0 A_takeinventory("flashlit",1)
+    TNT1 A 0 A_TakeInventory("HunterShotgun",1)
+	TNT1 A 0 a_JumpIfInventory("shotgunammo",2,"SelectStacked")
+    H20N A 1 A_Raise
+	H20N A 0 A_Raise
+    Loop
+SelectStacked: 
+    H22N A 1 A_Raise
+	H22N A 0 A_Raise
+    Loop
+  Fire:
+   "----" # 0 a_JumpIfInventory("Hunterloaded",1,"FireReal")
+    Goto Reload
+  FireReal:
+    "----" # 0 a_JumpIfInventory("shotgunammo",2,"FireStacked")
+	H20F A 0 
+	goto firereal2
+FireStacked:
+    H22F A 0 
+FireReal2:    
+	"----" # 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	"----" # 0 A_FireBullets (2.5, 2.5, 6, 16, "hitpuff", FBF_NORANDOM)
+	"----" # 0 a_JumpIfInventory("HunterLoaded",2,10)
+	"----" # 0 A_TakeInventory("Hunterloaded",1,TIF_NOTAKEINFINITE)
+    "####" A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light2
+	"####" A 0 A_SetPitch(Pitch-1)
+	"####" A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    "####" B 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light1
+	"####" A 0 A_SetPitch(Pitch-1)
+	"####" A 0 A_jump(256, 5)
+	"####" A 0 A_TakeInventory("Hunterloaded",1,TIF_NOTAKEINFINITE)
+	"####" C 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light2
+	"####" A 0 A_SetPitch(Pitch-1)
+    "####" D 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light1
+	"####" A 0 A_SetPitch(Pitch-1)
+	"####" E 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light0
+	"####" A 0 A_SetPitch(Pitch+0.5)
+	"####" A 0 A_AlertMonsters
+	"####" F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_SetPitch(Pitch+0.5)
+	"####" G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" G 0 A_SetPitch(Pitch+1)
+	"####" G 0 A_checkreload
+	Goto Ready
+  Reload:
+    "----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"----" # 0 A_jumpifinventory("Shotgunammo", 1, 1)
+	goto ready
+    "----" # 0 A_JumpIfInventory("HunterLoaded",2,"Ready")
+	"----" # 0 A_JumpIfInventory("Hunterloaded",1,"Work2")
+	"----" # 0 A_JumpIfInventory("HunterFound",1,"work1")
+  FirstLoad:
+    "----" # 0 A_JumpIfInventory("Shotgunammo",2,"FirstLoadStacked")
+    H22R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H22R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H22R EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_Giveinventory("Hunterfound",1)
+	TNT1 A 8
+	H22R H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H22R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H22R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H22R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+  FirstLoadStacked:
+    H20R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H20R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H20R EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_Giveinventory("Hunterfound",1)
+	TNT1 A 8
+	H20R H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H20R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H20R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H20R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+  Work1:
+    TNT1 A 0 A_JumpIfInventory("HunterChambered",2,"Work3")
+	 "----" # 0 A_JumpIfInventory("Shotgunammo",2,"work1stacked")
+	  H20S A 0
+	 goto Work1Real
+    Work1Stacked:
+	 H22S A 0
+	Work1Real:
+     "####" AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	"####" CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    "####" EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	"####" A 2
+	"####" H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    "####" IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_PlaySound ("weapons/sawedoffload")
+	"####" L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+Work2:
+    "----" # 0 A_JumpIfInventory("Shotgunammo",2,"work2stacked")
+    H20R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H20S CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H20H EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 2
+	H20H H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H20H IJ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H20R K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H20R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H20R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+Work2Stacked:
+    H22R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H22S CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H22H EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 2
+	H22H H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H22H IJ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H22R K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H22R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H22R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+work3:
+     "----" # 0 A_JumpIfInventory("Shotgunammo",2,"work3stacked")
+    H20R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H20R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H20R EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,12,-3)
+    TNT1 A 2
+	H20R H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H20R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H20R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H20R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto reloadloop
+work3Stacked:
+    H22R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H22R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H22R EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,12,-3)
+    TNT1 A 2
+	H22R H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H22R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H22R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H22R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ReloadLoop:
+	TNT1 A 0 A_Giveinventory("Hunterloaded",1)
+	TNT1 A 0 A_Giveinventory("Hunterchambered",1)
+	TNT1 A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+	TNT1 A 0 a_JumpIfInventory("Hunterloaded",2,"Reloaddone2")
+	TNT1 A 0 a_JumpIfInventory("shotgunammo",1,"Reloadloop")
+    Goto ReloadDone1
+  ReloadDone1:
+    "----" # 0 A_JumpIfInventory("Shotgunammo",2,"ReloadDone1Stacked")
+    TNT1 A 4
+    H20S N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H20S OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    H20S Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H20R RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H20R U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone1Stacked:
+    TNT1 A 4
+    H22S N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H22S OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    H22S Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H22R RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H22R U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone2:
+     "----" # 0 A_JumpIfInventory("Shotgunammo",2,"ReloadDone2Stacked")
+    TNT1 A 4
+    H20R N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H20R OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    H20R Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H20R RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H20R U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+ ReloadDone2Stacked:
+    TNT1 A 4
+    H22R N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H22R OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    H22R Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H22R RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H22R U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+  Altfire:
+    TNT1 A 0 a_JumpIfInventory("Hunterloaded",2,"FireDouble")
+	TNT1 A 0 a_JumpIfInventory("Hunterloaded",1,"FireReal")
+    Goto Reload
+  FireDouble:
+    "----" # 0 A_JumpIfInventory("Shotgunammo",2,"FireDoubleStacked")
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	H20F A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	H20D A 1 BRIGHT A_WEAPONREADY(WRF_NOFIRE|WRF_NOSWITCH)
+	 TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("HunterLoaded",2,TIF_NOTAKEINFINITE)
+    H20D A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light(3)
+	TNT1 A 0 A_SetPitch(Pitch-4)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    H20F B 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-3)
+	H20D B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H20D C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H20D C 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	H20F F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	H20F G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2)
+	H20N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H20N A 0 A_checkreload
+	Goto Ready
+ FireDoubleStacked:
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	H22F A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	H22D A 1 BRIGHT A_WEAPONREADY(WRF_NOFIRE|WRF_NOSWITCH)
+	 TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("HunterLoaded",2,TIF_NOTAKEINFINITE)
+    H22D A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light(3)
+	TNT1 A 0 A_SetPitch(Pitch-4)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    H22F B 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-3)
+	H22D B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H22D C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H22D C 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	H22F F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	H22F G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2)
+	H22N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H22N A 0 A_checkreload
+	Goto Ready
+   User1:	
+	    "####" ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		H20N DCBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  Zoom:
+	    H20N A 0  A_giveinventory("flashlit",1)
+	    H20N A 0  A_SelectWeapon("crowbar")
+		H20N A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+    Spawn:
+		HNSP B 10
+		HNSP B 1 bright
+		loop
+  }
+}
+ACTOR HunterShotgun3 : Weapon 
+{
+  SpawnID 27
+  Weapon.Kickback 170
+  Weapon.SelectionOrder 1200
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+  Weapon.AmmoGive2 4
+  Weapon.AmmoType2 "shotgunammo"
+  Weapon.AmmoType1 "HunterLoaded"
+  Weapon.BobStyle Alpha
+  Weapon.BobSpeed 1.5
+  Weapon.BobRangeX .2
+  Weapon.BobRangeY .5
+  Weapon.Kickback 120
+  Obituary "%o chewed on %k's Tactical hunter shotgun."
+  Tag "Tactical Hunter Shotgun"
+  weapon.slotnumber 3
+  Inventory.Pickupmessage "Got the Tactical Hunter shotgun!"
+  scale 0.6
+  weapon.upsound "weapons/sawedoffdeploy"
+  +AMMO_CHECKBOTH
+  +NOALERT
+  +CHEATNOTWEAPON
+  +weapon.meleeweapon
+  Inventory.PickupSound "items/gunspickup"
+  Inventory.Icon "HNSID0"
+  States
+  {
+  Ready:
+  TNT1 A 0 a_JumpIfInventory("shotgunammo",2,"ReadyStacked")
+  H4SN A 0 a_JumpIfInventory("flashlit",1,"Readylamp")
+  H40N A 5 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+  Loop
+  Readylamp:
+  H40L A 5 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+  Loop
+  ReadyStacked:
+  H3SN A 0 a_JumpIfInventory("flashlit",1,"ReadylampStacked")
+  H42N A 5 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+  Loop
+  ReadyLampStacked:
+  H42L A 5 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+  Loop
+  Deselect:
+     "----" # 0 A_takeInventory("flashlit")
+    "----" #  1 A_Lower
+	"----" #  0 A_Lower
+    Loop
+  Select: 
+     TNT1 A 0 A_takeInventory("flashlit")
+    TNT1 A 0 A_TakeInventory("HunterShotgun",1)
+	TNT1 A 0 A_TakeInventory("HunterShotgun2",1)
+	TNT1 A 0 a_JumpIfInventory("shotgunammo",2,"SelectStacked")
+    H40N A 1 A_Raise
+	H40N A 0 A_Raise
+    Loop
+SelectStacked: 
+    H42N A 1 A_Raise
+	H42N A 0 A_Raise
+    Loop
+  Fire:
+   "----" # 0 a_JumpIfInventory("Hunterloaded",1,"FireReal")
+    Goto Reload
+  FireReal:
+    "----" # 0 a_JumpIfInventory("shotgunammo",2,"FireStacked")
+	H40F A 0 
+	goto firereal2
+FireStacked:
+    H42F A 0 
+FireReal2:    
+	"----" # 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	"----" # 0 A_FireBullets (2.5, 2.5, 6, 16, "hitpuff", FBF_NORANDOM)
+	"----" # 0 a_JumpIfInventory("HunterLoaded",2,10)
+	"----" # 0 A_TakeInventory("Hunterloaded",1,TIF_NOTAKEINFINITE)
+    "####" A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light2
+	"####" A 0 A_SetPitch(Pitch-1)
+	"####" A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    "####" B 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light1
+	"####" A 0 A_SetPitch(Pitch-1)
+	"####" A 0 A_jump(256, 5)
+	"####" A 0 A_TakeInventory("Hunterloaded",1,TIF_NOTAKEINFINITE)
+	"####" C 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light2
+	"####" A 0 A_SetPitch(Pitch-1)
+    "####" D 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light1
+	"####" A 0 A_SetPitch(Pitch-1)
+	"####" E 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_Light0
+	"####" A 0 A_SetPitch(Pitch+0.5)
+	"####" A 0 A_AlertMonsters
+	"####" F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_SetPitch(Pitch+0.5)
+	"####" G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" G 0 A_SetPitch(Pitch+1)
+	"####" G 0 A_checkreload
+	Goto Ready
+  Reload:
+    "----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"----" # 0 A_jumpifinventory("Shotgunammo", 1, 1)
+	goto ready
+    "----" # 0 A_JumpIfInventory("HunterLoaded",2,"Ready")
+	"----" # 0 A_JumpIfInventory("Hunterloaded",1,"Work2")
+	"----" # 0 A_JumpIfInventory("HunterFound",1,"work1")
+  FirstLoad:
+    "----" # 0 A_JumpIfInventory("Shotgunammo",2,"FirstLoadStacked")
+    H42R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H42R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H42R EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_Giveinventory("Hunterfound",1)
+	TNT1 A 8
+	H42R H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H42R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H42R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H42R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+  FirstLoadStacked:
+    H40R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H40R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H40R EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_Giveinventory("Hunterfound",1)
+	TNT1 A 8
+	H40R H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H40R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H40R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H40R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+  Work1:
+    TNT1 A 0 A_JumpIfInventory("HunterChambered",2,"Work3")
+	 "----" # 0 A_JumpIfInventory("Shotgunammo",2,"work1stacked")
+	  H40S A 0
+	 goto Work1Real
+    Work1Stacked:
+	 H42S A 0
+	Work1Real:
+     "####" AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	"####" CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    "####" EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	"####" A 2
+	"####" H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    "####" IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" A 0 A_PlaySound ("weapons/sawedoffload")
+	"####" L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	"####" M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+Work2:
+    "----" # 0 A_JumpIfInventory("Shotgunammo",2,"work2stacked")
+    H40R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H40S CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H40H EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 2
+	H40H H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H40H IJ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H40R K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H40R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H40R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+Work2Stacked:
+    H42R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H42S CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H42H EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 2
+	H42H H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H42H IJ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H42R K 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H42R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H42R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ReloadLoop
+work3:
+     "----" # 0 A_JumpIfInventory("Shotgunammo",2,"work3stacked")
+    H40R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H40R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H40R EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,12,-3)
+    TNT1 A 2
+	H40R H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H40R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H40R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H40R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto reloadloop
+work3Stacked:
+    H42R AABB 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffopen", CHAN_7)
+	H42R CD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H42R EEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,12,-3)
+    TNT1 A 2
+	H42R H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    H42R IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffload")
+	H42R L 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	H42R M 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ReloadLoop:
+	TNT1 A 0 A_Giveinventory("Hunterloaded",1)
+	TNT1 A 0 A_Giveinventory("Hunterchambered",1)
+	TNT1 A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+	TNT1 A 0 a_JumpIfInventory("Hunterloaded",2,"Reloaddone2")
+	TNT1 A 0 a_JumpIfInventory("shotgunammo",1,"Reloadloop")
+    Goto ReloadDone1
+  ReloadDone1:
+    "----" # 0 A_JumpIfInventory("Shotgunammo",2,"ReloadDone1Stacked")
+    TNT1 A 4
+    H40S N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H40S OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    H40S Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H40R RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H40R U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone1Stacked:
+    TNT1 A 4
+    H42S N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H42S OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    H42S Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H42R RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H42R U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+  ReloadDone2:
+     "----" # 0 A_JumpIfInventory("Shotgunammo",2,"ReloadDone2Stacked")
+    TNT1 A 4
+    H40R N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H40R OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    H40R Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H40R RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H40R U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+ ReloadDone2Stacked:
+    TNT1 A 4
+    H42R N 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H42R OP 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_PlaySound ("weapons/sawedoffclose")
+    H42R Q 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H42R RST 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	H42R U 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+  Altfire:
+    TNT1 A 0 a_JumpIfInventory("Hunterloaded",2,"FireDouble")
+	TNT1 A 0 a_JumpIfInventory("Hunterloaded",1,"FireReal")
+    Goto Reload
+  FireDouble:
+    "----" # 0 A_JumpIfInventory("Shotgunammo",2,"FireDoubleStacked")
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	H40F A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	H40D A 1 BRIGHT A_WEAPONREADY(WRF_NOFIRE|WRF_NOSWITCH)
+	 TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("HunterLoaded",2,TIF_NOTAKEINFINITE)
+    H40D A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light(3)
+	TNT1 A 0 A_SetPitch(Pitch-4)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    H40F B 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-3)
+	H40D B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H40D C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H40D C 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	H40F F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	H40F G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2)
+	H40N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H40N A 0 A_checkreload
+	Goto Ready
+ FireDoubleStacked:
+    TNT1 A 0 A_PlayWeaponSound ("weapons/sawedofffire")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	H42F A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	H42D A 1 BRIGHT A_WEAPONREADY(WRF_NOFIRE|WRF_NOSWITCH)
+	 TNT1 A 0 A_PlayWeaponSound ("weapons/sawedoffdouble")
+	TNT1 A 0 A_FireBullets (4, 2.5, 6, 18, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_TakeInventory("HunterLoaded",2,TIF_NOTAKEINFINITE)
+    H42D A 1 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_Light(3)
+	TNT1 A 0 A_SetPitch(Pitch-4)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    H42F B 2 Bright A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light1
+	TNT1 A 0 A_SetPitch(Pitch-3)
+	H42D B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H42D C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H42D C 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	TNT1 A 0 A_Light0
+	TNT1 A 0 A_AlertMonsters
+	H42F F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1.5)
+	H42F G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+2)
+	H42N A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+1)
+	H42N A 0 A_checkreload
+	Goto Ready
+   User1:	
+	    "####" ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		H40N DCBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  ZOOM:
+	    TNT1 A 0 a_JumpIfInventory("flashlit",1,"unlight")
+	    H42N A 2 A_giveinventory("flashlit",1) 
+	    H42L A 1 a_playsound("weapons/lampclickon")
+		H42L A 10 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+        goto ready
+	UnLight:
+	    H42L A 2 A_takeinventory("flashlit",1) 
+	    H42N A 1 a_playsound("weapons/lampclickoff")
+		H42N A 10 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+        goto ready
+    Spawn:
+		HNSP D 10
+		HNSP D 1 bright
+		loop
+  }
+}

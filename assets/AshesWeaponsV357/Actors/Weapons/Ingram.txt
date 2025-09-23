@@ -1,0 +1,1261 @@
+ACTOR Ingramloaded: Ammo
+{
+ Inventory.MaxAmount 48
+ Ammo.BackPackMaxAmount 48
+ +IGNORESKILL
+ }
+ACTOR IngramSpawn : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.6
+	Tag "Machine Pistol"
+	Inventory.Icon "MPISA0"
+	Inventory.PickupMessage "Got the Machine pistol."
+	Inventory.PickupSound "items/gunspickup"
+	States
+	{
+	Spawn:
+		MPIP A 10
+		MPIP A 1 bright
+		loop
+	Pickup:
+	    TNT1 A 0 A_JumpIfInventory("Ingram3", 1, 4) //Skips giving you the normal mac10 if you have the upgrade
+		TNT1 A 0 A_JumpIfInventory("Ingram2", 1, 3) //Skips giving you the normal mac10 if you have the upgrade
+		TNT1 A 0 A_GiveInventory("Ingram")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("NineMilAmmo", 16)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR IngramBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "MPIPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		MPIP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Ingram2")
+		TNT1 A 0 A_takeInventory("Ingram")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR IngramBuild3 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "MPIPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		MPIP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Ingram3")
+		TNT1 A 0 A_takeInventory("Ingram")
+		TNT1 A 0 A_takeInventory("Ingram2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ actor Ingram: Weapon
+{
+ Weapon.SelectionOrder 700
+ Weapon.AmmoUse1 1
+ weapon.AmmoUse2 1
+ Weapon.BobStyle Alpha
+ Weapon.BobSpeed 1.5
+ Weapon.BobRangeX .2
+ Weapon.BobRangeY .5
+ Weapon.AmmoGive2 16
+ Weapon.AmmoType1 "IngramLoaded"
+ Weapon.AmmoType2 "NineMilAmmo"
+ Inventory.Pickupmessage "Got the Machine pistol!"
+ Tag "Machine Pistol"
+ Inventory.PickupSound "items/gunspickup"
+ Obituary "%o was ventilated by %k."
+ Weapon.SlotNumber 4
+ weapon.upsound "weapons/ingramup"
+ Inventory.Icon "MPISA0"
+ +AMMO_CHECKBOTH
+ +NOALERT
+ scale 0.7
+ States
+ {
+ Ready:
+  TNT1 A 0 a_JumpIfInventory("lightlit",1,"Readylamp")
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,"LoadedReady")
+  INGG B 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+  Loop
+ LoadedReady:
+  INGG A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+  Loop
+ ReadyLamp:
+     INGG I 0 a_JumpIfInventory("IngramLoaded",1,"readylamploaded")
+     INGG I 0 a_JumpIfInventory("batteries",1,2)
+	 INGG I 0 a_jump(256,"Unlight")
+     INGG J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     INGG L 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     INGG K 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     loop
+ ReadyLampLoaded:
+     INGG I 0 a_JumpIfInventory("batteries",1,2)
+	 INGG I 0 a_jump(256,"Unlight")
+	 INGG I 0 a_light2
+     INGO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     INGO K 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     INGO L 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     loop
+ Deselect:
+  "----" A 0 A_LIGHT0
+  "----" A 0 A_takeinventory("Lightlit",1)
+  "----" A 0 A_lower
+  "----" A 1 A_Lower
+  loop
+ Select:
+   TNT1 A 0 A_takeInventory("flashlit")
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,"Loadedselect")
+  INGG B 1 A_Raise
+  INGG B 0 A_Raise
+  Loop
+ LoadedSelect:
+  INGG A 0 a_JumpIfInventory("IngramLoaded",33,"CheetReset")
+  INGG A 1 A_Raise
+  INGG A 0 A_Raise
+  Loop
+ CheetReset:
+    INGG A 1 A_Raise
+	INGG A 0 A_takeinventory("IngramLoaded",48)
+	INGG A 0 A_giveinventory("IngramLoaded",32)
+	INGG A 0 A_Raise
+	goto loadedselect
+ Swapmod:
+  INGG A 0 A_SelectWeapon("Ingram2")
+  INGG A 1 A_Lower
+  Wait
+ Fire:
+   TNT1 A 0 a_JumpIfInventory("lightlit",1,"FireLamp")
+   TNT1 A 0 a_JumpIfInventory("ingramloaded",1,"FireReal")
+   Goto Reload
+  Firelamp:
+  TNT1 A 0 a_JumpIfInventory("ingramLoaded",1,"FireLampReal")
+  Goto Reload
+ Firereal:
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+  Goto empty
+  INGG A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(2,2,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+  INGF A 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  INGF A 1 BRIGHT  A_SetPitch(Pitch-1)
+  TNT1 A 0 A_Light1
+  INGF A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  INGG B 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  INGG B 1 a_refire("empty")
+  INGG C 1 A_SetPitch(Pitch+0.4) 
+  TNT1 A 0 A_Light0
+  INGG B 0 A_refire("fire2")
+  INGG B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("fire2")
+  INGG C 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("fire2")
+  INGG D 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("fire2")
+  goto ready
+ Fire2:
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+  Goto empty
+  TNT1 A 0 A_FireBullets(3,3,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+  INGF B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  INGF B 0 BRIGHT  A_SetPitch(Pitch-1)
+  TNT1 A 0 A_Light1
+  INGF A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  INGG B 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  INGG B 1 a_refire("empty")
+  INGG C 1 A_SetPitch(Pitch+0.4) 
+  TNT1 A 0 A_Light0
+  INGG B 0 A_refire("fire3")
+  INGG B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("fire3")
+  INGG C 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("fire3")
+  INGG D 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("fire3")
+  goto ready
+ Fire3:
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+  Goto empty
+  TNT1 A 0 A_FireBullets(4,4,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+  INGF C 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  INGF C 1 BRIGHT  A_SetPitch(Pitch-1)
+  TNT1 A 0 A_Light1
+  INGF A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  INGG B 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  INGG B 1 a_refire("empty")
+  INGG C 1 A_SetPitch(Pitch+0.4) 
+  TNT1 A 0 A_Light0
+  INGG B 0 A_refire("firereal")
+  INGG B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firereal")
+  INGG C 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firereal")
+  INGG D 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firereal")
+  goto ready
+  Firelampreal:
+  GLKL A 0 A_gunflash("lampFlash")
+  INGG A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(3,4,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+  INGO M 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  INGO M 1 BRIGHT  A_SetPitch(Pitch-3)
+  INGO A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  INGO P 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  INGO P 1 a_refire("emptylamp")
+  INGO Q 1 A_SetPitch(Pitch+1) 
+  INGO P 0 A_refire("firelamp2")
+  INGO Q 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firelamp2")
+  INGO R 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firelamp2")
+  INGO L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firelamp2")
+  goto ready
+   Firelamp2:
+  GLKL A 0 A_gunflash("lampFlash")
+  INGG A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(3,5,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+  INGO N 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  INGO N 1 BRIGHT  A_SetPitch(Pitch-3)
+  INGO A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  INGO P 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  INGO P 1 a_refire("emptylamp")
+  INGO Q 1 A_SetPitch(Pitch+1) 
+  INGO P 0 A_refire("firelamp3")
+  INGO Q 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firelamp3")
+  INGO R 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firelamp3")
+  INGO L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firelamp3")
+  goto ready
+   Firelamp3:
+  GLKL A 0 A_gunflash("lampFlash")
+  INGG A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(3,5,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+  INGO O 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  INGO O 1 BRIGHT  A_SetPitch(Pitch-3)
+  INGO A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  INGO P 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  INGO P 1 a_refire("emptylamp")
+  INGO Q 1 A_SetPitch(Pitch+1) 
+  INGO P 0 A_refire("firelampreal")
+  INGO Q 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firelampreal")
+  INGO R 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firelampreal")
+  INGO L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("firelampreal")
+  goto ready
+empty:
+  INGG B 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  INGG B 0  a_refire("empty")
+  goto ready
+emptylamp:
+  INGO P 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+   INGO A 0  a_refire("fire")
+  goto ready
+  Reload:
+        TNT1 A 0 a_JumpIfInventory("lightlit",1,"ReloadLamp")
+        TNT1 A 0 A_JumpIfInventory("IngramLoaded",1,2)
+		TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"Workempty")
+		INGG A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("IngramLoaded",32,"Ready")
+        TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"Work1")
+        Goto Ready
+ Reloadlamp:
+        TNT1 A 0 A_JumpIfInventory("IngramLoaded",1,2)
+		TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"chamberlamp")
+		INGO L 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("IngramLoaded",32,"Readylamp")
+        TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"droplamp")
+        Goto Ready
+droplamp:
+        INGO I 1 a_playsound("weapons/lampclickoff")
+	    INGO H 2 a_light0
+	    INGO G 2 A_PlaySound("weapons/pistolclipout", CHAN_ITEM)
+	    INGO FEDCBA 1 A_takeinventory("lightlit",1)
+		INGR NOP 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 3 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		INGR ABCDEFGHIII 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGR IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)	
+goto reloadloop
+chamberlamp:
+        INGO I 1 a_playsound("weapons/lampclickoff")
+	    INGO H 2 a_light0
+	    INGO G 2 A_PlaySound("weapons/pistolclipout", CHAN_ITEM)
+	    INGO FEDCBA 1 A_takeinventory("lightlit",1)
+		INGE NOP 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 3 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		INGE ABCDEFGHIII 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGE IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		goto Loopempty
+	Work1:
+	    INGR NOP 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 3 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		INGR ABCDEFGHIII 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGR IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)		
+	ReloadLoop:
+		TNT1 A 0 a_JumpIfInventory("Ingramloaded",32,"ReloadDone")
+		TNT1 A 0 A_TakeInventory("NineMilAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_Giveinventory("Ingramloaded",1)
+		TNT1 A 0 a_JumpIfInventory("NineMilAmmo",1,"Reloadloop")
+        Goto ReloadDone
+    Workempty:
+	    INGE NOP 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 3 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		INGE ABCDEFGHIII 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGE IJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		goto Loopempty
+	Loopempty:
+		TNT1 A 0 a_JumpIfInventory("Ingramloaded",32,"emptyDone")
+		TNT1 A 0 A_TakeInventory("NineMilAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_Giveinventory("Ingramloaded",1)
+		TNT1 A 0 a_JumpIfInventory("NineMilAmmo",1,"loopempty")
+        Goto emptyDone
+	ReloadDone:
+		TNT1 A 0 A_PlaySound("weapons/ingramin", CHAN_ITEM)
+		INGR LLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGR MMQRST 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGR PON 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		Goto Ready
+	EmptyDone:
+		TNT1 A 0 A_PlaySound("weapons/ingramin", CHAN_ITEM)
+		INGE LLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGE MMQRS 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGR UVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound("weapons/ingrambolt", CHAN_ITEM)
+		INGR WXYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGR PON 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		Goto Ready
+	   Altfire:
+         TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,"AltFireReal")
+         Goto Reload
+       AltfireReal:
+        INGS ABC 2  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		INGS C 1 A_REfire("altfire1")
+		INGS CBA 2 A_weaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	  Altfire1:
+        TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+        Goto emptyAlt
+        INGS A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,0,0)
+        TNT1 A 0 A_FireBullets(4,2,-1,12,"hitpuff",FBF_NORANDOM)
+		TNT1 A 0 A_TakeInventory("IngramLoaded",1,TIF_NOTAKEINFINITE)
+        TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+        INGS D 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_Light2
+        INGS A 0 BRIGHT  A_SetPitch(Pitch-1)
+        TNT1 A 0 A_Light1
+        INGS G 1 A_SetPitch(Pitch+0.4) 
+        TNT1 A 0 A_Light0
+        INGS A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,0,0)
+        TNT1 A 0 A_AlertMonsters
+        INGS A 0 A_checkreload
+        INGS B 0 A_refire("altfire2")
+        INGS H 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGS B 0 A_refire("altfire2")
+        INGS G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGS B 0 A_refire("altfire2")
+        INGS CBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	  Altfire2:
+        TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+        Goto emptyAlt
+        TNT1 A 0 A_FireBullets(5,4,-1,12,"hitpuff",FBF_NORANDOM)
+		TNT1 A 0 A_TakeInventory("IngramLoaded",1,TIF_NOTAKEINFINITE)
+        TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+        INGS E 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_Light2
+        INGS A 0 BRIGHT  A_SetPitch(Pitch-1)
+        TNT1 A 0 A_Light1
+        INGS G 1 A_SetPitch(Pitch+0.4) 
+        TNT1 A 0 A_Light0
+        CHGG A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,0,0)
+        TNT1 A 0 A_AlertMonsters
+        SHTG A 0 A_checkreload
+        INGG B 0 A_refire("altfire3")
+        INGS H 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGS B 0 A_refire("altfire3")
+        INGS G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGG B 0 A_refire("altfire3")
+        INGS CBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	  Altfire3:
+        TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+        Goto emptyAlt
+        TNT1 A 0 A_FireBullets(6,5,-1,12,"hitpuff",FBF_NORANDOM)
+		TNT1 A 0 A_TakeInventory("IngramLoaded",1,TIF_NOTAKEINFINITE)
+        TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+        INGS F 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_Light2
+        INGS A 0 BRIGHT  A_SetPitch(Pitch-1)
+        TNT1 A 0 A_Light1
+        INGS G 1 A_SetPitch(Pitch+0.4) 
+        TNT1 A 0 A_Light0
+        CHGG A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,0,0)
+        TNT1 A 0 A_AlertMonsters
+        SHTG A 0 A_checkreload
+        INGG B 0 A_refire("altfire4")
+        INGS H 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGS B 0 A_refire("altfire4")
+        INGS G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGG B 0 A_refire("altfire4")
+        INGS CBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	 Altfire4:
+        TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+        Goto emptyAlt
+        TNT1 A 0 A_FireBullets(7,6,-1,12,"hitpuff",FBF_NORANDOM)
+		TNT1 A 0 A_TakeInventory("IngramLoaded",1,TIF_NOTAKEINFINITE)
+        TNT1 A 0 A_PlaySound("weapons/ingramfire", CHAN_WEAPON)
+        INGS E 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_Light2
+        INGS A 0 BRIGHT  A_SetPitch(Pitch-1)
+        TNT1 A 0 A_Light1
+        INGS G 1 A_SetPitch(Pitch+0.4) 
+        TNT1 A 0 A_Light0
+        CHGG A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,0,0)
+        TNT1 A 0 A_AlertMonsters
+        SHTG A 0 A_checkreload
+        INGG B 0 A_refire("altfire1")
+        INGS H 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGS B 0 A_refire("altfire1")
+        INGS G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGG B 0 A_refire("altfire1")
+        INGS CBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	emptyAlt:
+        INGS G 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        INGG A 0  a_refire("emptyAlt")
+		INGS CBA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        goto ready
+	Zoom:
+	TNT1 A 0 a_JumpIfInventory("lightlit",1,"unlight")
+	INGO A 2 
+	INGO BCD 2 
+	INGO E 2 a_playsound("weapons/revolverup")
+	INGO F 2 A_giveinventory("lightlit",1) 
+	INGO GHI 1 a_playsound("weapons/lampclickon")
+    goto readylamp
+	unlight:
+	INGO I 1 a_playsound("weapons/lampclickoff")
+	INGO HG 2 a_light0
+	INGO F 2 a_playsound("weapons/revolverup")
+	INGO EDCB 1 
+	INGO A 1 A_takeinventory("lightlit",1)
+    goto loadedready
+	User1:
+	    TNT1 A 0 a_JumpIfInventory("lightlit",1,"AltUser1")
+	    INGR NOP 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		INGR PON 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	AltUser1:
+	    INGO STUV 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		INGO VUTS 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+ lampFlash:
+        TNT1 A 0
+		stop
+ Spawn:
+        MPIP A 10
+		MPIP A 1 bright
+		loop
+ }
+ } 
+ actor Ingram2: Ingram
+{
+ Inventory.Pickupmessage "Got the Silenced Machine pistol!"
+ Tag "Michonne Special"
+ Obituary "%o was executed by %k."
+ Inventory.Icon "MPI2A0"
+ scale 0.6
+ +CHEATNOTWEAPON
+ States
+ {
+  Ready:
+  TNT1 A 0 a_JumpIfInventory("lightlit",1,"Readylamp")
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,"LoadedReady")
+  INF2 B 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+  Loop
+ LoadedReady:
+  ING2 A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+  Loop
+   ReadyLamp:
+     I2GO I 0 a_JumpIfInventory("IngramLoaded",1,"readylamploaded")
+     I2GO I 0 a_JumpIfInventory("batteries",1,2)
+	 I2GO I 0 a_jump(256,"Unlight")
+	 I2GO I 0 a_light2
+	 I2GO I 0 A_jump(240,2)
+     I2GO I 0 A_takeinventory("batteries",1,TIF_NOTAKEINFINITE)
+     I2GO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     I2GO L 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     I2GO K 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     loop
+ ReadyLampLoaded:
+     I2GO I 0 a_JumpIfInventory("batteries",1,2)
+	 I2GO I 0 a_jump(256,"Unlight")
+	 I2GO I 0 a_light2
+	 I2GO I 0 A_jump(240,2)
+     I2GO I 0 A_takeinventory("batteries",1,TIF_NOTAKEINFINITE)
+     I2GO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     I2GO K 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     I2GO L 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     loop
+ Deselect:
+  "----" A 0 A_LIGHT0
+  "----" A 0 A_takeinventory("Lightlit",1)
+  "----" A 0 A_lower
+  "----" A 1 A_Lower
+  loop
+ Select:
+  TNT1 A 0 A_takeInventory("flashlit")
+  TNT1 A 0 A_TakeInventory("Ingram",1)
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,"Loadedselect")
+  INF2 B 1 A_Raise
+  INF2 B 0 A_Raise
+  Loop
+ LoadedSelect:
+  ING2 A 0 a_JumpIfInventory("IngramLoaded",33,"CheetReset")
+  ING2 A 1 A_Raise
+  ING2 A 0 A_Raise
+  Loop
+ CheetReset:
+    ING2 A 1 A_Raise
+	ING2 A 0 A_takeinventory("IngramLoaded",48)
+	ING2 A 0 A_giveinventory("IngramLoaded",32)
+	ING2 A 0 A_Raise
+	goto loadedselect
+ Fire:
+   TNT1 A 0 a_JumpIfInventory("lightlit",1,"FireLamp")
+   TNT1 A 0 a_JumpIfInventory("ingramloaded",1,"FireReal")
+   Goto Reload
+  Firelamp:
+  TNT1 A 0 a_JumpIfInventory("ingramLoaded",1,"FireLampReal")
+  Goto Reload
+ Firereal:
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+  Goto empty
+  INF2 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(2,2,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_WEAPON)
+  INF2 A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  INF2 A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light1
+  INF2 D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+  TNT1 A 0 A_Light0
+  INF2 A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  INF2 A 0 A_checkreload
+  INF2 B 0 A_refire("fire2")
+  INF2 E 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INF2 B 0 A_refire("fire2")
+  INF2 F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INF2 B 0 A_refire("fire2")
+  ING2 A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("fire2")
+  goto ready
+  Fire2:
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+  Goto empty
+  TNT1 A 0 A_FireBullets(3,3,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramsuppressed", CHAN_7)
+  INF2 B 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light1
+  INF2 D 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light0
+  INF2 A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  INF2 A 0 A_checkreload
+  INF2 E 0 A_refire("fire3")
+  INF2 E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INF2 F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ING2 B 0 A_refire("fire3")
+  ING2 A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("fire3")
+  goto ready
+   Fire3:
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+  Goto empty
+  TNT1 A 0 A_FireBullets(4,4,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramsuppressed", CHAN_7)
+  INF2 C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+  TNT1 A 0 A_Light1
+  INF2 C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+  TNT1 A 0 A_Light0
+  INF2 E 1 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  INF2 A 0 A_checkreload
+  INF2 E 0 A_refire("fire")
+  INF2 E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INF2 F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ING2 B 0 A_refire("fire")
+  ING2 A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INGG B 0 A_refire("fire")
+  goto ready
+  Firelampreal:
+  GLKL A 0 A_gunflash("lampFlash")
+  INGG A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(3,4,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_WEAPON)
+  I2GO M 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  I2GO M 1 BRIGHT  A_SetPitch(Pitch-1)
+  I2GO A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  I2GO P 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  I2GO P 1 a_refire("emptylamp")
+  I2GO Q 1 A_SetPitch(Pitch+0.5) 
+  I2GO P 0 A_refire("firelamp2")
+  I2GO Q 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I2GO B 0 A_refire("firelamp2")
+  I2GO R 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I2GO B 0 A_refire("firelamp2")
+  I2GO L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I2GO B 0 A_refire("firelamp2")
+  goto ready
+   Firelamp2:
+  GLKL A 0 A_gunflash("lampFlash")
+  I2GO A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(3,5,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_7)
+  I2GO N 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  I2GO N 1 BRIGHT  A_SetPitch(Pitch-1)
+  I2GO A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  I2GO P 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  I2GO P 1 a_refire("emptylamp")
+  I2GO Q 1 A_SetPitch(Pitch+0.5) 
+  I2GO P 0 A_refire("firelamp3")
+  I2GO Q 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I2GO B 0 A_refire("firelamp3")
+  I2GO R 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I2GO B 0 A_refire("firelamp3")
+  I2GO L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I2GO B 0 A_refire("firelamp3")
+  goto ready
+   Firelamp3:
+  GLKL A 0 A_gunflash("lampFlash")
+  I2GO A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(3,5,-1,6,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_WEAPON)
+  I2GO O 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  I2GO O 1 BRIGHT  A_SetPitch(Pitch-1)
+  I2GO A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  I2GO P 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  I2GO P 1 a_refire("emptylamp")
+  I2GO Q 1 A_SetPitch(Pitch+0.5) 
+  I2GO P 0 A_refire("firelampreal")
+  I2GO Q 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I2GO B 0 A_refire("firelampreal")
+  I2GO R 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I2GO B 0 A_refire("firelampreal")
+  I2GO L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I2GO B 0 A_refire("firelampreal")
+  goto ready
+  Reload:
+        TNT1 A 0 a_JumpIfInventory("lightlit",1,"ReloadLamp")
+		TNT1 A 0 A_JumpIfInventory("IngramLoaded",1,2)
+		TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"Workempty")
+		ING2 A 0 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("IngramLoaded",32,"Ready")
+        TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"Work1")
+        Goto Ready
+	 Reloadlamp:
+        TNT1 A 0 A_JumpIfInventory("IngramLoaded",1,2)
+		TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"chamberlamp")
+		I2GO L 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("IngramLoaded",32,"Readylamp")
+        TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"droplamp")
+        Goto Ready
+droplamp:
+        I2GO I 1 a_playsound("weapons/lampclickoff")
+	    I2GO H 2 a_light0
+	    I2GO G 2 A_PlaySound("weapons/pistolclipout", CHAN_ITEM)
+	    I2GO FEDCBA 1 A_takeinventory("lightlit",1)
+		ING2 AOPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 3 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		ING2 CDEFGHHHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING2 JKLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)	
+goto reloadloop
+chamberlamp:
+        I2GO I 1 a_playsound("weapons/lampclickoff")
+	    I2GO H 2 a_light0
+	    I2GO G 2 A_PlaySound("weapons/pistolclipout", CHAN_ITEM)
+	    I2GO FEDCBA 1 A_takeinventory("lightlit",1)
+		INF2 B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	    I2E2 OPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 3 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		I2E2 CDEFGHHHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		I2E2 JKLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		goto Loopempty
+	Work1:
+	    ING2 AOPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 3 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		ING2 CDEFGHHHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING2 JKLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto reloadloop
+	Workempty:
+	    INF2 B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	    I2E2 OPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 3 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		I2E2 CDEFGHHHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		I2E2 JKLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		goto Loopempty
+	ReloadLoop:
+		TNT1 A 0 a_JumpIfInventory("Ingramloaded",32,"ReloadDone")
+		TNT1 A 0 A_TakeInventory("NineMilAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_Giveinventory("Ingramloaded",1)
+		TNT1 A 0 a_JumpIfInventory("NineMilAmmo",1,"Reloadloop")
+        Goto ReloadDone
+	loopempty:
+		TNT1 A 0 a_JumpIfInventory("Ingramloaded",32,"emptyDone")
+		TNT1 A 0 A_TakeInventory("NineMilAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_Giveinventory("Ingramloaded",1)
+		TNT1 A 0 a_JumpIfInventory("NineMilAmmo",1,"loopempty")
+        Goto EmptyDone
+	ReloadDone:
+		ING2 MMM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound("weapons/ingramin", CHAN_ITEM)
+		ING2 NRSTU 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 2 A_WEAPONREADY(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		ING2 QPO 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		Goto Ready
+	EmptyDone:
+		I2E2 MMM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound("weapons/ingramin", CHAN_ITEM)
+		I2E2 NRST 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		I2GR UVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound("weapons/ingrambolt", CHAN_ITEM)
+		I2GR WXYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		ING2 QPO 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		Goto Ready
+	  Altfire:
+         TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,"AltFireReal")
+         Goto Reload
+       AltfireReal:
+	    ING2 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGS B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING2 V 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING2 V 2 A_REfire("altfire1")
+		ING2 V 2 A_weaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		INGS B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING2 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	  Altfire1:
+        TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+        Goto emptyAlt
+        INGG A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,0,0)
+        TNT1 A 0 A_FireBullets(6,5,-1,12,"hitpuff",FBF_NORANDOM)
+		TNT1 A 0 A_TakeInventory("IngramLoaded",1,TIF_NOTAKEINFINITE)
+        TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_WEAPON)
+        ING2 W 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_Light2
+        TNT1 A 0 A_Light1
+        TNT1 A 0 A_Light0
+        CHGG A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,0,0)
+		ING2 X 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_AlertMonsters(256)
+        SHTG A 0 A_checkreload
+        INGG B 0 A_refire("altfire2")
+        ING2 X 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGS B 0 A_refire("altfire2")
+        ING2 V 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGG B 0 A_refire("altfire2")
+       ING2 V 2 A_weaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		INGS B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING2 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	  Altfire2:
+        TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+        Goto emptyAlt
+        TNT1 A 0  A_FireBullets(5,4,-1,12,"hitpuff",FBF_NORANDOM)
+		TNT1 A 0 A_TakeInventory("IngramLoaded",1,TIF_NOTAKEINFINITE)
+        TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_7)
+        ING2 Y 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_Light2
+        TNT1 A 0 A_Light1
+        TNT1 A 0 A_Light0
+        CHGG A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,0,0)
+		ING2 Z 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_AlertMonsters(256)
+        SHTG A 0 A_checkreload
+        INGG B 0 A_refire("altfire1")
+        ING2 X 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGS B 0 A_refire("altfire1")
+        ING2 V 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        INGG B 0 A_refire("altfire1")
+       ING2 V 2 A_weaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		INGS B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING2 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	empty:
+        INF2 B 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        ING2 A 0  a_refire("empty")
+        goto ready
+	emptyAlt:
+        ING2 Z 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        INGG A 0  a_refire("emptyAlt")
+		ING2 Z 2 A_weaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		INGS B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		ING2 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        goto ready
+	emptylamp:
+       I2GO P 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+       I2GO A 0  a_refire("fire")
+       goto ready
+	Zoom:
+	TNT1 A 0 a_JumpIfInventory("lightlit",1,"unlight")
+	I2GO A 2 
+	I2GO BCD 2 
+	I2GO E 2 a_playsound("weapons/revolverup")
+	I2GO F 2 A_giveinventory("lightlit",1) 
+	I2GO GHI 1 a_playsound("weapons/lampclickon")
+    goto readylamp
+	unlight:
+	I2GO I 1 a_playsound("weapons/lampclickoff")
+	I2GO HG 2 a_light0
+	I2GO F 2 a_playsound("weapons/revolverup")
+	I2GO EDCB 1 
+	I2GO A 1 A_takeinventory("lightlit",1)
+    goto loadedready
+	User1:
+	    TNT1 A 0 a_JumpIfInventory("lightlit",1,"AltUser1")	
+	    ING2 OPQ 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING2 QPO 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+ Spawn:
+        MP2P A 10
+		MP2P A 1 bright
+		loop
+ }
+ } 
+ actor Ingram3: Ingram
+{
+ Inventory.Pickupmessage "Got the Ultra Machine pistol!"
+ Tag "Michonne Ultra"
+ Obituary "%o was executed by %k."
+ Inventory.Icon "MPI2A0"
+ scale 0.6
+ +CHEATNOTWEAPON
+ States
+ {
+  Ready:
+  TNT1 A 0 a_JumpIfInventory("lightlit",1,"Readylamp")
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,"LoadedReady")
+  INF3 B 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+  Loop
+ LoadedReady:
+  ING3 A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+  Loop
+ Deselect:
+  "----" A 0 A_LIGHT0
+  "----" A 0 A_takeinventory("Lightlit",1)
+  "----" A 0 A_lower
+  "----" A 1 A_Lower
+  loop
+  ReadyLamp:
+     I3GO I 0 a_JumpIfInventory("IngramLoaded",1,"readylamploaded")
+     I3GO I 0 a_JumpIfInventory("batteries",1,2)
+	 I3GO I 0 a_jump(256,"Unlight")
+	 I3GO I 0 a_light2
+	 I3GO I 0 A_jump(240,2)
+     I3GO I 0 A_takeinventory("batteries",1,TIF_NOTAKEINFINITE)
+     I3GO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     I3GO L 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     I3GO K 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     loop
+ ReadyLampLoaded:
+     I3GO I 0 a_JumpIfInventory("batteries",1,2)
+	 I3GO I 0 a_jump(256,"Unlight")
+	 I3GO I 0 a_light2
+     I3GO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     I3GO K 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     I3GO L 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+     loop
+ Select:
+   TNT1 A 0 A_takeInventory("flashlit")
+  TNT1 A 0 A_TakeInventory("Ingram",1)
+  TNT1 A 0 A_TakeInventory("Ingram2",1)
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,"Loadedselect")
+  INF3 B 1 A_Raise
+  INF3 B 0 A_Raise
+  Loop
+ LoadedSelect:
+  ING3 A 1 A_Raise
+  ING3 A 0 A_Raise
+  Loop
+ Fire:
+   TNT1 A 0 a_JumpIfInventory("lightlit",1,"FireLamp")
+   TNT1 A 0 a_JumpIfInventory("ingramloaded",1,"FireReal")
+   Goto Reload
+  Firelamp:
+  TNT1 A 0 a_JumpIfInventory("ingramLoaded",1,"FireLampReal")
+  Goto Reload
+   Firereal:
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+  Goto empty
+  INF3 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(1.5,1.5,-1,7,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_WEAPON)
+  INF3 A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  TNT1 A 0 A_Light1
+  INF3 D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+  TNT1 A 0 A_Light0
+  INF3 A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  INF3 A 0 A_checkreload
+  INF3 B 0 A_refire("fire2")
+  INF3 E 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INF3 B 0 A_refire("fire2")
+  INF3 F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INF3 B 0 A_refire("fire2")
+  ING3 A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ING3 B 0 A_refire("fire2")
+  goto ready
+  Fire2:
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+  Goto empty
+  TNT1 A 0 A_FireBullets(2.5,2.5,-1,7,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramsuppressed", CHAN_7)
+  INF3 B 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light1
+  INF3 D 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light0
+  INF3 A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  INF3 A 0 A_checkreload
+  INF3 E 0 A_refire("fire3")
+  INF3 E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INF3 F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ING3 B 0 A_refire("fire3")
+  ING3 A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ING3 B 0 A_refire("fire3")
+  goto ready
+   Fire3:
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+  Goto empty
+  TNT1 A 0 A_FireBullets(3.5,3.5,-1,7,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/ingramsuppressed", CHAN_7)
+  INF3 C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+  TNT1 A 0 A_Light1 
+  TNT1 A 0 A_Light0
+  INF3 E 1 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  INF3 A 0 A_checkreload
+  INF3 E 0 A_refire("fire")
+  INF3 E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  INF3 F 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ING3 B 0 A_refire("fire")
+  ING3 A 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  ING3 B 0 A_refire("fire")
+  goto ready
+   Firelampreal:
+  GLKL A 0 A_gunflash("lampFlash")
+  I3GO A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(2,3,-1,7,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_WEAPON)
+  TNT1 A 0 A_Light2
+  I3GO M 1 BRIGHT  A_SetPitch(Pitch-0.5)
+  I3GO A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  I3GO P 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  I3GO P 1 a_refire("emptylamp")
+  I3GO Q 1 A_SetPitch(Pitch+0.5) 
+  I3GO P 0 A_refire("firelamp2")
+  I3GO Q 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I3GO B 0 A_refire("firelamp2")
+  I3GO R 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I3GO B 0 A_refire("firelamp2")
+  I3GO L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I3GO B 0 A_refire("firelamp2")
+  goto ready
+   Firelamp2:
+  GLKL A 0 A_gunflash("lampFlash")
+  I3GO A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(2,4,-1,7,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_7)
+  TNT1 A 0 A_Light2
+  I3GO N 1 BRIGHT  A_SetPitch(Pitch-0.5)
+  I3GO A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  I3GO P 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  I3GO P 1 a_refire("emptylamp")
+  I3GO Q 1 A_SetPitch(Pitch+0.5) 
+  I3GO P 0 A_refire("firelamp3")
+  I3GO Q 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I3GO B 0 A_refire("firelamp3")
+  I3GO R 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I3GO B 0 A_refire("firelamp3")
+  I3GO L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I3GO B 0 A_refire("firelamp3")
+  goto ready
+   Firelamp3:
+  GLKL A 0 A_gunflash("lampFlash")
+  I3GO A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireBullets(2,4,-1,7,"hitpuff",1)
+  TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_WEAPON)
+  TNT1 A 0 A_Light2
+  I3GO O 1 BRIGHT  A_SetPitch(Pitch-0.5)
+  I3GO A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,3)
+  I3GO P 1  A_PlaySound("weapons/Ingramdry", CHAN_ITEM)
+  I3GO P 1 a_refire("emptylamp")
+  I3GO Q 1 A_SetPitch(Pitch+0.5) 
+  I3GO P 0 A_refire("firelampreal")
+  I3GO Q 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I3GO B 0 A_refire("firelampreal")
+  I3GO R 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I3GO B 0 A_refire("firelampreal")
+  I3GO L 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  I3GO B 0 A_refire("firelampreal")
+  goto ready 
+  Reload:
+        TNT1 A 0 a_JumpIfInventory("lightlit",1,"ReloadLamp")
+		TNT1 A 0 A_JumpIfInventory("IngramLoaded",1,2)
+		TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"Workempty")
+		ING3 A 0 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("IngramLoaded",48,"Ready")
+        TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"Work1")
+        Goto Ready
+  	 Reloadlamp:
+        TNT1 A 0 A_JumpIfInventory("IngramLoaded",1,2)
+		TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"chamberlamp")
+		I3GO L 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("IngramLoaded",48,"Readylamp")
+        TNT1 A 0 A_JumpIfInventory("NineMilAmmo",1,"droplamp")
+        Goto Ready
+droplamp:
+        I3GO I 1 a_playsound("weapons/lampclickoff")
+	    I3GO H 2 a_light0
+	    I3GO G 2 A_PlaySound("weapons/pistolclipout", CHAN_ITEM)
+	    I3GO FEDCBA 1 A_takeinventory("lightlit",1)
+		ING3 AOPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 1 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		ING3 CDEFGHHHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		ING3 JKLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		goto reloadloop	
+goto reloadloop
+chamberlamp:
+        I3GO I 1 a_playsound("weapons/lampclickoff")
+	    I3GO H 2 a_light0
+	    I3GO G 2 A_PlaySound("weapons/pistolclipout", CHAN_ITEM)
+	    I3GO FEDCBA 1 A_takeinventory("lightlit",1)
+		 INF3 B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	    I3E2 OPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 1 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		I3E2 CDEFGHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		I3E2 JKLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		goto Loopempty
+	Work1:
+	    ING3 AOPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 1 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		ING3 CDEFGHHHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		ING3 JKLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		goto reloadloop
+	Workempty:
+	    INF3 B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+	    I3E2 OPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 1 A_PlaySound("weapons/ingramout", CHAN_ITEM)
+		I3E2 CDEFGHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		I3E2 JKLL 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		goto Loopempty
+	ReloadLoop:
+		TNT1 A 0 a_JumpIfInventory("Ingramloaded",48,"ReloadDone")
+		TNT1 A 0 A_TakeInventory("NineMilAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_Giveinventory("Ingramloaded",1)
+		TNT1 A 0 a_JumpIfInventory("NineMilAmmo",1,"Reloadloop")
+        Goto ReloadDone
+	loopempty:
+		TNT1 A 0 a_JumpIfInventory("Ingramloaded",48,"emptyDone")
+		TNT1 A 0 A_TakeInventory("NineMilAmmo",1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_Giveinventory("Ingramloaded",1)
+		TNT1 A 0 a_JumpIfInventory("NineMilAmmo",1,"loopempty")
+        Goto EmptyDone
+	ReloadDone:
+		ING3 MNN 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound("weapons/ingramin", CHAN_ITEM)
+		ING3 NRSTU 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		ING3 QPO 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		Goto Ready
+	EmptyDone:
+		I3E2 MMM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound("weapons/ingramin", CHAN_ITEM)
+		I3E2 NRST 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		I3GR UVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound("weapons/ingrambolt", CHAN_ITEM)
+		I3GR WXYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		ING3 QPO 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		Goto Ready
+	  Altfire:
+         TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,"AltFireReal")
+         Goto Reload
+       AltfireReal:
+	    ING3 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        ING3 B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING3 V 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING3 V 2 A_REfire("altfire1")
+		ING3 V 2 A_weaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING3 B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING3 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	  Altfire1:
+        TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+        Goto emptyAlt
+        ING3 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,0,0)
+        TNT1 A 0 A_FireBullets(4,4,-1,14,"hitpuff",FBF_NORANDOM)
+		TNT1 A 0 A_TakeInventory("IngramLoaded",1,TIF_NOTAKEINFINITE)
+        TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_WEAPON)
+        ING3 W 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_Light2
+        TNT1 A 0 A_Light1
+        TNT1 A 0 A_Light0
+        ING3 A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,0,0)
+		ING3 X 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_AlertMonsters(256)
+        ING3 A 0 A_checkreload
+        ING3 B 0 A_refire("altfire2")
+        ING3 X 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        ING3 B 0 A_refire("altfire2")
+        ING3 V 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        ING3 B 0 A_refire("altfire2")
+       ING3 V 2 A_weaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING3 B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING3 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	  Altfire2:
+        TNT1 A 0 a_JumpIfInventory("IngramLoaded",1,1)
+        Goto emptyAlt
+        TNT1 A 0  A_FireBullets(4,4,-1,14,"hitpuff",FBF_NORANDOM)
+		TNT1 A 0 A_TakeInventory("IngramLoaded",1,TIF_NOTAKEINFINITE)
+        TNT1 A 0 A_PlaySound("weapons/IngramSuppressed", CHAN_7)
+        ING3 Y 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_Light2
+        TNT1 A 0 A_Light1
+        TNT1 A 0 A_Light0
+        ING3 A 0 A_FireCustomMissile("pistolCasingSpawner",-10,0,0,0)
+		ING3 Z 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 0 A_AlertMonsters(256)
+        ING3 A 0 A_checkreload
+        ING3 B 0 A_refire("altfire1")
+        ING3 X 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        ING3 B 0 A_refire("altfire1")
+        ING3 V 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        ING3 B 0 A_refire("altfire1")
+       ING3 V 2 A_weaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING3 B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING2 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	empty:
+        INF3 B 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        INF3 A 0  a_refire("empty")
+        goto ready
+	emptyAlt:
+        ING3 Z 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        ING3 A 0  a_refire("emptyAlt")
+		ING3 Z 2 A_weaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		ING3 B 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+		ING3 o 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+        goto ready
+	emptylamp:
+       I3GO P 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+       I3GO A 0  a_refire("fire")
+       goto ready
+	Zoom:
+	TNT1 A 0 a_JumpIfInventory("lightlit",1,"unlight")
+	I3GO A 2 
+	I3GO BCD 2 
+	I3GO E 2 a_playsound("weapons/revolverup")
+	I3GO F 2 A_giveinventory("lightlit",1) 
+	I3GO GHI 1 a_playsound("weapons/lampclickon")
+    goto readylamp
+	unlight:
+	I3GO I 1 a_playsound("weapons/lampclickoff")
+	I3GO HG 2 a_light0
+	I3GO F 2 a_playsound("weapons/revolverup")
+	I3GO EDCB 1 
+	I3GO A 1 A_takeinventory("lightlit",1)
+    goto loadedready
+	User1:
+	    TNT1 A 0 a_JumpIfInventory("lightlit",1,"AltUser1")
+	    ING3 OPQ 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		ING3 QPO 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+ Spawn:
+        MP3P A 10
+		MP3P A 1 bright
+		loop
+ }
+ } 

@@ -1,0 +1,366 @@
+ACTOR HammerSpawn : CustomInventory replaces Chainsaw
+{
+	Inventory.Amount 0
+	scale 0.8
+	Inventory.Icon "JHAMA0"
+	Inventory.PickupMessage "Got the Jackhammer!"
+	inventory.pickupsound "weapons/hammerup"
+	+DROPPED
+	States
+	{
+	Spawn:
+		JHAM A 10
+		JHAM A 1 bright
+		loop
+	Pickup:
+	    TNT1 A 0 A_JumpIfInventory("Jackhammer3", 1, 4) //Skips giving you the normal revolver if you have the upgrade
+		TNT1 A 0 A_JumpIfInventory("Jackhammer2", 1, 3) //Skips giving you the normal revolver if you have the upgrade
+		TNT1 A 0 A_GiveInventory("Jackhammer")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("Hammergas", 90)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR HammerBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "JHAMB0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		JHAM B 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Jackhammer2")
+		TNT1 A 0 A_takeInventory("Jackhammer")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR HammerBuild3 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "JHAMC0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		JHAM C 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Jackhammer3")
+		TNT1 A 0 A_takeInventory("Jackhammer")
+		TNT1 A 0 A_takeInventory("Jackhammer2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR Hammergas : Ammo
+{
+ Inventory.Amount 99
+ Inventory.MaxAmount 99
+ Ammo.BackpackAmount 99
+ Ammo.BackpackMaxAmount 99
+ Inventory.PickupSound "items/ammopickup"
+ Inventory.PickupMessage "Got the hammer gas."
+ scale 0.5
+ +ignoreskill
+ States
+ {
+ Spawn:
+  TNT1 A -1
+  Stop
+ }
+}
+ACTOR Hammercount : Ammo
+{
+ Inventory.MaxAmount 10
+ Ammo.BackPackMaxAmount 10
+ +IGNORESKILL
+}
+ACTOR OverchargePuff: bulletpuff
+{ 
++NOBLOCKMAP
+  +ALLOWPARTICLES
+  +RANDOMIZE
+  +NOEXTREMEDEATH
+  +NOGRAVITY
+  RenderStyle Translucent
+  Alpha 0.5
+  scale 0.6
+  Mass 100
+ seesound "weapons/crowbarmiss"
+  States
+  {
+  Spawn:
+    TNT1 A 2 A_RadiusThrust(700, 48, RTF_AFFECTSOURCE)
+    CPUF A 1 A_PlaySound("misc/crowbarmiss")
+    CPUF A 2 Bright
+    CPUF B 3 
+    Stop
+  melee:
+    TNT1 A 2 A_RadiusThrust(700, 48, RTF_AFFECTSOURCE)
+	CPUF A 1 A_PlaySound("misc/crowbarmiss")
+    CPUF A 2 Bright
+    CPUF B 3 
+	stop
+  }
+}
+ACTOR DriverOvercharge: bulletpuff
+{ 
++NOBLOCKMAP
+  +ALLOWPARTICLES
+  +RANDOMIZE
+  +NOEXTREMEDEATH
+  +NOGRAVITY
+  RenderStyle Translucent
+  Alpha 0.5
+  scale 0.6
+  Mass 100
+ seesound "weapons/crowbarmiss"
+  States
+  {
+  Spawn:
+    TNT1 A 2 A_RadiusThrust(700, 48, RTF_AFFECTSOURCE)
+    CPUF A 1 A_PlaySound("misc/crowbarmiss")
+    CPUF A 2 Bright
+    CPUF B 3 
+    Stop
+  melee:
+    TNT1 A 2 A_RadiusThrust(700, 48, RTF_AFFECTSOURCE)
+	CPUF A 1 A_PlaySound("misc/crowbarmiss")
+    CPUF A 2 Bright
+    CPUF B 3 
+	stop
+  }
+}
+actor JACKHAMMER: Weapon
+{
+  Weapon.Kickback 250
+  Weapon.SelectionOrder 4200
+   Weapon.AmmoUse 0
+   Weapon.AmmoGive 99
+   Weapon.AmmoType "Hammergas"
+  Weapon.UpSound "weapons/hammerup"
+  Inventory.PickupMessage "Got the Jackhammer!"
+  Obituary "%o took a pounding from %k!"
+  weapon.slotnumber 1
+  scale 0.7
+  Decal "BulletChip"
+  Tag "JackHammer"
+  inventory.pickupsound "weapons/hammerup"
+  Inventory.Icon "JHAMA0"
+  +WEAPON.MELEEWEAPON
+   States
+  {
+  Ready:
+    HAMM A 0 A_jumpifinventory("hammergas", 1, "reallyready")
+	HAMM A 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWZOOM)
+	loop
+  ReallyReady:
+	HAMM A 0 A_playsound("weapons/hammeridle", CHAN_WEAPON)
+    HAMM ABCDCB 2 A_WeaponReady(WRF_ALLOWZOOM)
+    goto ready
+  Deselect:
+    HAMM A 1 A_Lower
+    Loop
+  Select:
+   TNT1 A 0 A_takeInventory("flashlit")
+    HAMM A 1 A_Raise
+    Loop
+  Fire:
+    HAMM E 0 a_jumpifinventory("hammergas",1,"Firegas")
+	goto ready
+  FIREGAS:
+    HAMM E 1  A_PlayWeaponSound("weapons/Hammerattack")
+	HAMM F 1 A_CustomPunch(random(2, 4) * 5, TRUE, 0, "hitPuff", 90)
+	 TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",15,0,15,0)
+	HAMM GHE 1
+	HAMM E 0 a_jumpifinventory("hammercount",1,3)
+	HAMM E 0 A_giveinventory("hammercount", 5)
+	HAMM E 0 A_takeinventory("hammergas",1,TIF_NOTAKEINFINITE)
+	HAMM E 0 A_takeinventory("hammercount",1)
+    HAMM H 0 A_ReFire("FIRE")
+	HAMM HIHEABCDCB 2
+    Goto Ready
+  AltFire:
+    HAMM E 0 a_jumpifinventory("hammergas",1,"altgas")
+	goto ready
+  AltGas:
+    HAMM E 1  A_PlayWeaponSound("weapons/Hammerovercharge")
+	HAMM IHEI 1
+	HAMM E 0 a_jumpifinventory("hammercount",1,3)
+	HAMM E 0 A_giveinventory("hammercount", 5)
+	HAMM E 0 A_takeinventory("hammergas",1,TIF_NOTAKEINFINITE)
+	HAMM E 0 A_takeinventory("hammercount",1)
+	HAMM H 1 A_refire("altgas")
+	HAMM F 2 A_CustomPunch(random(4, 8) * 10, TRUE, 0, "overchargePuff", 90)
+	HAMM HIJKLMMNNLLKKJJA 1
+	goto ready
+Zoom:
+	    HAMM A 0  A_giveinventory("lightlit",1)
+	    HAMM A 0  A_SelectWeapon("crowbar")
+		HAMM A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  Spawn:
+    JHAM A -1
+    Stop
+  }
+}
+actor JACKHAMMER2: Weapon
+{
+  Weapon.Kickback 250
+  Weapon.SelectionOrder 4200
+   Weapon.AmmoUse 0
+   Weapon.AmmoGive 99
+   Weapon.AmmoType "Hammergas"
+  Weapon.UpSound "weapons/hammerup"
+  Inventory.PickupMessage "Got the Smackhammer!"
+  Obituary "%o took a pounding from %k!"
+  weapon.slotnumber 1
+  scale 0.7
+  Decal "BulletChip"
+  Tag "SmackHammer"
+  inventory.pickupsound "weapons/hammerup"
+  Inventory.Icon "JHAMB0"
+  +WEAPON.MELEEWEAPON
+   +CHEATNOTWEAPON
+   States
+  {
+  Ready:
+    HAM2 A 0 A_jumpifinventory("hammergas", 1, "reallyready")
+	HAM2 A 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWZOOM)
+	loop
+  ReallyReady:
+	HAM2 A 0 A_playsound("weapons/hammeridle", CHAN_WEAPON)
+    HAM2 ABCDCB 2 A_WeaponReady(WRF_ALLOWZOOM)
+    goto ready
+  Deselect:
+    HAM2 A 1 A_Lower
+    Loop
+  Select:
+   TNT1 A 0 A_takeInventory("flashlit")
+    TNT1 A 0 A_TakeInventory("Jackhammer",1)
+    HAM2 A 1 A_Raise
+    Loop
+  Fire:
+    HAM2 E 0 a_jumpifinventory("hammergas",1,"Firegas")
+	goto ready
+  FIREGAS:
+    HAM2 E 1  A_PlayWeaponSound("weapons/Hammerattack")
+	HAM2 F 1 A_CustomPunch(random(4, 8) * 5, TRUE, 0, "PiledriverPuff", 90)
+	 TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",15,0,15,0)
+	HAM2 GHE 1
+	HAM2 E 0 a_jumpifinventory("hammercount",1,3)
+	HAM2 E 0 A_giveinventory("hammercount", 5)
+	HAM2 E 0 A_takeinventory("hammergas",1,TIF_NOTAKEINFINITE)
+	HAM2 E 0 A_takeinventory("hammercount",1)
+    HAM2 H 0 A_ReFire("FIRE")
+	HAM2 HIHEABCDCB 2
+    Goto Ready
+  AltFire:
+    HAM2 E 0 a_jumpifinventory("hammergas",1,"altgas")
+	goto ready
+  AltGas:
+    HAM2 E 1  A_PlayWeaponSound("weapons/Hammerovercharge")
+	HAM2 IHEI 1
+	HAM2 E 0 a_jumpifinventory("hammercount",1,3)
+	HAM2 E 0 A_giveinventory("hammercount", 5)
+	HAM2 E 0 A_takeinventory("hammergas",1,TIF_NOTAKEINFINITE)
+	HAM2 E 0 A_takeinventory("hammercount",1)
+	HAM2 H 1 A_refire("altgas")
+	HAM2 F 2 A_CustomPunch(random(8, 16) * 10, TRUE, 0, "DriverOvercharge", 90)
+	HAM2 HIJKLMMNNLLKKJJA 1
+	goto ready
+Zoom:
+	    HAM2 A 0  A_giveinventory("lightlit",1)
+	    HAM2 A 0  A_SelectWeapon("crowbar")
+		HAM2 A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  Spawn:
+    JHAM B -1
+    Stop
+  }
+}
+actor JACKHAMMER3: Weapon
+{
+  Weapon.Kickback 250
+  Weapon.SelectionOrder 4200
+   Weapon.AmmoUse 0
+   Weapon.AmmoGive 99
+   Weapon.AmmoType "Hammergas"
+  Weapon.UpSound "weapons/hammerup2"
+  Inventory.PickupMessage "Got the Got-Your-Backhammer!"
+  Obituary "%o took a pounding from %k!"
+  weapon.slotnumber 1
+  scale 0.7
+  Decal "BulletChip"
+  Tag "Got-Your-BackHammer"
+  inventory.pickupsound "weapons/hammerup2"
+  Inventory.Icon "JHAMC0"
+  +WEAPON.MELEEWEAPON
+   +CHEATNOTWEAPON
+   States
+  {
+  Ready:
+    HAM3 A 0 A_jumpifinventory("hammergas", 1, "reallyready")
+	HAM3 A 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWZOOM)
+	loop
+  ReallyReady:
+	HAM3 A 0 A_playsound("weapons/hammeridle2", CHAN_WEAPON)
+    HAM3 ABCDCB 2 A_WeaponReady(WRF_ALLOWZOOM)
+    goto ready
+  Deselect:
+    HAM3 A 1 A_Lower
+    Loop
+  Select:
+   TNT1 A 0 A_takeInventory("flashlit")
+    TNT1 A 0 A_TakeInventory("Jackhammer",1)
+	TNT1 A 0 A_TakeInventory("Jackhammer2",1)
+    HAM3 A 1 A_Raise
+    Loop
+  Fire:
+    HAM3 E 0 a_jumpifinventory("hammergas",1,"Firegas")
+	goto ready
+  FIREGAS:
+    HAM3 E 1  A_PlayWeaponSound("weapons/Hammerattack2")
+	HAM3 F 1 A_CustomPunch(random(4, 8) * 5, TRUE, 0, "PiledriverPuff", 90)
+	 TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",15,0,15,0)
+	HAM3 GHE 1
+	HAM3 E 0 a_jumpifinventory("hammercount",1,3)
+	HAM3 E 0 A_giveinventory("hammercount", 10)
+	HAM3 E 0 A_takeinventory("hammergas",1,TIF_NOTAKEINFINITE)
+	HAM3 E 0 A_takeinventory("hammercount",1)
+    HAM3 H 0 A_ReFire("FIRE")
+	HAM3 HIHEABCDCB 2
+    Goto Ready
+  AltFire:
+    HAM3 E 0 a_jumpifinventory("hammergas",1,"altgas")
+	goto ready
+  AltGas:
+    HAM3 E 1  A_PlayWeaponSound("weapons/Hammerovercharge2")
+	HAM3 IHEI 1
+	HAM3 E 0 a_jumpifinventory("hammercount",1,3)
+	HAM3 E 0 A_giveinventory("hammercount", 10)
+	HAM3 E 0 A_takeinventory("hammergas",1,TIF_NOTAKEINFINITE)
+	HAM3 E 0 A_takeinventory("hammercount",1)
+	HAM3 H 1 A_refire("altgas")
+	HAM3 F 2 A_CustomPunch(random(8, 16) * 10, TRUE, 0, "DriverOvercharge", 90)
+	HAM3 HIJKLMMNNLLKKJJA 1
+	goto ready
+Zoom:
+	    HAM3 A 0  A_giveinventory("lightlit",1)
+	    HAM3 A 0  A_SelectWeapon("crowbar")
+		HAM3 A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+  Spawn:
+    JHAM C -1
+    Stop
+  }
+}

@@ -1,0 +1,1386 @@
+ACTOR GunSmokeSpawner
+{
+	Speed 20
+	+NOCLIP
+	States
+	{
+	Spawn:
+		TNT1 A 1
+		TNT1 A 0 Thing_ChangeTID(0,390)
+		TNT1 AA 0 A_CustomMissile ("GunSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+        Stop
+	}
+}
+ACTOR GunSmoke
+{
+	+NOGRAVITY
+	+NOBLOCKMAP
+	+FLOORCLIP
+	+FORCEXYBILLBOARD
+	+NOINTERACTION
+	+FORCEXYBILLBOARD
+	+MISSILE
+	Speed 1
+	RenderStyle Add
+	Alpha		0.4
+	+CLIENTSIDEONLY
+	Radius		0
+	Height		0
+	Scale		0.4
+	States
+	{
+	Spawn:
+		TNT1 A 1
+		GSMK AAABBBCCCDDDEEEFFFGGGHHHIIIJJJKK 1 A_FadeOut(0.004)
+		Stop
+	}
+}
+ACTOR ShotSmoke: gunsmoke
+{
+    renderstyle shaded
+	Scale		0.3
+	alpha 0.6
+}
+actor FlyingBlood
+{
+ game Doom
+ RenderStyle Translucent
+ Alpha 0.75
+ scale 0.4
+ gravity 0.4
+ health 1
+ radius 3
+ height 3
+ speed 40
+ mass 1
+ +MISSILE
+ +CORPSE
+ +NOTELEPORT
+ +NOBLOCKMAP
+Decal BloodSplat
+ states
+ {
+  Spawn:
+  GIBL ABCD 5
+  GIBL A 1 A_SpawnItem("blood",0,0,0,1)
+  LOOP
+DEATH:
+  GIBL EFGGGGGGGGGGGGGGGGG 5
+  GIBL GGGGGGGGGGGGGGGGGGG 10
+  GIBL GGGGGGGGGG 8 A_FadeOut(0.1)
+  stop
+ }
+}
+actor FlyingGibArm
+{
+health 1
+radius 4
+height 4
+mass 1
+speed 30
+scale 0.6
+gravity 0.4
++CORPSE
++NOTELEPORT
++NOBLOCKMAP
+Decal BloodSmear
+states
+	{
+	Spawn:
+	 GIRA ABCDEFG 5
+	 GIRA G 1 A_SpawnItem("blood",0,0,0,1)
+	 loop
+	Crash:
+	 GIRA G -1 A_PlaySound ("special/fleshdrop")
+	 stop
+	}
+}
+actor FlyingGibEntrails: FlyingGibArm
+{
+states
+	{
+	Spawn:
+	 GIEN ABCD 4
+	 GIEN A 1 A_SpawnItem("blood",0,0,0,1)
+	 loop
+	Crash:
+	 GIEN E -1 A_PlaySound ("special/fleshdrop")
+	 stop
+	}
+}
+actor FlyingGibRib: FlyingGibArm
+{
+states
+	{
+	Spawn:
+	 GIRI ABCD 4
+	 GIRI A 1 A_SpawnItem("blood",0,0,0,1)
+	 loop
+	Crash:
+	 GIRI E -1 A_PlaySound ("special/fleshdrop")
+	 stop
+	}
+}
+actor FlyingGibOffal: FlyingGibRib
+{
+states
+	{
+	Spawn:
+	 GIIN A 4 
+	 GIIN A 2 A_SpawnItem("blood",0,0,0,1)
+	 loop
+	Crash:
+	 GIIN B -1 A_PlaySound ("special/fleshdrop")
+	 stop
+	}
+}
+Actor GenericDebris
+{
+    
+	+MISSILE
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DROPOFF
+	+NOTELEPORT
+	+FORCEXYBILLBOARD
+	+NOTDMATCH
+	+GHOST
+	+DONTSPLASH
+	Radius 1
+	Height 1
+	Mass 10
+	Damage 0
+}
+ACTOR pistolCasingSpawner : GenericDebris
+{
+	Speed 15
+	+NOINTERACTION
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 1 Thing_ChangeTID(0,390)
+		TNT1 A 0 A_CustomMissile("pistolCasing",0,0,random(-100,-130),10,random(20,45))
+		Stop
+	}
+}
+ACTOR shellCasingSpawner : GenericDebris
+{
+	Speed 5
+	+NOINTERACTION
+	-NOBLOCKMAP
+	-NOGRAVITY
+	+Randomize
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 1 Thing_ChangeTID(0,390)
+		TNT1 A 0 A_CustomMissile("shellCasing",0,0,random(-140,-170),10,random(35,55))
+		Stop
+	}
+}
+ACTOR rifleCasingSpawner : GenericDebris
+{
+	Speed 15
+	+NOINTERACTION
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 1 Thing_ChangeTID(0,390)
+		TNT1 A 0 A_CustomMissile("rifleCasing",0,0,random(-100,-130),10,random(20,45))
+		Stop
+	}
+}
+ACTOR UnderbarrelSpawner : rifleCasingSpawner
+{
+	Speed 2
+}
+ACTOR SlugCasingSpawner : GenericDebris
+{
+	Speed 15
+	+NOINTERACTION
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 1 Thing_ChangeTID(0,390)
+		TNT1 A 0 A_CustomMissile("slugCasing",0,0,random(-100,-130),10,random(20,45))
+		Stop
+	}
+}
+Actor GrizzlySpawner: shellcasingspawner
+{
+  speed 15
+}
+Actor SpinCockSpawner: shellcasingspawner
+{
+  speed 2
+}
+ACTOR pistolCasing : GenericDebris
+{ 
+	-NOBLOCKMAP
+	-NOGRAVITY
+	+Randomize
+	Radius 3
+	Height 3
+	Speed 6
+	bouncetype "doom"
+	bouncesound "misc/casing"
+	BounceFactor 0.5
+	Scale .2
+	Alpha 1.0
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 Thing_ChangeTID(0,390)
+		TNT1 A 0 A_Jump(256,1,2,3,4,5,6,7,8)
+		CAS1 ABCDEFGH 1 
+		Goto Spawn+3
+	Death:
+		TNT1 A 0 
+		TNT1 A 0 A_jump(256,"death1","death2","death3","death4","death5","death6")
+	Death1:
+		CAS1 I 200
+		TNT1 A 1
+		Stop
+	Death2:
+		CAS1 J 200
+		TNT1 A 1
+		Stop
+	Death3:
+		CAS1 K 200
+		TNT1 A 1
+		Stop
+	Death4:
+		CAS1 L 200
+		TNT1 A 1
+		Stop
+	Death5:
+		CAS1 M 200
+		TNT1 A 1
+		Stop
+	Death6:
+		CAS1 N 200
+		Stop
+	}
+}
+ACTOR shellCasing : GenericDebris
+{ 
+	-NOBLOCKMAP
+	-NOGRAVITY
+	+Randomize
+	Radius 3
+	Height 3
+	Speed 6
+	bouncetype "doom"
+	bouncesound "misc/shellhit"
+	BounceFactor 0.5
+	Scale .2
+	Alpha 1.0
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 Thing_ChangeTID(0,390)
+		TNT1 A 0 A_Jump(256,1,2,3,4,5,6,7,8)
+		SCAS ABCDEFGH 1 
+		Goto Spawn+3
+	Death:
+		TNT1 A 0 
+		TNT1 A 0 A_jump(256,"death1","death2")
+	Death1:
+		SCAS A 500
+		SCAS A 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death2:
+		SCAS E 500
+		SCAS E 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	}
+}
+ACTOR rifleCasing : GenericDebris
+{ 
+	-NOBLOCKMAP
+	-NOGRAVITY
+	+Randomize
+	Radius 3
+	Height 3
+	Speed 6
+    bouncetype "doom"
+	bouncesound "misc/casing"
+	BounceFactor 0.5
+	Scale .2
+	Alpha 1.0
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 Thing_ChangeTID(0,390)
+		TNT1 A 0 A_Jump(256,1,2,3,4,5,6,7,8)
+		RCAS ABCDEFGH 1 
+		Goto Spawn+3
+	Death:
+		TNT1 A 0 
+		TNT1 A 0 A_jump(256,"death1","death2","death3","death4","death5","death6")
+	Death1:
+		RCAS I 500
+		RCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death2:
+		RCAS J 500
+		RCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death3:
+		RCAS K 500
+		RCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death4:
+		RCAS L 500
+		RCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death5:
+		RCAS M 500
+		RCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death6:
+		RCAS N 500
+		RCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	}
+}
+ACTOR SlugCasing : GenericDebris
+{ 
+	-NOBLOCKMAP
+	-NOGRAVITY
+	+Randomize
+	Radius 3
+	Height 3
+	Speed 5
+    bouncetype "doom"
+	bouncesound "misc/shellhit"
+	BounceFactor 0.5
+	Scale .2
+	Alpha 1.0
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 Thing_ChangeTID(0,390)
+		TNT1 A 0 A_Jump(256,1,2,3,4,5,6,7,8)
+		LCAS ABCDEFGH 1 
+		Goto Spawn+3
+	Death:
+		TNT1 A 0 
+		TNT1 A 0 A_jump(256,"death1","death2","death3","death4","death5","death6")
+	Death1:
+		LCAS I 500
+		LCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death2:
+		LCAS J 500
+		LCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death3:
+		LCAS K 500
+		LCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death4:
+		LCAS L 500
+		LCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death5:
+		LCAS M 500
+		LCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	Death6:
+		LCAS N 500
+		LCAS I 1 A_CheckSight(1)
+		Wait
+		TNT1 A 1
+		Stop
+	}
+}
+ACTOR CrowbarPuff: bulletpuff
+{
+  +NOBLOCKMAP
+  +ALLOWPARTICLES
+  +RANDOMIZE
+  +NOEXTREMEDEATH
+  +NOGRAVITY
+  damagetype crowdamage
+  RenderStyle Translucent
+  Alpha 0.5
+  scale 0.6
+  Mass 100 
+  attacksound "weapons/crowbarmiss"
+  activesound "weapons/crowbarswing"
+  States
+  {
+  Spawn:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/crowbarmiss")
+    CPUF A 4 Bright
+    CPUF B 3
+	stop
+  Crash: 
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/crowbarmiss")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  Melee:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/crowbarhit")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  }
+}
+ACTOR CroHamPuff: bulletpuff
+{
+  +NOBLOCKMAP
+  +ALLOWPARTICLES
+  +RANDOMIZE
+  +NOEXTREMEDEATH
+  +NOGRAVITY
+  +PUFFONACTORS
+  damagetype crowdamage
+  RenderStyle Translucent
+  Alpha 0.5
+  scale 0.6
+  Mass 100 
+   activesound "Croham/Swing"
+  States
+  {
+  Spawn:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("Croham/hit1")
+    CPUF A 4 Bright
+    CPUF B 3
+	stop
+  Crash: 
+    CPUF A 0
+    CPUF C 2 A_PlaySound("croham/hit2")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  Melee:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("croham/gotcha")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  }
+}
+ACTOR PileDriverPuff: bulletpuff
+{
+  +NOBLOCKMAP
+  +ALLOWPARTICLES
+  +RANDOMIZE
+  +NOGRAVITY
+  damagetype crowdamage
+  RenderStyle Translucent
+  Alpha 0.5
+  scale 0.6
+  Mass 100 
+  States
+  {
+  Spawn:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("Bullet/ricochet")
+    CPUF A 4 Bright
+    CPUF B 3
+	stop
+  Crash: 
+    CPUF A 0
+    CPUF C 2 A_PlaySound("Bullet/ricochet")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  Melee:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/crowbarhit")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  }
+}
+ACTOR BashPuff: crowbarpuff
+{        
+  attacksound "weapons/grimelmiss"
+  activesound "weapons/grimelhit"
+   States
+  {
+  Spawn:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/grimelhit")
+    CPUF A 4 Bright
+    CPUF B 3
+	stop
+  Crash: 
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/grimelhit")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  Melee:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/grimelhit")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  }
+}
+ACTOR HitPuff: bulletpuff 
+{
+  +NOBLOCKMAP
+  +NOGRAVITY
+  +ALLOWPARTICLES
+  +RANDOMIZE
+  +NOEXTREMEDEATH
+  renderstyle normal
+  Decal "BulletChip"
+  Alpha 1.0
+  VSpeed 0
+  Mass 0
+  States
+  {
+  Spawn:
+  crash:
+    CPUF A  0
+    CPUF A  1 A_JUMP(128, "puffricochet")
+	CPUF A 0 A_PlaySound("Bullet/ricochet")
+    CPUF B  1  A_FadeOut(0.3)
+	CPUF C  3 A_FadeOut(0.3)
+	CPUF D  3 A_FadeOut(0.3)
+	CPUF E  3
+    stop  
+   Puffricochet:
+    PIN2 B 1 bright 
+    CPUF A 0 A_PlaySound("Bullet/ricochet")
+	TNT1 A 0 A_SpawnItem("shotSmoke")
+    PIN2 C 1 Bright
+	PIN2 D 3 bright
+	PIN2 E 3 bright
+	PIN2 F 3 
+	PIN2 G 3
+	PIN2 H 3
+    stop  
+  melee:
+    TNT1 A 3
+	Stop    
+  }
+}
+ACTOR KnifePuff: Hitpuff
+{   
+  RenderStyle Translucent
+  Alpha 0.5
+  scale 0.5
+  decal knifescrape  
+  attacksound "weapons/knifemiss"
+  activesound "weapons/knifeswing"
+   States
+  {
+  Spawn:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/knifemiss")
+    CPUF A 4 Bright
+    CPUF B 3
+	stop
+  Crash: 
+    PIN2 A 0
+    PIN2 C 2 A_PlaySound("weapons/knifemiss")
+    PIN2 CDDEE 2 A_FadeOut(0.05)
+    Stop
+  Melee:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/knifehit")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  }
+}
+ACTOR LucySpit
+{
+  Radius 4
+  Height 4
+  Speed 40
+  FastSpeed 50
+  Damage 20
+  Projectile
+  +RANDOMIZE
+  +STRIFEDAMAGE
+  RenderStyle Add
+  decal Acidsplat
+  scale 1.0
+  Alpha .8
+  DeathSound "imp/shotx"
+  States
+  {
+  Spawn:
+    BAL3 AB 4 bright
+    Loop
+  Death:
+    BAL3 AAAA 0 A_CustomMissile("LucyDebris", 0, 0, random(0,360), 2, random(0,90))
+    BAL3 CDEF 4 bright
+    Stop
+  }
+}
+actor LucyDebris
+{
+  health 5
+  radius 2
+  height 2
+  Speed 10
+  Scale 0.5
+  PROJECTILE
+  +NOBLOCKMAP
+  +ROCKETTRAIL
+  +DONTSPLASH
+  +RANDOMIZE
+  -NOGRAVITY
+  -SOLID
+  +WINDTHRUST
+  //RENDERSTYLE ADD
+  states
+  {
+  Spawn:
+    CSPT A 0 bright
+    CSPT A 20 bright
+    CSPT A 200 bright A_LowGravity
+  Death:
+    ICWS JKLMNOPQRJKLMNOPQR 5
+	ICWS JKLMNOPQRJKLMNOPQR 5 a_fadeout(0.1)
+    stop
+  }
+}
+ACTOR AshesFirebomb: rocket 
+{
+  Radius 2
+  Height 2
+  Speed 30
+  Damage (random(80,90))
+  Projectile
+  DamageType Fire
+  decal "scorch"
+  -NOGRAVITY
+  +RANDOMIZE
+  +ROCKETTRAIL
+  Gravity 0.2
+  SeeSound "master/launch"
+  DeathSound "blaster/molotov"
+  Obituary "%o was reduced to ashes by %k."
+  Alpha 0.60
+  renderstyle add
+  States
+  {
+  Spawn:
+    TNT1 AA 1
+  Spawnloop:
+    FBOM A 2 bright
+	FBOM B 2 bright A_SpawnItem ("LeakFlame",8+random(-5,5),8+random(-5,5),0,0)
+    Loop
+  Death:
+    BFE1 AAAAAAAAAAAAA 0 A_CustomMissile("NapalmDebris", 0, 0, random(0,360), 2, random(0,90))
+	BFE1 AA 0 A_CustomMissile("darksmoke", 0, 0, random(0,360), 2, random(0,30))
+	BFE1 AAAAA 0 A_CustomMissile("firesmoke", 0, 0, random(0,360), 2, random(0,30))
+	FBOM B 0 A_PlaySound("weapons/explodedistant", CHAN_ITEM, 1.0)
+	FBOM B 0 A_Quake(4,10,0,300)
+    FBOM B 0 A_Quake(2,10,0,600)
+    FBOM C 4 bright A_explode(40, 128)
+    FBOM D 4 bright A_explode(40, 128)
+    FBOM E 4 bright 
+	FBOM F 4 bright
+	FBOM G 5 bright
+	  FBOM HIJ 5 A_fadeout(0.3)
+	  TNT1 A 0 
+	stop
+  }
+}
+ACTOR AshesFirebombHiPres: AshesFireBomb
+{
+  Radius 2
+  Height 2
+  Speed 36
+  Gravity 0.14
+   States
+  {
+  Spawn:
+    TNT1 AA 1
+    STRM V 4 bright A_SpawnItem ("LeakFlame",8+random(-5,5),8+random(-5,5),0,0)
+  Inflight:
+    FBOM A 2 bright
+	FBOM B 2 bright A_SpawnItem ("LeakFlame",8+random(-5,5),8+random(-5,5),0,0)
+    Loop
+  Death:
+    BFE1 AAAAAAAAAAAAA 0 A_CustomMissile("NapalmDebris", 0, 0, random(0,360), 2, random(0,90))
+	BFE1 AA 0 A_CustomMissile("darksmoke", 0, 0, random(0,360), 2, random(0,30))
+	BFE1 AAAAA 0 A_CustomMissile("firesmoke", 0, 0, random(0,360), 2, random(0,30))
+	FBOM B 0 A_PlaySound("weapons/explodedistant", CHAN_ITEM, 1.0)
+	FBOM B 0 A_Quake(4,10,0,300)
+    FBOM B 0 A_Quake(2,10,0,600)
+    FBOM C 4 bright A_explode(40, 128)
+    FBOM D 4 bright A_explode(40, 128)
+    FBOM E 4 bright 
+	FBOM F 4 bright
+	FBOM G 5 bright
+	  FBOM HIJ 5 A_fadeout(0.3)
+	  TNT1 A 0 
+	stop
+  }
+}
+Actor FireStream
+{
+   Radius 8
+  Height 6
+  Speed 10
+  Damage (5)
+  Projectile
+  DamageType Fire
+  renderstyle add
+  scale 0.8
+  Alpha 0.6
+  decal "revenantscorch"
+  Obituary "%o was burned to death by %k."
+  +NOEXTREMEDEATH
+  +BLOODLESSIMPACT
+  +RIPPER
+  States
+  {
+  Spawn:
+    TNT1 A 1
+	TNT1 AA 1
+    STRM AABCDE 1 bright A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+	STRM F 1 bright A_setrenderstyle(0.6,style_translucent)
+	STRM GHIJKLMNOPQRST 1 bright A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+	stop
+  Death:
+    STRM J 2 bright A_SpawnItem ("GasSpark")
+	STRM J 1 bright A_setrenderstyle(0.6,style_translucent)
+    STRM KLMNOPQRST 1 bright  A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+    Stop
+  }
+}
+Actor FirestreamMega: Firestream
+{
+Damage (6)
+Speed 13
++RIPPER
+
+States
+  {
+  Spawn:
+    TNT1 A 1
+	TNT1 AAA 1
+    STRM AABCDE 1 bright A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+	STRM F 1 bright A_setrenderstyle(0.6,style_translucent)
+	STRM GHIJKLMNOPQRST 1 bright A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+	stop
+  Death:
+    STRM J 2 bright A_SpawnItem ("GasSpark")
+	STRM J 1 bright A_setrenderstyle(0.6,style_translucent)
+    STRM KLMNOPQRST 1 bright  A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+    Stop
+  }
+}
+Actor FirestreamHIPRES: Firestream
+{
+Speed 16
+States
+  {
+  Spawn:
+    TNT1 A 1
+	TNT1 AA 1
+    STRM VVVAAABCDE 1 bright A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+	STRM F 1 bright A_setrenderstyle(0.6,style_translucent)
+	STRM GHIJKLMNOPQRST 1 bright A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+	stop
+  Death:
+    STRM J 2 bright A_SpawnItem ("GasSpark")
+	STRM J 1 bright A_setrenderstyle(0.6,style_translucent)
+    STRM KLMNOPQRST 1 bright  A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+    Stop
+  }
+}
+Actor NapalmBlast
+{
+  Radius 16
+  Height 16
+  Speed 11
+  Damage 10
+  Projectile
+  DamageType Fire
+  renderstyle add
+  scale 0.9
+  Alpha 0.6
+  gravity 1
+  BounceFactor 0.9
+  wallBounceFactor 0.9
+  decal "revenantscorch"
+  Obituary "%o was burned to death by %k."
+  SeeSound "blaster/molotov"
+  deathsound "blaster/molotov"
+  -NOGRAVITY
+  +NOEXTREMEDEATH
+  +BLOODLESSIMPACT
+  +RIPPER
+  +DOOMBOUNCE
+  +BOUNCEONACTORS
+  States
+  {
+  Spawn:
+    TNT1 A 1
+	TNT1 AA 1
+	STRM  AA 2
+    STRM  AABCDE 1 bright A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+	STRM  A 1 bright A_setrenderstyle(0.6,style_translucent)
+	STRM  ABABABABABABA 4 bright A_SpawnItemEx ("PBlasterTrail")
+	stop
+  Death:
+    MISL J 0 bright A_explode(50,64)
+    MISL C 2 bright A_SpawnItem ("GasSpark")
+	MISL D 1 bright A_setrenderstyle(0.6,style_translucent)
+    MISL FGHIJKLM 1 bright  A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+    Stop
+  }
+}
+Actor PBlasterTrail
+{
+   +NOGRAVITY
+   +RIPPER
+    Radius 30
+	DamageType Fire
+	renderstyle add
+    Height 56
+	Obituary "%o was burned to death by %k."
+   ALPHA 0.9
+   scale 0.8
+	States
+	{
+	Spawn:
+	  STRM F 4 bright
+	  goto death
+	Death:
+	    STRM A 0 A_PlaySound("blaster/molotov", CHAN_ITEM, 1.0)
+	    STRM A 0 A_explode(50,64)
+		STRM G 4 bright A_SpawnItemex ("GasSpark")
+		STRM AA 0 A_CustomMissile("NapalmDebris", 0, 0, random(0,360), 2, random(0,90))
+		STRM G 0 A_Quake(2,8,0,400)
+		STRM H 4 bright
+		STRM IJKLMNOPQRST 2 Bright A_fadeout(0.05)
+		Stop
+	}
+}
+Actor HyperNapalmBlast
+{
+  Radius 16
+  Height 16
+  Speed 11
+  Damage 12
+  Projectile
+  DamageType Fire
+  renderstyle add
+  scale 0.9
+  Alpha 0.6
+  gravity 1
+  BounceFactor 0.9
+  wallBounceFactor 0.9
+  decal "revenantscorch"
+  Obituary "%o was burned to death by %k."
+  SeeSound "blaster/molotov"
+  deathsound "blaster/molotov"
+  -NOGRAVITY
+  +NOEXTREMEDEATH
+  +BLOODLESSIMPACT
+  +RIPPER
+  +DOOMBOUNCE
+  +BOUNCEONACTORS
+  States
+  {
+  Spawn:
+    TNT1 A 1
+	TNT1 AA 1
+    STRM  AABCDE 1 bright A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+	STRM  A 1 bright A_setrenderstyle(0.6,style_translucent)
+	STRM  VVVABABABABABABA 4 bright A_SpawnItemEx ("HyperBlasterTrail")
+	stop
+  Death:
+    MISL J 0 bright A_explode(60,64)
+    MISL C 2 bright A_SpawnItem ("GasSpark")
+	MISL D 1 bright A_setrenderstyle(0.6,style_translucent)
+    MISL FGHIJKLM 1 bright  A_CustomMissile ("shotSmoke", 0, 0, random (0, 360), 2, random (0, 180))
+    Stop
+  }
+}
+Actor HyperBlasterTrail
+{
+   +NOGRAVITY
+   +RIPPER
+    Radius 30
+	renderstyle add
+	DamageType Fire
+    Height 56
+   ALPHA 0.9
+   scale 0.8
+	States
+	{
+	Spawn:
+	  STRM F 4 bright
+	  goto death
+	Death:
+	    STRM A 0 A_PlaySound("blaster/molotov", CHAN_ITEM, 1.0)
+	    STRM A 0 A_explode(60,64)
+		STRM G 4 bright A_SpawnItemex ("GasSpark")
+		STRM AA 0 A_CustomMissile("NapalmDebris", 0, 0, random(0,360), 2, random(0,90))
+		STRM G 0 A_Quake(3,8,0,400)
+		STRM V 4 bright
+		STRM VHIJKLMNOPQRST 2 Bright A_fadeout(0.05)
+		Stop
+	}
+}
+
+Actor FireSmoke: Gunsmoke
+{
+-NOgravity
+RenderStyle add
+alpha 0.9
+speed 1
+scale 1
+gravity 1
+mass 1000
++Randomize
+
+states
+{
+Spawn:
+		HIEX A 4 bright A_ChangeFlag("SPRITEFLIP", random(0,1))
+		HIEX BBBCCCDDDEEE 1  bright A_FadeOut(0.01)
+		HIEX FFFGGGHHHIIIIIIIIIIIIIIIIIIIIIIIIIIIII 1 bright A_FadeOut(0.05)
+		Stop
+	}
+}
+Actor DarkSmoke: firesmoke
+{
+RenderStyle translucent
+alpha 1.0
+speed 1
+states
+{
+Spawn:
+		HIEX A 4 bright A_ChangeFlag("SPRITEFLIP", random(0,1))
+		HIEX BBBCCCDDDEEE 1  bright A_FadeOut(0.1)
+		HIEX FFFGGGHHHIIIIIIIIIIIIIIIIIIIIIIIIIIIII 1  A_FadeOut(0.1)
+		Stop
+	}
+}
+Actor HEExplode
+{
+   +NOGRAVITY
+    Radius 30
+	renderstyle add
+    Height 56
+   ALPHA 0.9
+   scale 2
+   seesound "weapons/grenexplode"
+	States
+	{
+	Spawn:
+	  SPLO A 4 bright
+	  goto death
+	Death:
+	    SPLO A 0
+		SPLO AAAAAA 0 A_CustomMissile("firesmoke", 0, 0, random(0,360), 2, random(-20,30))
+		SPLO AAAAAA 0 A_CustomMissile("darksmoke", 0, 0, random(0,360), 2, random(-20,30))
+		SPLO B 4 bright
+		SPLO AAAAAA 0 A_CustomMissile("NapalmDebris", 0, 0, random(0,360), 2, random(0,90))
+		MISL B 0 A_Quake(4,12,0,400)
+        MISL B 0 A_Quake(2,12,0,800)
+		SPLO B 0 A_PlaySound("weapons/explodedistant", CHAN_ITEM, 1.0)
+		SPLO C 4 bright
+		SPLO DEFGHIJKLMNOP 4 Bright A_fadeout(0.05)
+		Stop
+	}
+}
+Actor HEMISFIRE: HEExplode
+{
+Radius 4
+	Height 4
+	Speed 15
+	scale 0.5
+	Damage 1
+	gravity 0.6
+	Projectile
+	-NOGRAVITY
+    Obituary "%o stood too close to %k's suicide."
+States
+	{
+	Spawn:
+	  SPLO A 2 bright
+	  goto death
+	Death:  
+	    TNT1 A 0 A_explode(280, 192)
+		SPLO AAAAAAAAA 0 A_CustomMissile("firesmoke", 0, 0, random(0,360), 2, random(-20,30))
+		SPLO B 4 bright
+		MISL B 0 A_Quake(4,12,0,400)
+        MISL B 0 A_Quake(2,12,0,800)
+		SPLO AAAAAA 0 A_CustomMissile("NapalmDebris", 0, 0, random(0,360), 2, random(0,90))
+		SPLO B 0 A_PlaySound("weapons/explodedistant", CHAN_ITEM, 1.0)
+		SPLO C 4 bright
+		SPLO DEFGHIJKLMNOP 4 Bright A_fadeout(0.05)
+		Stop
+	}
+	}
+Actor LeakFlame: Genericdebris
+{
++NOINTERACTION
+RenderStyle Translucent
+Alpha 0.8
+scale 0.4
+speed 10
+States
+	{
+Spawn:
+		LEAK ABCDEFGH 3 bright
+		Stop
+	}
+	}
+	
+actor NapalmDebris
+{
+  health 5
+  radius 2
+  height 2
+  Speed 20
+  Scale 0.4
+  PROJECTILE
+  +NOBLOCKMAP
+  +ROCKETTRAIL
+  +DONTSPLASH
+  +RANDOMIZE
+  -NOGRAVITY
+  -SOLID
+  +WINDTHRUST
+  //RENDERSTYLE ADD
+  states
+  {
+  Spawn:
+    FSPK A 0 bright A_Jump(192,3,4,6,8)
+    FSPK A 20 bright
+    FSPK A 200 bright A_LowGravity
+    stop
+    FSPK B 20 bright
+    FSPK B 200 bright A_LowGravity
+    stop
+    FSPK C 20 bright
+    FSPK C 200 bright A_LowGravity
+    stop
+    FSPK D 20 bright
+    FSPK D 200 bright A_LowGravity
+    stop
+    FSPK E 20 bright
+    FSPK E 200 bright A_LowGravity
+    stop
+  Death:
+    FSPK A 1
+    stop
+  }
+}
+Actor GasSpark: NapalmDebris
+{
+ speed 1
+ scale 0.8
+ renderstyle add
+ -NOBLOCKMAP
+ states
+  {
+  Spawn:
+   GPRK ABCDEFGHIJKLMNOP 3 bright
+   stop
+   }
+   }
+Actor Musketpuff: hitpuff
+{
++FORCEPAIN
+}
+Actor Driverpuff: hitpuff
+{
++FORCEPAIN
+-NOEXTREMEDEATH
+}
+Actor Megapuff: hitpuff
+{
++FORCEPAIN
+-NOEXTREMEDEATH
++EXTREMEDEATH
+}
+ACTOR BulletTracer : FastProjectile
+{   
+    Damage (random(6,12))
+	alpha 0.8
+	Speed 125
+	fastspeed 160
+	Radius 2
+	Height 2
+	PROJECTILE
+	renderstyle add
+	+BLOODSPLATTER
+	Scale 0.7
+	MissileType ""
+	MissileHeight 8
+	Decal "BulletChip"
+	DeathSound "Bullet/ricochet"
+	States
+	{
+	Spawn:
+	    TNT1 A 0 NoDelay
+		TRAC A 5 BRIGHT
+		Loop
+	Death:
+		CPUF A 0 BRIGHT
+	Crash:
+	    CPUF A 0 A_JUMP(128, "ALTDEATH")
+		CPUF AB 1 BRIGHT A_Scream
+		CPUF C 2 BRIGHT 
+		CPUF DE 2 BRIGHT
+		Stop
+	AltDeath:
+	    PIN2 A 0 A_JUMP(128, "ALTDEATH")
+		TNT1 A 0 A_SpawnItem("shotSmoke")
+		PIN2 AB 1 BRIGHT A_Scream
+		PIN2 C 2 BRIGHT 
+		PIN2 DEFGH 2 BRIGHT
+		Stop
+	XDeath:
+		TNT1 A 3 A_PlaySound("Bullet/Flesh")
+		Stop
+	}
+}
+Actor BulletTracerSmall: Bullettracer
+{
+Damage (random(5,9))
+}
+Actor BulletTracerFriend: Bullettracer
+{
+Damage (random(8,15))
+damagetype "Ally"
+}
+Actor BulletTracermedium: Bullettracer
+{
+Damage (random(8,12))
+}
+Actor BulletTracerLarge: Bullettracer
+{
+Damage (random(10,18))
+}
+Actor PigTracer: Bullettracer
+{
+Damage (random(100,120))
+}
+Actor MusketTracer: Bullettracer
+{
+Speed 160
+fastspeed 180
+Damage (random(20,40))
+}
+ACTOR ExcessTracer: bullettracer
+{
+   +EXTREMEDEATH
+   Speed 120
+  FastSpeed 150
+  Damage (random(10,15))
+  scale 0.7
+}
+ACTOR BoltSpark
+{
+	Health 4
+	radius 3
+	height 6
+	speed .3
+	Alpha 0.50
+	Scale 0.5
+	Mass		0
+	+missile
+	States
+	{
+		FSPK AAA 3 BRIGHT A_SetTranslucent(.8,1)
+		FSPK BB 3 BRIGHT A_SetTranslucent(.5,1)
+		FSPK CCC 3 BRIGHT A_SetTranslucent(.3,1)
+		FPSK DDEEE 3 BRIGHT A_SetTranslucent(.1,1)
+		Stop
+	}
+}
+ACTOR XbowBoltFX: fastprojectile
+{
+  Radius 2
+  Height 4
+  Speed 150
+  Damage (random(15,30) + 70)
+  Projectile
+  scale 0.5
+  MissileHeight 8
+  SeeSound "weapons/XBOWFLY1"
+  DeathSound "weapons/XBOWHIT2"
+  Obituary "$OB_MPCROSSBOW"
+  DamageType "Crossbow"
+  Obituary "%o was stuck full of %k's arrows."
+  +NOEXTREMEDEATH
+  +BLOODSPLATTER
+  States
+  {
+  Spawn:
+    CBLT A 1 Bright
+    Loop
+  Crash:
+    TNT1 A 1 A_SpawnItemEX("XbowAmmo", 0, 0, 0, 0, 0, 0, 0, SXF_TRANSFERPOINTERS)
+	stop
+  XDeath:
+    TNT1 A 1 a_playsound("weapons/xbowhit1",CHAN_WEAPON,1.0)
+	stop
+  Death:
+    CBLT A 5
+	TNT1 A 0 A_SpawnItemEX("XbowAmmo", 0, 0, 0, 0, 0, 0, 0, SXF_TRANSFERPOINTERS)
+    Stop
+  }
+}
+ACTOR HeavyOverseerBolt: FastProjectile
+{
+  Speed 100
+  Radius 4
+  Height 4
+  Damage (random(125,150))
+  MissileHeight 8
+  +NOBLOCKMAP
+  +NOGRAVITY
+  +MISSILE
+  +NOTELEPORT
+  +STRIFEDAMAGE
+  +ROCKETTRAIL
+   Decal "revenantScorch"
+  DamageType "Explosion"
+  DeathSound "Primo/Hit"
+  seesound "overseer/crossbow"
+  Obituary "%o reenacted Hot Shots Part Deux for %k."
+  scale 0.8
+  States
+  {
+  Spawn:
+    OBT1 ABC 3 bright
+    loop
+  Death:
+   TNT1 A 0 A_PlaySound("Distant/MedExp",3)
+    TNT1 A 0 A_SpawnDebris("BoltSpark")
+	SMEX A 1 BRIGHT A_Scream
+	SMEX B 1 BRIGHT
+	TNT1 A 0 A_explode(30,96)
+	SMEX CDEFGHIJKL 2 BRIGHT
+	Stop
+  }
+}
+ACTOR blooper
+{
+  Radius 3
+  Height 3
+  Speed 75
+  Damage (random(25,50))
+  Projectile
+  decal "scorch"
+  -NOGRAVITY
+  +RANDOMIZE
+  +GRENADETRAIL
+  +FORCERADIUSDMG
+  +EXTREMEDEATH
+  Gravity 0.4
+  scale 0.8
+  Obituary "%o catches %k's hot potato."
+  attacksound "weapons/crowbarmiss"
+  var int user_armtime;
+  States
+  {
+  Spawn:
+    BLOO A 3
+	BLOO B 3
+	BLOO C 3 A_SetUserVar("user_armtime",1)
+	BLOO DEF 2
+    Loop
+  Death:
+    BLOO A 1
+    BLOO G 0 A_JumpIf(user_armtime==1,2)
+	BLOO G 0 A_SpawnItemEx("blooperbounce")
+	stop
+	TNT1 A 0 A_PlaySound("weapons/grenexplode", CHAN_ITEM, 1.0, 0, 0.5)
+    TNT1 A 2 A_SpawnItemEx("HEExplode")
+	TNT1 A 0 A_explode(300, 192)
+	TNT1 A 0 A_RadiusThrust(200, 150, RTF_AFFECTSOURCE)
+	  TNT1 A 0 A_SetTranslucent (0.85,1)
+	  TNT1 A 0 A_burst("gunsmoke")
+	stop
+  }
+}
+ACTOR Blooperbounce
+{
+  Radius 4
+  Height 4
+  Speed 25
+  Projectile
+  -NOGRAVITY
+  +RANDOMIZE
+  +DEHEXPLOSION
+  +GRENADETRAIL
+  +FORCERADIUSDMG
+  +BOUNCEONACTORS
+  +BOUNCEONWALLS
+  +BOUNCEONFLOORS
+  +EXTREMEDEATH
+  Gravity 0.5
+  scale 0.8
+  Obituary "%o catches %k's hot potato."
+  seesound "weapons/pipebounce"
+  States
+  {
+  Spawn:
+    BLOO ABCDEF 3 
+    goto death
+  Death:
+    TNT1 A 0 
+    TNT1 A 0 A_jump(256,"death1","death2")
+  death1:
+    BLOO B 30
+	TNT1 A 0 A_PlaySound("weapons/grenexplode", CHAN_ITEM, 1.0, 0, 0.5)
+    TNT1 A 2 A_SpawnItemEx("HEExplode")
+	TNT1 A 0 A_explode(500, 192)
+	
+	  TNT1 A 0 A_SetTranslucent (0.85,1)
+	  TNT1 A 0 A_burst("gunsmoke")
+      Stop
+   death2:
+    BLOO E 30
+	TNT1 A 0 A_PlaySound("weapons/grenexplode", CHAN_ITEM, 1.0, 0, 0.5)
+    TNT1 A 2 A_SpawnItemEx("HEExplode")
+	TNT1 A 0 A_explode(200, 150)
+	TNT1 A 0 A_RadiusThrust(200, 150, RTF_AFFECTSOURCE)
+	  TNT1 A 0 A_SetTranslucent (0.85,1)
+	  TNT1 A 0 A_burst("gunsmoke")
+      Stop
+  }
+}
+

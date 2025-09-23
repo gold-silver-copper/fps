@@ -1,0 +1,45 @@
+ReformedJoe - Co-mapper and Zscript specialist.
+The Dutch Ghost- Screenwriter. Also voice of Sigma Announcer and Eyes In The Dark.
+John-S Weekley/Primeval - Soundtrack. Check him out on Facebook/Bandcamp if you haven't already!
+Retromuffin34 - Textures assistant and additional art/story
+SunniBoi -the voice of the Scav.
+BlueVaporConcord - The voice of Porcelain.
+Chronoteef - main voice acting for cannibals/raiders. I GET HIS LIVER!
+Captain J - the excellent SFX pack.
+Snarboo for the framework of the vehicle code.
+Ezepov for ANOTHER awesome new logo and title.
+NMN- fantastic art which now is my phone's lock screen, as well as the sprites for "Lucy"
+RamonDexter - ZDOOM dialog help and the Journal system.
+WildWeasel - GunLabs tutorials. I cannot stress how much this helped me get started.
+The entire Zdoom Forums for the wiki, the support and the Youtube playthroughs! Marvellous.
+XLightningStormL - Improved Radiation script
+D2Icarus - Help with zscript basics
+VoidWeaver - Original code for Nightvisor, though heavily modified and adapted
+Sgt MkIv for the idea behind the motorcycle.
+TerminusEst13 for the handling script for the motorcycle. Original mod: https://forum.zdoom.org/viewtopic.php?f=43&t=58804
+Vader for the original Roach sprites. Not, not those roaches. The bigger ones.
+TiberiumSoul for sourcing some new Jusket and assault rifle sounds!
+PillowBlaster - The Nuke script
+The Zombie Killer - Footsteps code original designer
+GupGupExtreme - Voice of the Goons Boss
+TheAbsoluteLad - Voice of Garavito
+Spart_n - Voice of Wheeler/Wheeler radio messages
+BigC - Voice of Barrett/Mojo, son of Jojo
+Goaldude00 - Gas bag colonies
+Pug-alo - Voice of Jack Miller
+JessyRuiz- radio voice1 in Flooded District
+Wolfseyerio - Athena/Vinaya
+SirAz-The General/The Warlord/Overseers
+Badguy292-"Give em hell" art kindly donated, original art by JessyRuiz
+Shockwave_S08 for optimizing many many sounds in the files.
+Many sounds from Fallout Tactics, by 14 Degrees East
+Playtest Team Alpha Wolf Squadron - you know who you are :wub:
+Textures-
+Raven, 3d Realms, Monolith, Xatrix entertainment, of course Id software as well.
+Realm667 and various contributors for some props and sounds.
+Specifically; Gothic, Captain Awesome, CaptainToenail, Bloax, EttinGrinder.
+MagicWazard for his/her (?) Terrain Splashes plugin.
+
+Ashes Weapons pack specifics:
+
+Fixes to enemy projectiles and bullet puffs by PlasmaZippo incorporated into pk3.

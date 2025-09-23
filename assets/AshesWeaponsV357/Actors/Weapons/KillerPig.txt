@@ -1,0 +1,502 @@
+ACTOR PigShell
+{
+  Radius 4
+  Height 6
+  Speed 30
+  damage (random(50,100))
+  Projectile
+  Scale 0.4
+  Gravity 0.65
+  -NOGRAVITY
+  +DEHEXPLOSION
+  +RANDOMIZE
+  +FORCERADIUSDMG
+  +BOUNCEONWALLS
+  +BOUNCEONFLOORS
+  +BOUNCEONACTORS
+  +ROCKETTRAIL
+  ReactionTime 2
+  RenderStyle Add
+  Alpha 1
+  SeeSound ""
+  DeathSound "Primo/Hit"
+  BounceSound "Nade/Bounce"
+  Decal "Scorch"
+  DamageType Explosion
+  States
+  {
+  Spawn:
+    FLAR GHB 1 NoDelay 
+    FLAR CDE 1  
+	FLAR F 1 A_CountDown
+    Loop
+  Death:
+  	TNT1 A 0 A_PlaySound("Distant/MedExp",3)
+    TNT1 A 0 A_SpawnDebris("BoltSpark")
+	SMEX A 1 BRIGHT A_Scream
+	SMEX B 1 BRIGHT A_Explode(50,96)
+	SMEX CDEFGHIJKL 2 BRIGHT
+	Stop
+  }
+}
+ACTOR PIGSpawn : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.6
+	Inventory.Icon "PBFGA0"
+	Inventory.PickupMessage "Got the Killer P.I.G!"
+	Inventory.PickupSound "items/gunspickup"
+	States
+	{
+	Spawn:
+		PBFG A 10
+		PBFG A 1 bright
+		loop
+	Pickup:
+	    TNT1 A 0 A_JumpIfInventory("KillerPig3", 1, 4) //Skips giving you the normal piggie if you have the upgrade
+		TNT1 A 0 A_JumpIfInventory("KillerPig2", 1, 3) //Skips giving you the normal piggie if you have the upgrade
+		TNT1 A 0 A_GiveInventory("Killerpig")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("SlugAmmo", 20)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR PIGBuild1 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "PBFGA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		PBFG A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("KillerPig")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR PIGBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "PBFGA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		PBFG A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("KillerPig2")
+		TNT1 A 0 A_takeInventory("KillerPig")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR PIGBuild3 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "PBFGA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		PBFG A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("KillerPig3")
+		TNT1 A 0 A_takeInventory("KillerPig")
+		TNT1 A 0 A_takeInventory("Killerpig2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+actor KillerPig: Weapon
+{
+ Weapon.SelectionOrder 2800
+ Weapon.AmmoUse1 1
+ Weapon.BobStyle Alpha
+ Weapon.BobSpeed 1.1
+ Weapon.BobRangeX .2
+ Weapon.BobRangeY .5
+ Weapon.AmmoGive1 40
+ Weapon.AmmoType1 "SlugAmmo"
+ Inventory.Pickupmessage "Got the Killer P.I.G!"
+ Tag "Killer P.I.G."
+ Inventory.PickupSound "items/gunspickup"
+ Obituary "%o went full ham courtesy of %k."
+ Weapon.SlotNumber 9
+weapon.upsound "weapons/napalmup"
+ +NOALERT
+ +ALT_USES_BOTH
+ scale 0.9
+ States
+ {
+ Ready:
+  KPIG A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM)
+  Loop
+ Deselect:
+  KPIG A 1 A_lower
+  KPIG A 0 A_Lower
+  KPIG A 1 A_Lower
+  Loop
+ Select:
+  TNT1 A 0 A_takeInventory("flashlit")
+  KPIG A 1 A_Raise
+  Loop
+ Fire:
+  KPIG A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireCustomMissile("PigTracer",frandom(-2.4,2.6),1,1,0,-5,frandom(-1.3,1))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  KPIG B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  KPIG E 1 BRIGHT  A_SetPitch(Pitch-1)
+  TNT1 A 0 A_Light1
+  KPIG F 2 A_SetPitch(Pitch+0.5)
+  KPIG F 0 A_RECOIL(1)
+  TNT1 A 0 A_Light0
+  KPIG A 0 A_FireCustomMissile("slugcasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  SHTG A 0 A_checkreload
+  KPIG G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KPIG H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KPIG A 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KPIG A 0 A_refire("fire2")
+  goto ready
+  Fire2:
+  KPIG A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireCustomMissile("PigTracer",frandom(-2.4,2.6),1,1,0,-5,frandom(-1.3,1))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  KPIG C 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+ KPIG E 1 BRIGHT  A_SetPitch(Pitch-1)
+  TNT1 A 0 A_Light1
+  KPIG F 2 A_SetPitch(Pitch+0.5)
+  TNT1 A 0 A_Light0
+  KPIG A 0 A_FireCustomMissile("slugcasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  SHTG A 0 A_checkreload
+  KPIG G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KPIG H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KPIG A 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KPIG A 0 A_refire("fire3")
+  goto ready
+  Fire3:
+  KPIG A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireCustomMissile("PigTracer",frandom(-2.4,2.6),1,1,0,-5,frandom(-1.3,1))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  KPIG D 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+ KPIG E 1 BRIGHT  A_SetPitch(Pitch-1)
+ KPIG F 0 A_RECOIL(1)
+  TNT1 A 0 A_Light1
+  KPIG F 2 A_SetPitch(Pitch+0.5) 
+  TNT1 A 0 A_Light0
+  KPIG A 0 A_FireCustomMissile("slugcasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  SHTG A 0 A_checkreload
+  KPIG G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KPIG H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KPIG A 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KPIG A 0 A_refire("fire")
+  goto ready
+  User1:
+        KPIG LMNOP 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 1
+        KNIF ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1
+		TNT1 A 10
+		KPIG PONML 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  Zoom:
+	    KPIG A 0  A_giveinventory("lightlit",1)
+	    KPIG A 0  A_SelectWeapon("crowbar")
+		KPIG A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+ Spawn:
+  PBFG A -1
+  Stop
+ }
+ } 
+ actor KillerPig2: KillerPig
+{
+ Weapon.AmmoGive 20
+ Weapon.AmmoType "SlugAmmo"
+ Inventory.Pickupmessage "Got the Barbecue P.I.G!"
+ Tag "Barbecue P.I.G."
+ Weapon.SlotNumber 9
+ Decal "BulletChip"
+weapon.upsound "weapons/napalmup"
+ +NOALERT
+ +CHEATNOTWEAPON
+ scale 0.9
+ States
+ {
+ Ready:
+  KP2G A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM)
+  Loop
+ Deselect:
+  KP2G A 1 A_lower
+  KP2G A 0 A_Lower
+  KP2G A 1 A_Lower
+  Loop
+ Select:
+  TNT1 A 0 A_takeInventory("flashlit")
+  TNT1 A 0 A_TakeInventory("Killerpig",1)
+  KP2G A 1 A_Raise
+  Loop
+ Fire:
+  KP2G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireCustomMissile("PigTracer",frandom(-2.4,2.6),1,1,0,-5,frandom(-1.3,1))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  KP2G B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  KP2G E 1 BRIGHT  A_SetPitch(Pitch-1)
+  TNT1 A 0 A_Light1
+  KP2G F 2 A_SetPitch(Pitch+0.5)
+  KP2G F 0 A_RECOIL(1)
+  TNT1 A 0 A_Light0
+  KP2G A 0 A_FireCustomMissile("slugcasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  KP2G A 0 A_checkreload
+  KP2G G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KP2G H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP2G A 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP2G A 0 A_refire("fire2")
+  goto ready
+  Fire2:
+  KP2G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireCustomMissile("PigTracer",frandom(-2.4,2.6),1,3,32,0,frandom(-1.3,2))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  KP2G C 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+ KPIG E 1 BRIGHT  A_SetPitch(Pitch-1)
+  TNT1 A 0 A_Light1
+  KP2G F 2 A_SetPitch(Pitch+0.5)
+  TNT1 A 0 A_Light0
+  KP2G A 0 A_FireCustomMissile("slugcasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  KP2G A 0 A_checkreload
+  KP2G G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KP2G H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP2G A 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP2G A 0 A_refire("fire3")
+  goto ready
+  Fire3:
+  KP2G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireCustomMissile("PigTracer",frandom(-2.4,2.6),1,1,0,-5,frandom(-1.3,1))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  KP2G D 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+ KP2G E 1 BRIGHT  A_SetPitch(Pitch-1)
+ KP2G F 0 A_RECOIL(1)
+  TNT1 A 0 A_Light1
+  KP2G F 2 A_SetPitch(Pitch+0.5) 
+  TNT1 A 0 A_Light0
+  KP2G A 0 A_FireCustomMissile("slugcasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  KP2G A 0 A_checkreload
+  KP2G G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KP2G H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP2G A 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP2G A 0 A_refire("fire")
+  goto ready
+DRYCLICK:
+  KP2G A 1 A_PlaySound("weapons/dryfire", CHAN_7)
+  KP2G A 3  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  KP2G B 0  a_refire("DRYCLICK")
+  goto ready
+ Altfire:
+        TNT1 A 0 a_JumpIfInventory("slugammo",3,"Altfiretrue")
+        Goto dryclick
+ Altfiretrue:
+  KP2G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  KP2G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  KP2G AAA 0 BRIGHT A_FireCustomMissile("PigShell",frandom(-6.3,6.1),0,7,0,0,frandom(-2.9,3.2))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  TNT1 A 0 A_TakeInventory("slugammo",3,TIF_NOTAKEINFINITE)
+  KP2G F 4 A_SetPitch(Pitch-2)
+  KP2G I 1 
+  KP2G I 1 A_SetPitch(Pitch+0.5)
+  KP2G J 1 A_SetPitch(Pitch+0.5)
+  KP2G J 1 A_SetPitch(Pitch+0.5)
+  KP2G K 2 A_SetPitch(Pitch+0.5)
+  TNT1 A 0 A_Light0
+  TNT1 A 0 A_AlertMonsters
+  KP2G A 0 A_checkreload
+  KP2G G 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KP2G H 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP2G A 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP2G A 0 A_refire("altfire")
+  goto ready
+ User1:
+        KP2G LMNOP 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 1
+        KNIF ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1
+		TNT1 A 10
+		KP2G PONML 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+Zoom:
+	    KP2G A 0  A_giveinventory("lightlit",1)
+	    KP2G A 0  A_SelectWeapon("crowbar")
+		KP2G A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+ Spawn:
+  PB2G A -1
+  Stop
+ }
+ } 
+ actor KillerPig3: KillerPig
+{
+ Weapon.AmmoGive 20
+ Weapon.AmmoType "SlugAmmo"
+ Inventory.Pickupmessage "Got the TURBO P.I.G!"
+ Tag "Turbo P.I.G."
+ Weapon.SlotNumber 9
+ Decal "BulletChip"
+weapon.upsound "weapons/napalmup"
+ +NOALERT
+ +CHEATNOTWEAPON
+ scale 0.9
+ States
+ {
+ Ready:
+  KP3G A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM)
+  Loop
+ Deselect:
+  KP3G A 1 A_lower
+  KP3G A 0 A_Lower
+  KP3G A 1 A_Lower
+  Loop
+ Select:
+  TNT1 A 0 A_takeInventory("flashlit")
+  TNT1 A 0 A_TakeInventory("Killerpig",1)
+  TNT1 A 0 A_TakeInventory("Killerpig2",1)
+  KP3G A 1 A_Raise
+  Loop
+ Fire:
+  KP3G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireCustomMissile("PigTracer",frandom(-2.4,2.6),1,1,0,-5,frandom(-1.3,1))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  KP3G B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+  KP3G E 1 BRIGHT  A_SetPitch(Pitch-1)
+  TNT1 A 0 A_Light1
+  KP3G F 2 A_SetPitch(Pitch+0.5)
+  KP3G F 0 A_RECOIL(1)
+  TNT1 A 0 A_Light0
+  KP3G A 0 A_FireCustomMissile("slugcasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  KP3G A 0 A_checkreload
+  KP3G G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KP3G H 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP3G A 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP3G A 0 A_refire("fire2")
+  goto ready
+  Fire2:
+  KP3G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireCustomMissile("PigTracer",frandom(-2.4,2.6),1,1,0,-5,frandom(-1.3,1))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  KP3G C 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+ KPIG E 1 BRIGHT  A_SetPitch(Pitch-1)
+  TNT1 A 0 A_Light1
+  KP3G F 2 A_SetPitch(Pitch+0.5)
+  TNT1 A 0 A_Light0
+  KP3G A 0 A_FireCustomMissile("slugcasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  KP3G A 0 A_checkreload
+  KP3G G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KP3G H 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP3G A 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP3G A 0 A_refire("fire3")
+  goto ready
+  Fire3:
+  KP3G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  TNT1 A 0 A_FireCustomMissile("PigTracer",frandom(-2.4,2.6),1,1,0,-5,frandom(-1.3,1))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  KP3G D 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_Light2
+ KP3G E 1 BRIGHT  A_SetPitch(Pitch-1)
+ KP3G F 0 A_RECOIL(1)
+  TNT1 A 0 A_Light1
+  KP3G F 2 A_SetPitch(Pitch+0.5) 
+  TNT1 A 0 A_Light0
+  KP3G A 0 A_FireCustomMissile("slugcasingSpawner",-10,0,15,0)
+  TNT1 A 0 A_AlertMonsters
+  KP3G A 0 A_checkreload
+  KP3G G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KP3G H 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP3G A 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP3G A 0 A_refire("fire")
+  goto ready
+DRYCLICK:
+  KP3G A 1 A_PlaySound("weapons/dryfire", CHAN_7)
+  KP3G A 3  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1)
+  KP3G B 0  a_refire("DRYCLICK")
+  goto ready
+ Altfire:
+        TNT1 A 0 a_JumpIfInventory("slugammo",3,"Altfiretrue")
+        Goto dryclick
+ Altfiretrue:
+  KP3G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  KP3G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+  KP3G AAA 0 BRIGHT A_FireCustomMissile("PigShell",frandom(-6.3,6.1),0,7,0,0,frandom(-2.9,3.2))
+  TNT1 A 0 A_PlaySound("weapons/pigfire", CHAN_WEAPON)
+  TNT1 A 0 A_TakeInventory("slugammo",3,TIF_NOTAKEINFINITE)
+  KP3G F 1 A_SetPitch(Pitch-2.0)
+  KP3G F 1 
+  KP3G F 1 A_SetPitch(Pitch+0.5)
+  KP3G I 1 A_SetPitch(Pitch+0.5)
+  KP3G J 1 A_SetPitch(Pitch+0.5)
+  KP3G K 1 A_SetPitch(Pitch+0.5)
+  TNT1 A 0 A_Light0
+  TNT1 A 0 A_AlertMonsters
+  KP3G A 0 A_checkreload
+  KP3G G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_SetPitch(Pitch+0.5)
+  KP3G H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP3G A 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KP3G A 0 A_refire("altfire")
+  goto ready
+  User1:
+        KP3G LMNOP 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 1
+        KNIF ABCD 1
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1
+		TNT1 A 10
+		KP3G PONML 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+Zoom:
+	    KP3G A 0  A_giveinventory("lightlit",1)
+	    KP3G A 0  A_SelectWeapon("crowbar")
+		KP3G A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+ Spawn:
+  PB3G A -1
+  Stop
+ }
+ } 
+ 

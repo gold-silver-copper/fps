@@ -1,0 +1,311 @@
+// Motorcycle
+#library "vehicle"
+#include "zcommon.acs"
+int oldPitch; // Used to gather the player's last pitch value
+int buttonPress; // Checks what key a player is using
+int Yaw;
+int Yaw_End;
+int yawturn;
+Int Roll_Yaw;
+Int Yaw_Final;
+int Roll_End;
+int Yawspeed = 0.00055;
+
+
+
+Script 900 (void) // Turns the player into a motorcycle
+{
+    Thing_Stop(0);
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+	LocalAmbientSound("bike/start", 127); //start yer engiiiiines -vostyok
+	GiveactorInventory (0,"Motohandles", 1); //New Morph power - Vostyok
+	ACS_Execute (902,0); // Must be ACS_Execute so Script 902 can be terminated
+	ACS_Execute (903,0); //Ditto -Vostyok
+	ACS_Execute (618,0); //disables footsteps
+	SetActorPitch (0,0);
+	setactorstate(0,"bikespawn");
+}
+
+Script 901 (void) // Turns the player back into a human.. wait.. wat. 
+{
+	ACS_Terminate (902,0);
+	ACS_Terminate (903,0); //added this for turning - Vostyok
+	LocalAmbientSound("bike/stop", 127); //get off your horse and drink yer milk -vostyok
+	stopsound(0,CHAN_5);
+	stopsound(0,CHAN_6);
+	stopsound(0,CHAN_7);
+	Spawn("VehicleMotorcycle",GetActorX(0),GetActorY(0),GetActorFloorZ(0)+32,80661,GetActorAngle(0)); // Spawns a motorcycle for reuse - Vostyok
+	SetActorPitch (0,0);
+	SetPlayerProperty (0,0,4);
+	TakeInventory ("Motohandles",1);
+	TakeInventory ("ignition",1);
+	TakeInventory ("speedo",100);
+	ACS_Execute (619,0); //enables footsteps
+}
+
+Script 902 (void) 
+/* Motorcycle physics. This script should *only* run if the player is a Motorcycle. 
+Pretty sloppy, but functional */
+{
+	buttonPress = GetPlayerInput (-1, INPUT_BUTTONS); // Checks what keys the player is pressing
+	if (buttonPress & BT_ATTACK) // Is player pressing fire?
+		{ 
+			GiveInventory("firingswitch", 1);
+		}
+	if (buttonPress & BT_FORWARD) // Is player pressing forward?
+		{ 
+			GiveInventory("revup", 1);
+		}
+	else if (buttonPress & BT_BACK) // Is player pressing backward?
+		{
+			GiveInventory("revdown", 1);
+		}
+	else if (buttonPress & BT_JUMP) // Is the player pressing Jump?
+		{
+			/* Removes player from the motorcycle and sets all values back to default */
+			if (CheckInventory("Speedo") < 20)
+				{
+			SetActorProperty (0,APROP_Speed, 1.0);
+			if (checkinventory("motohandles") > 0)
+			{
+			ACS_ExecuteAlways (901,0);
+			}
+			if (checkinventory("motohandles2") > 0)
+			{
+			ACS_ExecuteAlways (906,0);
+			}
+			TakeInventory("Speedo", 99);
+			}
+		}
+	else // Is the player pressing nothing?
+		{
+			SetPlayerProperty (0,1,4);
+		}
+	Delay (1);
+	Restart;
+}
+Script 903 (void) 
+/* Motorcycle Turning. This script should *only* run if the player is a Motorcycle. 
+Removed the mouse turning so as to give movement to the handlebars. Note that
+the code tends to favor left turns... not sure how to fix that shit for now - Vostyok*/
+{
+      if (GetActorLightLevel(0)<140)
+     {
+          // Spawn ("Headlightglow",
+   //GetActorX(0) + cos (GetActorAngle(0)) * 140,
+  // GetActorY(0) + sin (GetActorAngle(0)) * 140,
+   //GetActorZ(0)+64,
+  // 0,
+  //GetActorAngle(0) >> 8);
+  SpawnSpotforced("Headlightglow",0,1560,GetActorAngle(0)); 
+     }
+	buttonPress = GetPlayerInput (-1, INPUT_BUTTONS); // Checks what keys the player is pressing
+	yaw = GetPlayerInput(-1, Input_Yaw);
+	if (buttonPress & BT_MOVELEFT) // Is player pressing left?
+		{ 
+			GiveInventory("leftturn", 1);
+			TakeInventory("rightturn", 1);
+			yaw = yaw + 0.004;
+		}
+	else if (buttonPress & BT_MOVERIGHT) // Is the player pressing right?
+		{
+			GiveInventory("rightturn", 1);
+			TakeInventory("leftturn", 1);
+			yaw = yaw - 0.004;
+		}
+	else // Is the player pressing nothing?
+		{
+			TakeInventory("rightturn", 1);
+			Takeinventory("leftturn",1);
+			if (Yaw < 0.0) {Yaw = yaw +0.0004;}
+	        if (Yaw > 0.0) {Yaw = yaw -0.0004;}
+		}
+ //yaw = GetPlayerInput(-1, Input_Yaw);
+	if (Yaw < -0.00015 || Yaw > 0.00015) // only fast movement will cause tilt
+		{
+		Roll_Yaw = Yaw;
+		yawturn = Yaw / 4;
+		}
+	else
+		{
+		if (Yaw_Final < 0) {Yaw_Final += Yawspeed;}
+		if (Yaw_Final > 0) {Yaw_Final -= Yawspeed;}
+		}
+	// tilt left
+	if (Roll_Yaw < 0 && Yaw_Final >= Roll_Yaw)
+		{
+			Yaw_Final -= Yawspeed;
+		}
+			// tilt right
+	if (Roll_Yaw > 0 && Yaw_Final <= Roll_Yaw)
+		{
+			Yaw_Final += Yawspeed;
+		}
+	// Limits
+	TakeInventory("turnlevel", 7);
+	if (Yaw_Final < -0.3) {Yaw_Final = -0.3;}
+	if (Yaw_Final > 0.3) {Yaw_Final = 0.3;}
+	if (Yaw_Final < 0.0) {roll_end = Yaw_final-(Yaw_final*2);}
+	if (Yaw_Final > 0.0) {roll_end = Yaw_final+(Yaw_final*2);}
+	if (Yaw_Final < -0.008) {GiveInventory("turnlevel", 1);}
+	if (Yaw_Final > -0.008 && Yaw_Final< -0.006) {GiveInventory("turnlevel", 2);}
+	if (Yaw_Final > -0.006 && Yaw_Final< -0.004) {GiveInventory("turnlevel", 3);}
+	if (Yaw_Final > -0.004 && Yaw_Final< 0.004) {GiveInventory("turnlevel", 4);}
+	if (Yaw_Final > 0.004 && Yaw_Final < 0.006) {GiveInventory("turnlevel", 5);}
+	if (Yaw_Final > 0.006 && Yaw_Final < 0.008) {GiveInventory("turnlevel", 6);}
+	if (Yaw_Final > 0.008) {GiveInventory("turnlevel", 7);}
+	roll_end = yaw_final - (yaw_final*3);
+	if (Yaw_Final < -0.001 || Yaw_Final> 0.001)
+	{SetActorAngle (0, GetActorAngle (0) + yaw_final);}
+	changeActorRoll(0, roll_end,true);
+	if (Yaw_Final < 0.0) {Yaw_Final = yaw_final +0.00014;}
+	if (Yaw_Final > 0.0) {Yaw_Final = yaw_final -0.00014;}
+	if (Yaw_Final < 0.00039 && Yaw_Final > -0.00039)
+	{Yaw_Final = 0;}
+	Delay(1);
+	Restart;
+}
+
+Script 904 (void) // Turns the player into a motorcycle2
+{
+    Thing_Stop(0);
+    SetPlayerProperty(0, 1, PROP_TOTALLYFROZEN);
+	SetActorPitch (0,0);
+	LocalAmbientSound("bike/start", 127); //start yer engiiiiines -vostyok
+	GiveactorInventory (0,"Motohandles2", 1); //New Morph power - Vostyok
+	ACS_Execute (902,0); // Must be ACS_Execute so Script 902 can be terminated
+	ACS_Execute (903,0); //Ditto -Vostyok
+	ACS_Execute (618,0); //disables footsteps
+	setactorstate(0,"bikespawn");
+}
+
+Script 906 (void) // Turns the player back into a human.. wait.. wat. 
+{
+	ACS_Terminate (902,0);
+	ACS_Terminate (903,0); //added this for turning - Vostyok
+	LocalAmbientSound("bike/stop", 127); //get off your horse and drink yer milk -vostyok
+	stopsound(0,CHAN_5);
+	stopsound(0,CHAN_6);
+	stopsound(0,CHAN_7);
+	Spawn("VehicleMotorcycle2",GetActorX(0),GetActorY(0),GetActorFloorZ(0)+32,80661,GetActorAngle(0)); // Spawns a motorcycle for reuse - Vostyok
+	SetActorPitch (0,0);
+	SetPlayerProperty (0,0,4);
+	TakeInventory ("Motohandles2",1);
+	TakeInventory ("ignition",1);
+	TakeInventory ("speedo",100);
+	ACS_Execute (619,0); //enables footsteps
+}
+
+Script 907 (void) // Turns the player into a bugdog
+{
+    Thing_Stop(0);
+    SetPlayerProperty(0, 1, PROP_FROZEN);
+	SetactorProperty(0, APROP_jumpz,0);
+	SetActorPitch (0,0);
+	LocalAmbientSound("Lucy/fidget1", 127); //bugdog go brrrrr -vostyok
+	GiveactorInventory (0,"Lucyhandles", 1); //New Morph power - Vostyok
+	ACS_Execute (909,0); // Must be ACS_Execute so Script 909 can be terminated
+	ACS_Execute (618,0); //disables footsteps
+	setactorstate(0,"Lucyspawn");
+}
+Script 908 (void) // Turns the player back into a human from bugdog. 
+{
+	ACS_Terminate (909,0);
+	SetactorProperty(0, APROP_jumpz,8<<16);
+	LocalAmbientSound("Lucy/fidget2", 127); //get off your horse and drink yer milk -vostyok
+	stopsound(0,CHAN_5);
+	stopsound(0,CHAN_6);
+	stopsound(0,CHAN_7);
+	Spawnspotforced("Lucy",0,80660,0); // Spawns a Lucy for reuse - Vostyok
+	SetActorPitch (0,0);
+	SetActorAngle (80660, GetActorAngle (0));
+	SetPlayerProperty(0, 0, PROP_FROZEN);
+	TakeInventory ("Lucyhandles",1);
+	ACS_Execute (619,0); //enables footsteps
+}
+Script 909 (void) 
+/* Dogbug physics. This script should *only* run if the player is a Dogbug. 
+Pretty sloppy, but functional */
+{
+	int playerPitch = GetActorPitch (0);
+	buttonPress = GetPlayerInput (-1, INPUT_BUTTONS); // Checks what keys the player is pressing
+	if (buttonPress & BT_JUMP) // Is the player pressing Jump?
+		{
+			/* Removes player from the bugdog and sets all values back to default */
+			SetActorProperty (0,APROP_Speed, 1.0);
+			if (checkinventory("lucyhandles") > 0)
+			{
+			ACS_ExecuteAlways (908,0);
+			}
+			TakeInventory("lucyrun", 99);
+			TakeInventory("lucyback", 99);
+	}
+	else if (buttonPress & BT_BACK) // Is player pressing backward?
+		{
+			GiveInventory("lucywalk", 1);
+		}
+	else if (buttonPress & BT_FORWARD) // Is player pressing forward?
+		{ 
+		    SetActorPitch (0,0);
+			GiveInventory("lucyrun", 1);
+		}
+	else // Is the player pressing nothing?
+		{
+			SetPlayerProperty (0,1,0);
+		}
+	Delay (1);
+	Restart;
+}
+
+Script 910 ENTER
+{
+     if (checkinventory("motohandles") > 0)
+     {
+        ACS_EXECUTE(900,0);
+	 }
+	 if (checkinventory("motohandles2") > 0)
+     {
+        ACS_EXECUTE(904,0);
+	 }
+	 if (checkinventory("Lucyhandles") > 0)
+     {
+        ACS_EXECUTE(907,0);
+	 }
+	 else //fallback for map errors
+	 {
+	 ACS_Terminate (902,0);
+	ACS_Terminate (903,0); //added this for turning - Vostyok
+	ACS_Execute (619,0); //enables footsteps
+	SetactorProperty(0, APROP_jumpz,8<<16);
+	 ACS_Terminate (909,0);
+	 SetPlayerProperty(0, 0, PROP_FROZEN);
+	 SetPlayerProperty (0,0,4);
+	}
+
+}
+Script 911 RETURN
+{
+     if (checkinventory("motohandles") > 0)
+     {
+        ACS_EXECUTE(900,0);
+	 }
+	 if (checkinventory("motohandles2") > 0)
+     {
+        ACS_EXECUTE(904,0);
+	 }
+	 if (checkinventory("Lucyhandles") > 0)
+     {
+        ACS_EXECUTE(907,0);
+	 }
+	 else
+	 {
+	 ACS_Terminate (902,0);
+	 ACS_Terminate (903,0); //added this for turning - Vostyok
+	 SetactorProperty(0, APROP_jumpz,8<<16);
+	 ACS_Terminate (909,0);
+	 SetPlayerProperty(0, 0, PROP_FROZEN);
+	 SetPlayerProperty (0,0,4);
+	 ACS_Execute (619,0); //enables footsteps
+	 }
+
+}

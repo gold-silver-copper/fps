@@ -1,0 +1,152 @@
+ACTOR thumperloaded: Ammo
+{
+ Inventory.MaxAmount 1
+ +IGNORESKILL
+}
+ACTOR BFGSelector : actor replaces BFG9000
+{
+States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(GetCVar("BFGChoice") == 0, "Weapon1")
+		TNT1 A 0 A_JumpIf(GetCVar("BFGChoice") == 1, "Weapon2")
+		TNT1 A 0 A_JumpIf(GetCVar("BFGChoice") == 2, "Weapon3")
+		Stop
+    Weapon1:
+		TNT1 A 0 A_jump(96,"Weapon3")
+	Weapon2:
+		TNT1 A 0 A_SpawnItem("PIGSpawn")
+		Stop
+	Weapon3:
+		TNT1 A 0 A_SpawnItem("Thumper")
+		Stop
+	}
+}
+ACTOR BFGAmmoSelector : actor replaces cellpack
+{
+States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(GetCVar("BFGChoice") == 0, "Weapon1")
+		TNT1 A 0 A_JumpIf(GetCVar("BFGChoice") == 1, "Weapon2")
+		TNT1 A 0 A_JumpIf(GetCVar("BFGChoice") == 2, "Weapon3")
+		Stop
+    Weapon1:
+		TNT1 A 0 A_jump(96,"Weapon3")
+	Weapon2:
+		TNT1 A 0 A_SpawnItem("Slugpack")
+		Stop
+	Weapon3:
+		TNT1 A 0 A_SpawnItem("thumperammo")
+		Stop
+	}
+}
+ACTOR Thumper : Weapon 
+{
+  Radius 20
+  Height 16
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.Selectionorder 600
+  +WEAPON.NOAUTOAIM //That just looked ridiculous
+  +AMMO_CHECKBOTH
+  +NOALERT
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+ Weapon.AmmoGive1 0
+ Weapon.AmmoGive2 2
+ Weapon.AmmoType1 "thumperloaded"
+ Weapon.AmmoType2 "thumperammo"
+ weapon.upsound "weapons/heavyup"
+  Weapon.Kickback 100
+  Weapon.SlotNumber 9 
+  scale 0.5
+  Inventory.PickupMessage "Got the Thumper!"
+  Obituary "%o catches %k's hot potato."
+ Tag "Thumper"
+  Inventory.PickupSound "items/gunspickup"
+  weapon.upsound "weapons/grizlydeploy"
+  Inventory.Icon "M79IA0"
+  States
+  {
+  Spawn:
+    M79P A 10
+	M79P A 1 bright
+    loop
+  Ready:
+    M79G A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  Deselect:
+    M79G A 0 A_lower
+    M79G A 1 A_Lower
+	M79G A 0 A_lower
+    Loop
+  Select: 
+    TNT1 A 0 A_takeinventory("flashlit",1)
+    M79G A 1 A_Raise
+	M79G A 0 A_Raise
+    Loop
+  Fire:
+    TNT1 A 0 a_JumpIfInventory("thumperloaded",1,"FireReal")
+    Goto Reload
+  FireReal: 
+    M79G A 0 A_PlaySound("weapons/thumperfire", CHAN_WEAPON)
+	M79G A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Fireprojectile ("blooper",0,1,8,5)
+	TNT1 A 0 A_takeInventory("thumperloaded",1)
+	M79F A 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_SetPitch(Pitch-8.0)
+	M79F B 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	M79F A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	M79F C 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	TNT1 A 0 A_AlertMonsters
+	M79F D 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	M79F D 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	TNT1 A 0 A_SetPitch(Pitch+2.0)
+	M79F E 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	M79F F 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	M79F G 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	M79F H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    Goto Ready
+   Reload:
+	M79G A 1 A_WeaponReady(WRF_NOPRIMARY)
+	TNT1 A 0 A_JumpIfInventory("thumperloaded",1,"Ready")
+    TNT1 A 0 A_JumpIfInventory("thumperammo",1,"Work")
+    Goto Ready
+   work:
+	M79R AB 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWRELOAD)
+	TNT1 A 0 A_PlaySound("weapons/thumperempty", CHAN_ITEM)
+	M79R CDDEFG 2 A_WeaponReady(WRF_NOPRIMARY)
+	M79R HI 2 A_WeaponReady(WRF_NOPRIMARY)
+	TNT1 A 5 A_WeaponReady(WRF_NOPRIMARY)
+    M79R JK 2 A_WeaponReady(WRF_NOPRIMARY)
+	TNT1 A 0 A_PlaySound("weapons/thumperload", CHAN_BODY)
+	 M79R LMN 2 A_WeaponReady(WRF_NOPRIMARY)
+	TNT1 A 0 A_takeInventory("thumperammo",1)
+    TNT1 A 0 A_giveInventory("thumperloaded",1)
+	TNT1 A 20 A_WeaponReady(WRF_NOPRIMARY)
+    M79R O 2 A_WeaponReady(WRF_NOPRIMARY)
+	TNT1 A 0 A_PlaySound("weapons/thumperclose", CHAN_ITEM)
+	M79R PQR 2 A_WeaponReady(WRF_NOPRIMARY)
+	M79F E 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	M79F F 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	M79F G 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	M79F H 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+    goto ready
+ User1:	
+	    M79G BCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		M79G DCB 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  }
+}

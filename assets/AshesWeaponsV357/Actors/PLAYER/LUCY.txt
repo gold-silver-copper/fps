@@ -1,0 +1,335 @@
+/*Lucy Code
+Original mount/dismount code by Snarboo. Modified by Vostyok. */
+
+Actor LucyRun: Inventory 
+{
+inventory.maxamount 1
+}
+Actor Lucywalk: Inventory 
+{
+inventory.maxamount 1
+}
+ACTOR LucyPickup : CustomInventory
+{
+	Radius 64
+    Height 30
+	Scale 0.8
+	Inventory.PickupMessage "Ride 'em, DOGGY!"
+	States
+	{
+	Spawn:
+		LUCY A -1
+		Stop
+	Pickup:
+	    TNT1 A 0 A_giveinventory("lucyhandles")
+	    TNT1 A 0 A_SelectWeapon("lucyhandles")
+		TNT1 A 0 ACS_Execute (907,0)
+		Stop
+	}
+}
+ACTOR LucyPuff: Hitpuff
+{   
+  RenderStyle Translucent
+  Alpha 0.5
+  scale 0.5
+  decal knifescrape  
+   States
+  {
+  Spawn:
+    CPUF A 0
+    CPUF C 2
+    CPUF A 4 Bright
+    CPUF B 3
+	stop
+  Crash: 
+    PIN2 A 0
+    PIN2 C 2 A_PlaySound("weapons/knifemiss")
+    PIN2 CDDEE 2 A_FadeOut(0.05)
+    Stop
+  Melee:
+    CPUF A 0
+    CPUF C 2 A_PlaySound("weapons/knifehit")
+    CPUF CDDEE 2 A_FadeOut(0.05)
+    Stop
+  }
+}
+Actor LUCY: switchabledecoration 424
+{
+  Health 300
+  Radius 32
+  Height 48
+  Mass 300
+  Speed 30
+  PainChance 220
+  Monster
+  +FLOORCLIP
+  +NEVERFAST
+  +FRIENDLY
+  +USESPECIAL
+  +Invulnerable
+  Activation THINGSPEC_Activate
+  SeeSound "Lucy/sight"
+  PainSound "Lucy/Pain"
+  DeathSound "fiend/death"
+  Obituary "%o was dissolved by Lucy."
+  HitObituary "%o was crushed by Lucy."
+  States
+  {
+  Spawn:
+    LUCY V 10 A_LookEx(LOF_NOSOUNDCHECK, 0, 256, 0, 0, "see")
+	LUCY V 1 A_jump(16,"fidget1")
+	LUCY V 1 A_jump(10,"fidget2")
+    Loop
+  See:
+    LUCY A 0
+    LUCY AABBCCDD 2 A_Chase
+    Loop
+  IDLE:
+    LUCY V 5  A_LookEx(LOF_NOSOUNDCHECK, 0, 256, 0, 0, "see")
+	loop
+  Melee:
+  Missile:
+    LUCY VW 4 A_FaceTarget
+    LUCY X 10 A_CustomComboAttack("LucySpit", 20, 3 * random(1, 8), "Lucy/Spit")
+    Goto See
+  Fidget1:
+     LUCY V 1 A_playsound("lucy/fidget1",CHAN_VOICE)
+	 LUCY XYXYXYZZZYXV 3
+	 goto spawn
+   Fidget2:
+     LUCY V 1 A_playsound("lucy/fidget1",CHAN_VOICE)
+	 LUCY VVWWWWWVV 3
+	 goto spawn
+  Pain:
+    LUCY Z 3 A_Pain
+    LUCY Z 3 
+    Goto See
+  Death:
+    TROO H 6 A_Scream
+    TROO I 7
+    TROO J 7 
+    TROO K 6 A_AlertMonsters(256)
+    TROO L 6 A_NoBlocking
+	TROO V 6
+    TROO M -1
+    Stop
+  Active:
+    LUCY A 0 A_SpawnItemEx ("LucyPickup", 0, 0, 0, 0 ,0 ,0 , 0)
+    stop
+  }
+}
+Actor Minilucy: actor
+{
+  Health 30000000
+  Radius 32
+  Height 48
+  Mass 300
+  Speed 30
+  PainChance 220
+  Monster
+  scale 0.8
+  -solid
+  -shootable
+  +FLOORCLIP
+  +NEVERFAST
+  -countkill
+  +FRIGHTENED
+  +Invulnerable
+  SeeSound "Lucy/sight"
+  PainSound "Lucy/Pain"
+  DeathSound "fiend/death"
+  Obituary "%o was dissolved by a rogue bug dog."
+  HitObituary "%o was crushed by a rogue bug dog."
+  States
+  {
+  Spawn:
+    LUCY V 10 A_LookEx(LOF_NOSOUNDCHECK, 0, 256, 0, 0, "see")
+	LUCY V 1 A_jump(16,"fidget1")
+	LUCY V 1 A_jump(10,"fidget2")
+    Loop
+  See:
+    LUCY A 0
+    LUCY AABBCCDD 2 A_Chase("","")
+    Loop
+  IDLE:
+    LUCY V 5  A_LookEx(LOF_NOSOUNDCHECK, 0, 256, 0, 0, "see")
+	loop
+  Melee:
+  Missile:
+    Goto See
+  Fidget1:
+     LUCY V 1 A_playsound("lucy/fidget1",CHAN_VOICE)
+	 LUCY XYXYXYZZZYXV 3
+	 goto spawn
+   Fidget2:
+     LUCY V 1 A_playsound("lucy/fidget1",CHAN_VOICE)
+	 LUCY VVWWWWWVV 3
+	 goto spawn
+  Pain:
+    LUCY Z 3 A_Pain
+    LUCY Z 3 
+    Goto See
+  Death:
+    TROO H 6 A_Scream
+    TROO I 7
+    TROO J 7 
+    TROO K 6 A_AlertMonsters(256)
+    TROO L 6 A_NoBlocking
+	TROO V 6
+    TROO M -1
+    Stop
+  }
+}
+ACTOR Lucyhandles : Weapon //Dogmode
+{
+	Game Doom 
+	+INVENTORY.UNDROPPABLE
+	+DONTBOB
+	+NOALERT
+	Tag "Lucy"
+	States
+  	{
+  		Ready:
+		TNT1 A 0 a_stopsound(CHAN_7)
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("Lucywalk", 1, "backup")
+    	LWEP A 2 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("lucywalk", 1, "backup")
+    	LWEP A 2 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("lucywalk", 1, "backup")
+    	LWEP B 2 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("lucywalk", 1, "backup")
+    	LWEP B 2 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("lucywalk", 1, "backup")
+    	LWEP C 2 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("lucywalk", 1, "backup")
+    	LWEP C 2 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("lucywalk", 1, "backup")
+    	LWEP D 2 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("lucywalk", 1, "backup")
+    	LWEP D 2 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("lucywalk", 1, "backup")
+    	LWEP E 2 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("Lucyrun", 1, "running")
+		TNT1 A 0 A_JumpIfInventory("lucywalk", 1, "backup")
+    	LWEP E 2 A_WeaponReady
+    	Loop
+	   RUNNING:
+	    LWEP F 0 A_PlaySound("Lucy/run", CHAN_7, 1, 1)
+		LWEP F 0 A_takeinventory("lucyrun",1)
+	    LWEP F 2 A_Recoil(-5)
+	    LWEP F 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucyrun",1)
+		LWEP G 2 A_Recoil(-5)
+		LWEP G 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucyrun",1)
+		LWEP H 2 A_Recoil(-5)
+		LWEP H 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucyrun",1)
+		LWEP I 2 A_Recoil(-6)
+		LWEP I 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucyrun",1)
+		LWEP J 2 A_Recoil(-6)
+		LWEP J 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucyrun",1)
+		LWEP K 2 A_Recoil(-6)
+		LWEP K 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucyrun",1)
+		LWEP L 2 A_Recoil(-6)
+		LWEP L 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucyrun",1)
+		LWEP M 2 A_Recoil(-5)
+		LWEP M 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucyrun",1)
+		LWEP N 2 A_Recoil(-5)
+		LWEP N 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucyrun",1)
+		LWEP O 2 A_Recoil(-5)
+		LWEP O 1 A_JumpIfInventory("Lucyrun", 1, 1)
+    	goto running
+	 backup:
+	    LWEP A 0 A_PlaySound("Lucy/walk", CHAN_7, 1, 1)
+	    LWEP A 2 A_Recoil(1)
+	    LWEP A 1 A_JumpIfInventory("Lucywalk", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucywalk",1)
+		LWEP B 2 A_Recoil(1)
+		LWEP B 1 A_JumpIfInventory("Lucywalk", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucywalk",1)
+		LWEP C 2 A_Recoil(1)
+		LWEP C 1 A_JumpIfInventory("Lucywalk", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucywalk",1)
+		LWEP D 2 A_Recoil(1)
+		LWEP D 1 A_JumpIfInventory("Lucywalk", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucywalk",1)
+		LWEP E 2 A_Recoil(1)
+		LWEP E 1 A_JumpIfInventory("Lucywalk", 1, 1)
+    	goto ready
+		LWEP F 0 A_takeinventory("lucywalk",1)
+		LWEP F 2 A_Recoil(1)
+		LWEP F 1 A_JumpIfInventory("Lucywalk", 1, 1)
+    	goto ready
+		LWEP A 1
+        goto backup
+	fire:
+	    LWEP A 2 
+		LWEP B 2 a_playsound("LUCY/spit",CHAN_WEAPON)
+		LWEP CD 2
+		LWEP E 2 A_FireCustomMissile("Lucyspit",0,1,0,-10,0)
+		LWEP F 2
+		LWEP G 2
+		LWEP F 2
+		LWEP E 2
+		LWEP DC 2
+		goto ready
+	altfire:
+	    LWEP F 2
+		LWEP G 2 a_playsound("LUCY/jump",CHAN_WEAPON)
+		LWEP H 2 ThrustThingZ(0,10,0,0)
+		LWEP I 2 A_recoil(-10)
+		LWEP J 0 a_custompunch(random(7, 10) * 10, TRUE, 0,"Lucypuff",96)
+		LWEP J 2 A_REcoil(-10)
+		LWEP K 0 a_custompunch(random(7, 10) * 10, TRUE, 0,"Lucypuff",96)
+		LWEP K 2 A_REcoil(-8)
+		LWEP L 0 a_custompunch(random(7, 10) * 10, TRUE, 0,"Lucypuff",96)
+		LWEP L 2 A_REcoil(-8)
+		LWEP M 0 a_custompunch(random(7, 10) * 10, TRUE, 0,"Lucypuff",96)
+		LWEP M 2 A_REcoil(-8)
+		LWEP N 0 a_custompunch(random(7, 10) * 10, TRUE, 0,"Lucypuff",96)
+		LWEP N 2 A_REcoil(-8)
+		LWEP O 0 a_custompunch(random(7, 10) * 10, TRUE, 0,"Lucypuff",96)
+		LWEP O 2 A_REcoil(-8)
+		LWEP ABCD 5
+		goto ready
+  	Deselect:
+	    LWEP A 0 ACS_EXECUTE(908)
+		LWEP A 1 A_TakeInventory("Lucyhandles", 10)
+    	stop
+  	Select:
+    	TNT1 A 0 A_Raise
+    	Loop
+	Spawn:
+    	TNT1 A -1
+    	Stop
+  	}
+}

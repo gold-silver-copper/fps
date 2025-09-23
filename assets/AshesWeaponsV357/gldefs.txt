@@ -1,0 +1,154 @@
+pointlight flourescence
+{
+color 0.4 1.0 0.4
+size 20
+offset 0 8 0
+}
+pulselight flourescenceBig
+{
+color 0.4 1.0 0.4
+size 100
+secondarysize 90
+interval 0.5
+offset 0 4 0
+}
+pulselight psifield
+{
+color 0.7 0.1 0.7
+size 96
+secondarySize 90
+interval 0.5
+offset 0 32 0
+}
+pointlight Headlight1
+{
+color 0.8 0.7 0.5
+size 150
+offset 0 0 32
+}
+pointlight Lantern1
+{
+color 0.3 0.3 0.7
+size 130
+offset 0 36 32
+}
+pointlight forcefield1
+{
+color 0.7 0.3 0.6
+size 64
+offset 0 36 0
+}
+pulselight Cylinder1
+{
+color 0.4 0.4 0.8
+size 140
+secondarySize 160
+interval 0.3
+offset 0 36 0
+}
+pulselight Cylinder2
+{
+color 0.6 0.6 0.8
+size 140
+secondarySize 356
+interval 0.5
+offset 0 24 0
+}
+pointlight PsychicDark
+{
+    color 1 1 1
+    size 80
+	subtractive 1
+    offset 0 16 0
+}
+pointlight PsychicRed
+{
+    color 1 0.3 0.3
+    size 70
+	subtractive 1
+    offset 0 16 0
+}
+Object LanternGlow
+{
+  frame TNT1 { light Lantern1 }
+}
+Object HeadlightGlow
+{
+  frame TNT1 { light Headlight1}
+}
+Object Laserdot100w
+{
+  frame LDOTC { light Lantern1 }
+}
+
+BrightMap Sprite PLAYA1
+{
+Map PLALA1
+DisableFullBright
+}
+BrightMap Sprite PLAYA2
+{
+Map PLALA2
+DisableFullBright
+}
+BrightMap Sprite PLAYA8
+{
+Map PLALA8
+DisableFullBright
+}
+BrightMap Sprite PLAYB1
+{
+Map PLALB1
+DisableFullBright
+}
+BrightMap Sprite PLAYB2
+{
+Map PLALB2
+DisableFullBright
+}
+BrightMap Sprite PLAYB8
+{
+Map PLALB8
+DisableFullBright
+}
+BrightMap Sprite PLAYC1
+{
+Map PLALC1
+DisableFullBright
+}
+BrightMap Sprite PLAYC2
+{
+Map PLALC2
+DisableFullBright
+}
+BrightMap Sprite PLAYC8
+{
+Map PLALC8
+DisableFullBright
+}
+BrightMap Sprite PLAYD1
+{
+Map PLALD1
+DisableFullBright
+}
+BrightMap Sprite PLAYD2
+{
+Map PLALD2
+DisableFullBright
+}
+BrightMap Sprite PLAYD8
+{
+Map PLALD8
+DisableFullBright
+}
+BrightMap Sprite PLAYE1
+{
+Map PLALE1
+DisableFullBright
+}
+
+BrightMap Sprite P2RCA0
+{
+Map P2RlA0
+DisableFullBright
+}

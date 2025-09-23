@@ -1,0 +1,103 @@
+ACTOR Firstaid : Healthpickup replaces Medikit
+{
+	Health 25
+	-COUNTITEM
+	+INVENTORY.FANCYPICKUPSOUND
+	+INVBAR
+	Inventory.Interhubamount 10
+	Inventory.MaxAmount 10
+	Inventory.Icon "INVMA0"
+	+Inventory.PickupFlash
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "Got the First-aid kit."
+	Tag "Medical Kit"
+	HealthPickup.Autouse 1
+	inventory.usesound "items/mediuse"
+	scale 1.0
+	States
+	{
+	Spawn:
+		MEDI A 10
+		MEDI A 10 bright
+		loop
+	}
+}
+Actor CanneryReplacer : RandomSpawner replaces Healthbonus
+{
+DropItem "FoodTin1"
+DropItem "FoodTin2"
+DropItem "FoodTin3"
+DropItem "FoodTin4"
+}
+ACTOR FoodTin1 : Stimpack
+{
+  Inventory.Amount 2
+  Inventory.PickupMessage "Got the Food."
+  Inventory.PickupSound "items/foodpickup"
+  Inventory.MaxAmount 200
+  scale 0.4
+  States
+  {
+  Spawn:
+    BON1 A 20
+	BON1 A 5 bright
+    loop
+  }
+}
+Actor FoodTin2 : FoodTin1
+{
+  States
+ {
+  Spawn:
+    BON1 B 20
+	BON1 B 5 bright
+    loop
+  }
+}
+Actor FoodTin3 : FoodTin1
+{
+ States
+ {
+  Spawn:
+    BON1 C 20
+	BON1 C 5 bright
+    loop
+  }
+}
+Actor FoodTin4 : FoodTin1
+{
+ States
+ {
+  Spawn:
+    BON1 D 20
+	BON1 D 5 bright
+    loop
+  }
+}
+Actor FoodTin5 : FoodTin1
+{
+Inventory.PickupSound "items/colapickup"
+Inventory.Amount 10
+  Inventory.PickupMessage "Got the cola!"
+ States
+ {
+  Spawn:
+    BON1 E 20
+	BON1 E 5 bright
+    loop
+  }
+}
+ACTOR Painkillers : Stimpack replaces Stimpack
+{
+  Inventory.Amount 15
+  Inventory.PickupSound "items/pilluse"
+  Inventory.PickupMessage "Got the painkillers."
+  scale 0.4
+  States
+  {
+  Spawn:
+    STIM A 20
+	STIM A 5 bright
+    loop
+  }
+}

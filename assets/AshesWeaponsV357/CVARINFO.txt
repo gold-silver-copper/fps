@@ -1,0 +1,9 @@
+server int hud_vertical = 0;
+Server Int NapalmChoice = 0;
+Server Int ActionChoice = 0;
+Server Int SawedChoice = 0;
+Server Int PistolChoice = 0;
+Server Int SMGChoice = 0;
+Server Int RifleChoice = 0;
+Server Int SniperChoice = 0;
+Server Int BFGChoice = 0;

@@ -1,0 +1,25 @@
+#library "SolarPower"
+#include "zcommon.acs"
+
+
+Script 905 (void)
+{
+      if (GetActorLightLevel(0)>185)
+     {
+			GiveInventory("Batteries",3);
+			delay(8);
+			ACS_Terminate (905,0);	
+     }
+     if (GetActorLightLevel(0)>170)
+     {
+			GiveInventory("Batteries",2);
+			delay(8);
+			ACS_Terminate (905,0);	
+     } 
+     if (GetActorLightLevel(0)>160)
+     {
+			GiveInventory("Batteries",1);
+			delay(8);
+			ACS_Terminate (905,0);	
+     } 
+}

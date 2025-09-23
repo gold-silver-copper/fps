@@ -1,0 +1,3 @@
+[enu default]
+
+SECRETMESSAGE = "Found a secret stash!";

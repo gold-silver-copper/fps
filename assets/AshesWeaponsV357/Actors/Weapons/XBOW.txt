@@ -1,0 +1,522 @@
+ACTOR CrossbowLoaded : Ammo
+{
+ Inventory.MaxAmount 1
+ +IGNORESKILL
+}
+ACTOR doubleloaded : Ammo
+{
+ Inventory.MaxAmount 2
+ +IGNORESKILL
+}
+ACTOR SniperSelector : actor
+{
+States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(GetCVar("SniperChoice") == 0, "Weapon1")
+		TNT1 A 0 A_JumpIf(GetCVar("SniperChoice") == 1, "Weapon2")
+		TNT1 A 0 A_JumpIf(GetCVar("SniperChoice") == 2, "Weapon3")
+		Stop
+    Weapon1:
+		TNT1 A 0 A_jump(96,"Weapon3")
+	Weapon2:
+		TNT1 A 0 A_SpawnItem("MusketSpawn")
+		Stop
+	Weapon3:
+		TNT1 A 0 A_SpawnItem("CrossbowSpawn")
+		Stop
+	}
+}
+ACTOR SniperAmmoSelector : actor replaces cell
+{
+States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(GetCVar("SniperChoice") == 0, "Weapon1")
+		TNT1 A 0 A_JumpIf(GetCVar("SniperChoice") == 1, "Weapon2")
+		TNT1 A 0 A_JumpIf(GetCVar("SniperChoice") == 2, "Weapon3")
+		Stop
+    Weapon1:
+		TNT1 A 0 A_jump(96,"Weapon3")
+	Weapon2:
+		TNT1 A 0 A_SpawnItem("Slugammo")
+		Stop
+	Weapon3:
+		TNT1 A 0 A_SpawnItem("Xbowpack")
+		Stop
+	}
+}
+ACTOR CrossbowSpawn : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "XBWPA0"
+	Inventory.PickupMessage "Got the Bolt-Caster!"
+	Inventory.PickupSound "items/gunspickup"
+	States
+	{
+	Spawn:
+		XBWP A 10
+		XBWP A 1 bright
+		loop
+	Pickup:
+	    TNT1 A 0 A_JumpIfInventory("Xbow3", 1, 4) //Skips giving you the normal crossbow if you have the upgrade
+		TNT1 A 0 A_JumpIfInventory("Xbow2", 1, 3) //Skips giving you the normal crossbow if you have the upgrade
+		TNT1 A 0 A_GiveInventory("Xbow")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("XbowAmmo", 6)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR CrossbowBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "XBWPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		XBWP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Xbow2")
+		TNT1 A 2
+		TNT1 A 0 A_selectweapon("Xbow2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR CrossbowBuild3 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "XBWPA0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		XBWP A 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Xbow3")
+		TNT1 A 2
+		TNT1 A 0 A_selectweapon("Xbow3")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR Xbow : Weapon
+{
+  Radius 20
+  Height 16
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.Selectionorder 2200
+  +WEAPON.NOAUTOAIM //Projectile weapons with autoaim enabled are literal garbage 
+  +AMMO_CHECKBOTH
+  +NOALERT
+  +NOAUTOFIRE
+ +AMMO_OPTIONAL
+  +WEAPON.ALT_AMMO_OPTIONAL
+  Weapon.AmmoUse1 0
+  Weapon.AmmoUse2 0
+ Weapon.AmmoGive2 0
+ Weapon.AmmoType1 "CrossbowLoaded"
+ Weapon.AmmoType2 "XbowAmmo"
+ weapon.upsound "weapons/heavyup"
+  Weapon.Kickback 100
+  Weapon.SlotNumber 7 
+  scale 0.8
+  Inventory.PickupMessage "Got the Bolt-Caster!"
+  Tag "Bolt-Caster"
+  Inventory.PickupSound "items/gunspickup"
+  Inventory.Icon "XBWIA0"
+  States
+  {
+  Spawn:
+    XBWP A 10
+	XBWP A 1 bright
+    loop
+  Ready:
+    XBOW I 0 a_JumpIfInventory("CrossbowLoaded",1,"LoadedReady")
+    XBOW I 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  LoadedReady:
+    XBOW A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+   Deselect:
+    XBOW I 0 a_JumpIfInventory("CrossbowLoaded",1,"LoadedDeselect")
+    XBOW I 0 A_lower
+    XBOW I 1 A_Lower
+    Loop
+ LoadedDeselect:
+    XBOW A 0 A_lower
+    XBOW A 1 A_Lower
+    Loop
+  Select:
+  TNT1 A 0 A_takeinventory("flashlit",1)
+  TNT1 A 0 A_takeinventory("lightlit",1)
+  XBOW E 0 a_JumpIfInventory("CrossbowLoaded",1,"Loadedselect")
+  XBOW E 1 A_Raise
+  XBOW E 0 A_Raise
+  Loop
+ LoadedSelect:
+  XBOW A 1 A_Raise
+  XBOW A 0 A_Raise
+  Loop
+  Fire:
+    "----" #  0 a_JumpIfInventory("CrossbowLoaded",1,1)
+    Goto Reload
+  FireReal:
+    TNT1 A 0 A_TakeInventory("CrossbowLoaded",1,TIF_NOTAKEINFINITE)
+	XBOW E 1 A_PlaySound("weapons/XBOWFIRE1", CHAN_WEAPON, 1.0)
+	XBOW F 2 A_FireProjectile("XbowBoltFX",0,1,8,5)
+    XBOW G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	XBOW H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	XBOW I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+   Reload:
+		"----" #  1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		"----" #  0 A_JumpIfInventory("CrossbowLoaded",1,"Ready")
+        "----" #  0 A_JumpIfInventory("XbowAmmo",1,"Work1")
+        Goto Ready
+	Work1:
+		XBOR ABCDEF 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound("weapons/XBOWload1", CHAN_ITEM, 1.5)
+		XBOR GGHIJKLMNOPQR 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		TNT1 A 0 A_jumpifinventory("crossbowloaded",1,"reloaddone")
+		TNT1 A 0 A_Giveinventory("CrossbowLoaded",1)
+		TNT1 A 0 A_TakeInventory("XbowAmmo",1,TIF_NOTAKEINFINITE)
+ ReloadDone:
+  TNT1 A 0 A_PlaySound("weapons/XBOWload2", CHAN_ITEM, 1.5)
+  XBOR STUVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 10
+  XBOR XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  goto ready
+	 User1:
+        XBOR ZYX 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		XBOR XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  }
+}
+ACTOR Xbow2 : Weapon
+{
+  Radius 20
+  Height 16
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.Selectionorder 2200
+  +WEAPON.NOAUTOAIM //Projectile weapons with autoaim enabled are literal garbage 
+  +AMMO_CHECKBOTH
+  +NOALERT
+  +NOAUTOFIRE
+ +AMMO_OPTIONAL
+  +WEAPON.ALT_AMMO_OPTIONAL
+   +CHEATNOTWEAPON
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+ Weapon.AmmoGive2 0
+ Weapon.AmmoType1 "doubleloaded"
+ Weapon.AmmoType2 "XbowAmmo"
+ weapon.upsound "weapons/heavyup"
+  Weapon.Kickback 100
+  Weapon.SlotNumber 7 
+  scale 0.8
+   Inventory.PickupMessage "Got the Double Bolt-Caster!"
+  Tag "Double Bolt-caster"
+  Inventory.PickupSound "items/gunspickup"
+  Inventory.Icon "XBWIB0"
+  States
+  {
+  Spawn:
+    XBWP B 10
+	XBWP B 1 bright
+    loop
+  Ready:
+    XB2W E 0 a_JumpIfInventory("doubleloaded",2,"LoadedDoubleReady")
+    XB2W E 0 a_JumpIfInventory("doubleloaded",1,"LoadedReady")
+    XB2W E 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  LoadedReady:
+    XB2W B 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  LoadedDoubleReady:
+    XB2W A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+   Deselect:
+    XB2W E 0 a_JumpIfInventory("doubleloaded",2,"LoadedDoubleDeselect")
+    XB2W E 0 a_JumpIfInventory("doubleloaded",1,"LoadedDeselect")
+    XB2W E 0 A_lower
+    XB2W E 1 A_Lower
+    Loop
+ LoadedDeselect:
+    XB2W B 0 A_lower
+    XB2W B 1 A_Lower
+    Loop
+ LoadedDoubleDeselect:
+    XB2W A 0 A_lower
+    XB2W A 1 A_Lower
+    Loop
+  Select:
+  TNT1 A 0 A_takeinventory("flashlit",1)
+   TNT1 A 0 A_takeinventory("lightlit",1)
+   TNT1 A 0 A_TakeInventory("XBOW",1)
+  XB2W E 0 a_JumpIfInventory("doubleloaded",2,"LoadedDoubleselect")
+  XB2W E 0 a_JumpIfInventory("doubleloaded",1,"Loadedselect")
+  XB2W E 1 A_Raise
+  XB2W E 0 A_Raise
+  Loop
+ LoadedSelect:
+  XB2W B 1 A_Raise
+  XB2W B 0 A_Raise
+  Loop
+ LoadedDoubleSelect:
+  XB2W A 1 A_Raise
+  XB2W A 0 A_Raise
+  Loop
+  Fire:
+    "----" # 0 a_JumpIfInventory("doubleloaded",2,"firedouble")
+    "----" # 0 a_JumpIfInventory("doubleloaded",1,"firesingle")
+    Goto Reload
+  FireDouble:
+	XB2W B 1 A_PlaySound("weapons/XBOWFIRE1", CHAN_WEAPON, 1.0)
+	XB2D F 2 A_FireProjectile("XbowBoltFX",0,1,8,5)
+    XB2D G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	XB2D H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	XB2D I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	XB2D J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+   FireSingle:
+	XB2W E 1 A_PlaySound("weapons/XBOWFIRE1", CHAN_WEAPON, 1.0)
+	XB2W F 2 A_FireProjectile("XbowBoltFX",0,1,8,5)
+    XB2W G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	XB2W H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	XB2W I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	XB2W J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+   Reload:
+        "----" # 0 A_JumpIfInventory("doubleloaded",1,"HalfReload")
+		"----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        "----" # 0 A_JumpIfInventory("XbowAmmo",1,"Work1")
+        Goto Ready
+   HalfReload:
+		"----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		"----" # 0 A_JumpIfInventory("doubleloaded",2,"Ready")
+        "----" # 0 A_JumpIfInventory("XbowAmmo",1,"Work2")
+        Goto Ready
+	Work1:
+		XB2R ABCDEF 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		"----" # 0 A_PlaySound("weapons/XBOWload1", CHAN_ITEM, 1.5)
+		XB2R GGHIJKLMNOPQR 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	ReloadAmmo:
+		"----" # 0 A_Giveinventory("doubleloaded",1)
+		"----" # 0 A_TakeInventory("XbowAmmo",1,TIF_NOTAKEINFINITE)
+		"----" # 0 A_JumpIfInventory("XbowAmmo",1,"reloaddone1")
+    ReloadDone:
+        "----" # 0 A_PlaySound("weapons/XBOWload2", CHAN_ITEM, 1.5)
+        XB2R STUVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 10
+        XB2R XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	 ReloadDone1:
+	    "----" # 0 A_Giveinventory("doubleloaded",1)
+		"----" # 0 A_TakeInventory("XbowAmmo",1,TIF_NOTAKEINFINITE)
+        "----" # 0 A_PlaySound("weapons/XBOWload2", CHAN_ITEM, 1.5)
+        XB2R STUVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 10
+        XB2O XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	Work2:
+		XB2O ABCDEF 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		"----" # 0 A_PlaySound("weapons/XBOWload1", CHAN_ITEM, 1.5)
+		XB2O GGHIJKLMNOPQR 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	ReloadAmmo2:
+		"----" # 0 A_Giveinventory("doubleloaded",1)
+		"----" # 0 A_TakeInventory("XbowAmmo",1,TIF_NOTAKEINFINITE)
+    ReloadDone2:
+       TNT1 A 0 A_PlaySound("weapons/XBOWload2", CHAN_ITEM, 1.5)
+       XB2O STUVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+       TNT1 A 10
+       XB2O XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+       goto ready
+	 User1:
+        XB2R ZYX 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		XB2R XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  }
+}
+ACTOR Xbow3 : Weapon
+{
+  Radius 20
+  Height 16
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.Selectionorder 2200
+  +WEAPON.NOAUTOAIM //Projectile weapons with autoaim enabled are literal garbage 
+  +NOALERT
+  +NOAUTOFIRE
+  +AMMO_CHECKBOTH
+ +AMMO_OPTIONAL
+  +WEAPON.ALT_AMMO_OPTIONAL
+   +CHEATNOTWEAPON
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 1
+ Weapon.AmmoGive2 0
+ Weapon.AmmoType1 "DoubleLoaded"
+ Weapon.AmmoType2 "XbowAmmo"
+ weapon.upsound "weapons/heavyup"
+  Weapon.Kickback 100
+  Weapon.SlotNumber 7 
+  scale 0.8
+   Inventory.PickupMessage "Got the Explosive Bolt-Caster!"
+  Tag "Explosive Boltcaster"
+  Inventory.PickupSound "items/gunspickup"
+  Inventory.Icon "XBWIC0"
+  States
+  {
+  Spawn:
+    XBWP C 10
+	XBWP C 1 bright
+    loop
+  Ready:
+    XB3W E 0 a_JumpIfInventory("DoubleLoaded",2,"LoadedDoubleReady")
+    XB3W E 0 a_JumpIfInventory("DoubleLoaded",1,"LoadedReady")
+    XB3W E 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  LoadedReady:
+    XB3W D 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+  LoadedDoubleReady:
+    XB3W C 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1)
+    Loop
+   Deselect:
+    XB3W E 0 a_JumpIfInventory("DoubleLoaded",2,"LoadedDoubleDeselect")
+    XB3W E 0 a_JumpIfInventory("DoubleLoaded",1,"LoadedDeselect")
+    XB3W E 0 A_lower
+    XB3W E 1 A_Lower
+    Loop
+ LoadedDeselect:
+    XB3W D 0 A_lower
+    XB3W D 1 A_Lower
+    Loop
+ LoadedDoubleDeselect:
+    XB3W C 0 A_lower
+    XB3W C 1 A_Lower
+    Loop
+  Select:
+  TNT1 A 0 A_takeinventory("flashlit",1)
+   TNT1 A 0 A_takeinventory("lightlit",1)
+  TNT1 A 0 A_TakeInventory("XBOW2",1)
+   TNT1 A 0 A_TakeInventory("XBOW",1)
+  XB3W E 0 a_JumpIfInventory("DoubleLoaded",2,"LoadedDoubleselect")
+  XB3W E 0 a_JumpIfInventory("DoubleLoaded",1,"Loadedselect")
+  XB3W E 1 A_Raise
+  XB3W E 0 A_Raise
+  Loop
+ LoadedSelect:
+  XB3W D 1 A_Raise
+  XB3W D 0 A_Raise
+  Loop
+ LoadedDoubleSelect:
+  XB3W C 1 A_Raise
+  XB3W C 0 A_Raise
+  Loop
+  Fire:
+    "----" # 0 a_JumpIfInventory("DoubleLoaded",2,"firedouble")
+    "----" # 0 a_JumpIfInventory("DoubleLoaded",1,"firesingle")
+    Goto Reload
+  FireDouble:
+	XB3W D 1 A_PlaySound("weapons/XBOWFIRE1", CHAN_WEAPON, 1.0)
+	XB3E F 2 A_FireProjectile("HeavyOverseerBolt",0,1,8,5)
+    XB3E G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	XB3E H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	XB3E I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	XB3E J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+   FireSingle:
+	XB3W E 1 A_PlaySound("weapons/XBOWFIRE1", CHAN_WEAPON, 1.0)
+	XB3W F 2 A_FireProjectile("HeavyOverseerBolt",0,1,8,5)
+    XB3W G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	XB3W H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	XB3W I 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	XB3W J 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+   Reload:
+        "----" # 0 A_JumpIfInventory("DoubleLoaded",1,"HalfReload")
+		"----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        "----" # 0 A_JumpIfInventory("XbowAmmo",1,"Work1")
+        Goto Ready
+   HalfReload:
+		"----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    "----" # 0 A_JumpIfInventory("DoubleLoaded",2,"Ready")
+        "----" # 0 A_JumpIfInventory("XbowAmmo",1,"Work2")
+        Goto Ready
+	Work1:
+		XB3R ABCDEF 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		"----" # 0 A_PlaySound("weapons/XBOWload1", CHAN_ITEM, 1.5)
+		XB3R GGHIJKLMNOPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	ReloadAmmo:
+	    "----" # 0 A_JumpIfInventory("DoubleLoaded",2,"reloaddone")
+		"----" # 0 A_Giveinventory("DoubleLoaded",1)
+		"----" # 0 A_TakeInventory("XbowAmmo",1,TIF_NOTAKEINFINITE)
+		"----" # 0 A_JumpIfInventory("XbowAmmo",1,"reloaddone1")
+    ReloadDone:
+        TNT1 A 0 A_PlaySound("weapons/XBOWload2", CHAN_ITEM, 1.5)
+        XB3E RSTUVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 10
+        XB3E XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	 ReloadDone1:
+	    "----" # 0 A_JumpIfInventory("DoubleLoaded",2,"reloaddone")
+	    "----" # 0 A_Giveinventory("DoubleLoaded",1)
+		"----" # 0 A_TakeInventory("XbowAmmo",1,TIF_NOTAKEINFINITE)
+        "----" # 0 A_PlaySound("weapons/XBOWload2", CHAN_ITEM, 1.5)
+        XB3E RSTUVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        TNT1 A 10
+        XB3X XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        goto ready
+	Work2:
+		XB3X ABCDEF 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		"----" # 0 A_PlaySound("weapons/XBOWload1", CHAN_ITEM, 1.5)
+		XB3X GGHIJKLMNOPQR 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	ReloadAmmo2:
+	   "----" # 0 A_JumpIfInventory("DoubleLoaded",2,"reloaddone2")
+		"----" # 0 A_Giveinventory("DoubleLoaded",1)
+		"----" # 0 A_TakeInventory("XbowAmmo",1,TIF_NOTAKEINFINITE)
+    ReloadDone2:
+       "----" # 0 A_PlaySound("weapons/XBOWload2", CHAN_ITEM, 1.5)
+       XB3X STUVW 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+       TNT1 A 10
+       XB3X XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+       goto ready
+	 User1:
+        XB3R ZYX 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		XB3R XYZ 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  }
+}

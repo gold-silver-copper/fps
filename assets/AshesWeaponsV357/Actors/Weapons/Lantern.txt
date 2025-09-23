@@ -1,0 +1,225 @@
+ACTOR Batteries : Ammo
+{
+ Inventory.Amount 100
+ Inventory.MaxAmount 100
+ Ammo.BackpackAmount 0
+ Ammo.BackpackMaxAmount 200
+ Inventory.PickupSound "items/ammopickup"
+ Inventory.PickupMessage "Got the battery pack."
+ scale 0.5
+ +ignoreskill
+ States
+ {
+ Spawn:
+  LANT A -1
+  Stop
+ }
+}
+ACTOR lightlit : Ammo
+{
+ Inventory.MaxAmount 1
+ Ammo.BackPackMaxAmount 1
+ +IGNORESKILL
+}
+ACTOR suitdamage : Ammo
+{
+ Inventory.MaxAmount 6
+ Ammo.BackPackMaxAmount 6
+ +IGNORESKILL
+}
+ACTOR lightcount : Ammo //maximum affects how long the lantern's battery lasts
+{
+ Inventory.MaxAmount 20
+ Ammo.BackPackMaxAmount 20
+ +IGNORESKILL
+}
+ACTOR LanternGlow : GenericDebris
+{
+	+NOGRAVITY
+	+NOINTERACTION
+	+NOCLIP
+	Radius 3
+	Height 3
+	States
+	{
+	Spawn:
+		TNT1 A 3
+		Stop
+	}
+}
+actor Lantern: weapon ///deprecated weapon. Now a hotkey. Look at all this fuckin cut content shiiiiiit you kno what im sayin
+{
+   Weapon.SelectionOrder 5000
+   Weapon.AmmoUse1 1
+   Weapon.AmmoGive1 99
+   Weapon.AmmoType1 "Batteries"
+   weapon.slotnumber 0
+   Inventory.Pickupmessage "Got a Solar Lantern!"
+   Tag "Solar Lantern"
+   Inventory.PickupSound "misc/p_pkup"
+   Weapon.BobStyle Alpha
+   Weapon.BobSpeed 1.5
+   Weapon.BobRangeX .2
+   Weapon.BobRangeY .5
+   +NOALERT
+   +NOAUTOFIRE
+   +AMMO_OPTIONAL
+   +IGNORESKILL
+   +CHEATNOTWEAPON
+   scale 0.7
+   States
+  {
+ Ready:
+  TNT1 A 0 a_JumpIfInventory("lightlit",1,"Glowin")
+  SOLR A 1 A_WeaponReady
+  SOLR A 0 ACS_Execute(905)
+  Loop
+ Glowin:
+  SOLR A 0 A_light(4)
+  SOLR A 0 a_JumpIfInventory("batteries",1,1)
+  goto unlight
+  SOLR B 1 BRIGHT A_WeaponReady
+  SOLR A 0 A_spawnitemex("lanternglow",0,0,8,0)
+  SOLR F 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD)
+  SOLR A 0 A_spawnitemex("lanternglow",0,0,8,0)
+  SOLR F 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD)
+  SOLR A 0 A_spawnitemex("lanternglow",0,0,8,0)
+  SOLR G 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD)
+   SOLR A 0 A_spawnitemex("lanternglow",0,0,8,0)
+  SOLR B 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD)
+   SOLR A 0 A_spawnitemex("lanternglow",0,0,8,0)
+  SOLR F 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD)
+   SOLR A 0 A_spawnitemex("lanternglow",0,0,8,0)
+  SOLR B 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD)
+   SOLR A 0 A_spawnitemex("lanternglow",0,0,8,0)
+   SOLR F 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD)
+   SOLR A 0 A_spawnitemex("lanternglow",0,0,8,0)
+   SOLR G 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD)
+   SOLR A 0 A_spawnitemex("lanternglow",0,0,8,0)
+  SOLR B 0 A_jump(220,2)
+  SOLR A 0 A_takeinventory("batteries",1)
+  SOLR A 0 A_checkreload
+  loop
+ AltFire:
+  SOLR CDE 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+  TNT1 A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH) 
+	goto Upswing
+   Downswing:
+    TNT1 A 8
+	CROW RSTU 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	CROW A 0 A_CustomPunch(random(3, 6) * 5, TRUE, 0, "CrowbarPuff", 90)
+	CROW VWXY 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 5 a_refire("upswing")
+	SOLR EDC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+   Upswing:
+    TNT1 A 4
+    CRO2 ABC 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	CRO2 A 0 A_CustomPunch(random(3, 6) * 5, TRUE, 0, "CrowbarPuff", 90)
+	CRO2 DEFGH 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 5 a_refire("downswing")
+	SOLR EDC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	goto ready
+ Deselect:
+  SOLR A 0 A_LIGHT0
+  SOLR A 0 A_takeinventory("Lightlit",1)
+  SOLR A 0 A_lower
+  SOLR A 1 A_Lower
+  Loop
+ Select:
+  SOLR A 1 A_Raise
+  SOLR A 0 A_Raise
+  Loop
+ Fire:
+  TNT1 A 0 a_JumpIfInventory("lightlit",1,"unlight")
+  Goto light
+ Unlight:
+  SOLR A 0 A_LIGHT0
+  SOLR A 0 A_PlayWeaponSound("weapons/lampclickoff")
+  SOLR A 1 A_takeinventory("lightlit",1)
+  goto ready
+ light:
+  SOLR A 0 A_PlayWeaponSound("weapons/lampclickon")
+  SOLR A 1 A_giveinventory("lightlit",1)
+  goto ready
+ }
+}
+ACTOR HazardSuitOverlay : Weapon
+{
+  Obituary "%o was murdered. %k looks kinda sus."
+  +WEAPON.MELEEWEAPON
+  +AMMO_OPTIONAL
+  +CHEATNOTWEAPON
+  +NOALERT
+  +UNDROPPABLE
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 0
+	Weapon.BobRangeX 0
+	Weapon.BobRangeY 0
+  attacksound "weapons/knifehit"
+  States
+  {
+  Ready:
+    HZMM A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HZM2 ABCDEEEFGGHIJ 4
+    goto ready1
+   Ready1:
+    HZMM A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HZMM A 0 A_jumpifinventory("suitdamage",1,"damage1")
+	loop
+   Damage1:
+    HZMM ABCDE 4 
+	goto ready2
+   Ready2:
+    HZMM E 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HZMM A 0 A_jumpifinventory("suitdamage",2,"damage2")
+	loop
+   Damage2:
+    HZMM EFGHI 4 
+	goto ready3
+   Ready3:
+    HZMM I 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HZMM A 0 A_jumpifinventory("suitdamage",3,"damage3")
+	loop
+   Damage3:
+    HZMM IJKLMN 4 
+	goto ready4
+   Ready4:
+    HZMM N 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HZMM A 0 A_jumpifinventory("suitdamage",4,"damage4")
+	loop
+   Damage4:
+    HZMM NOPQRS 4 
+	goto ready5
+   Ready5:
+    HZMM S 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HZMM A 0 A_jumpifinventory("suitdamage",5,"damage5")
+	loop
+   Damage5:
+    HZMM TUVW 4 
+	goto ready6
+   Ready6:
+    HZMM W 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	HZMM A 0 A_jumpifinventory("suitdamage",6,"damage6")
+	loop
+   Damage6:
+    HZMM XYZ 4 
+	goto ready7
+   Ready7:
+    HZMM Z 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	loop
+  Deselect:
+    TNT1 A 1 a_lower
+    loop
+  Select:
+    HZMM AAAAAA 0 A_raise 
+    loop
+  Fire:
+     KNIF AAAAAA 0 A_raise 
+    KNIF ABCD 1
+	TNT1 A 0 A_CustomPunch(random(3, 6) * 5, TRUE, 0, "knifePuff", 80)
+	KNIF EFG 1
+	KNIF G 0 A_selectweapon("Lantern")
+    goto ready
+	}
+}

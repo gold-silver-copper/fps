@@ -1,0 +1,19 @@
+#library "Hudswap"
+#include "zcommon.acs"
+
+script "Hud_Switch" (void)
+{
+    if(GetCVar("Hud_vertical")<1)
+	{
+	setCvar("hud_vertical",1);
+	}
+	else if(GetCVar("Hud_vertical")>0)
+	{
+	setCvar("hud_vertical",0);
+	}
+	delay(4);
+}
+script "Hud_SwitchOff" (void)
+{
+	delay(4);
+}

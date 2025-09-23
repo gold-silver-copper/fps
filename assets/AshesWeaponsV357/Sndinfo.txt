@@ -1,0 +1,458 @@
+weapons/revolverfire              revfir1
+weapons/revolverextended          revfir2
+weapons/revolveropen              revopn1
+weapons/revolverclose             revcls1
+weapons/revolverup                revdpy1
+weapons/revolvertwirl             revtwrl
+
+weapons/Popistol                   dspistl2
+$random weapons/pistolSuppressed { SupFir1 SupFir2}
+SupFir1 SupFire1
+SupFir2 SupFire2
+
+weapons/glock                   dspistl1
+weapons/pistolup                revdpy1
+weapons/PistolClipout           dspisclp
+weapons/Pistolclipin            dspslod2
+weapons/Pistolclipslide         dspislod
+
+weapons/knifeswing              kniswsh
+weapons/knifemiss               kniwal
+weapons/knifehit                knihit
+weapons/crowbarswing            crswing
+weapons/crowbarmiss             crowal
+weapons/crowbarhit              crobar
+
+CroHam/swing1 HAMMIS1
+CroHam/swing2 HAMMIS2
+$random Croham/Swing { CroHam/swing1  CroHam/swing2}
+CroHam/hit1 HAMWAL1
+CroHam/hit2 HAMWAL2
+CroHam/gotcha HAMFLSH
+
+weapons/grizlygun             	SHOTFIRE
+weapons/grizlyout               dscsgout
+weapons/grizlydeploy            dsgrizup
+weapons/grizlyload              dscsglod
+weapons/grizlyfill              dscsgmag
+weapons/grizcock1               PUMP1
+weapons/grizcock2               PUMP2
+weapons/grimelmiss              grimel1
+weapons/grimelhit               grimel2
+
+weapons/leverempty              WINCOK1
+weapons/leveropen               WINCOK2
+weapons/leverclose              WINCOK3
+weapons/leverdistant            WINDIST
+$rolloff weapons/leverdistant 3200 7400
+$volume weapons/leverdistant 0.8
+weapons/leverload               WINLOAD
+
+weapons/sawedofffire            dsshotas
+weapons/sawedoffopen            dsshtopn
+weapons/sawedoffload            dsshtlod
+weapons/sawedoffclose           dsshtcls
+weapons/sawedoffdeploy          dsshtgup
+weapons/sawedoffdouble          dsdblsht
+
+$random weapons/IngramFire { MacFire1 MacFire2}
+MacFire1 dschggun
+MacFire2 dschggu2
+$random weapons/IngramSuppressed { SupFire1 SupFire2}
+SupFire1 dssupfr1
+SupFire2 dssupfr2
+weapons/Ingramup                dschggup
+weapons/Ingramin                dsuzilod
+weapons/Ingramout               dsuziout
+weapons/IngramBolt              dsuzipul
+weapons/IngramDry               dsuzidry
+
+weapons/Greaserfire1       GRSFIR1
+weapons/Greaserfire2       GRSFIR2
+$random weapons/Greaserfire {weapons/Greaserfire1 weapons/Greaserfire2 }
+weapons/GreaserCock         GRSCock
+weapons/GreaserMagout        GRSMag1
+weapons/GreaserMagIn         GRSMag2
+
+weapons/flamestream             dsflstrm
+weapons/flamestart              dsflstrt
+weapons/flamestop              dsflstop
+master/launch                   dsnlaunc
+blaster/molotov                 dsmoltov
+weapons/napalmup                dsmisgup
+weapons/boomerreload            dsbomrld
+
+weapons/HammerIdle              dshamidl
+weapons/HammerUp                dshammup
+Weapons/HammerAttack            dshamatk
+Weapons/HammerOvercharge        dshamova
+
+weapons/HammerIdle2              dshamil2
+weapons/HammerUp2               dshamup2
+Weapons/HammerAttack2            dshamak2
+Weapons/HammerOvercharge2        dshamov2
+
+weapons/zippo                   dszippo1
+weapons/fuselit                 dsfuslit
+weapons/fuseloop                dsfuslop
+weapons/pipethrow               dspipthr
+weapons/tripplace               dstrpplc
+weapons/tripwire                dstrpwir
+weapons/tripdisarm              dstrpdis
+$random weapons/pipebounce { Pipebonce1 Pipebonce2 Pipebonce3}
+Pipebonce1                    dspipbo1
+Pipebonce2                     dspipbo2
+Pipebonce3                     dspipbo3
+weapons/grenexplode             dsgrboom
+weapons/explodedistant              dsexpdis
+$rolloff weapons/explodedistant 3200 7400
+$volume weapons/explodedistant 1.0
+
+distant/medexp1              mxp1
+$rolloff weapons/explodedistant 3200 7400
+$volume weapons/explodedistant 1.0
+
+Primo/Hit                    PRIMHIT
+
+$random weapons/M16Fire    { M16Fire1 M16Fire2}
+M16Fire1                        556FIR1
+M16Fire2                        556FIR2
+weapons/m16up                   dsriflup
+weapons/m16clipout              ds556out
+weapons/m16clipin               ds556lod
+weapons/m16cock                 ds556COK
+
+weapons/stonerfire              STONFIRE
+weapons/Stonerdistant           STONDIST
+$rolloff weapons/stonerdistant 4000 8000
+weapons/modreload1              MODRE1
+weapons/modreload2              MODRE2
+weapons/modreload3              MODRE3
+
+weapons/rifleshot                 dsrifir1
+weapons/riflemedium               dsrifir3
+weapons/riflestrong               dsrifir4
+weapons/riflemega                 dsrifir5
+weapons/rifledistant              dsrifir2
+$rolloff weapons/rifledistant 3200 7400
+$volume weapons/rifledistant 0.7
+weapons/musketopen              dsmstld1
+weapons/musketclose             dsmstld2
+weapons/musketlever             dsmsklev
+weapons/musketcharge            dsmuschg
+
+weapons/xbowhit1                XBOHIT1
+weapons/xbowhit2                XBOHIT2
+weapons/xbowload1                XBOLOD1
+weapons/xbowload2                XBOLOD2
+weapons/xbowfire1                XBOFIR1
+weapons/xbowfly1                XBOFLY1
+weapons/heavyup                 DSHEVYUP
+
+weapons/thumperfire             THUMFIR
+weapons/thumperempty            THUMEMP
+weapons/thumperload             THUMLOD
+weapons/thumperclose           THUMCLS
+
+weapons/laserpistol             Lasgun1
+weapons/laserblaster            Lasgun2
+
+$random weapons/PigFire    { PigFire1 PigFire2}
+PIGFire1                        PIGFIR1
+PIGFire2                        PIGFIR2
+
+Distant/revolver              DISREV1
+$rolloff Distant/revolver 3200 7400
+$volume Distant/revolver 0.5
+
+Distant/pistol              DISPIS1
+$rolloff Distant/pistol 3200 7400
+$volume Distant/pistol 0.5
+
+Distant/smg              DISSMG1
+$rolloff Distant/smg  3200 7400
+$volume Distant/smg  0.5
+
+Distant/m16              DISRIF1
+$rolloff Distant/m16  3200 7400
+$volume Distant/m16  0.5
+
+Distant/shotgun              DISSHT1
+$rolloff Distant/shotgun   3200 7400
+$volume Distant/shotgun   0.5
+
+weapons/dryfire                   dryfir
+
+items/pickupclip                  PKCLIP
+items/pickuploose                 PKLOOS
+items/foodpickup                DSFOPKUP
+items/colapickup                DSCOPKUP
+items/ammopickup                DSAMPKUP
+items/shardpickup               DSARPKUP
+items/armorpickup               DSJKPKUP
+items/armorpickup2              DSMTPKUP
+items/legendpickup              DSLGPKUP
+items/gunspickup                DSWPPKUP
+items/stimuse                   DSREGENS
+items/stimuse2                  DSPURGES
+items/stimuse3                  DSFRNZYS
+items/stimuse4                  DSTITANS
+items/pilluse                   DSPAINKS
+items/mediuse                   DSMEDPAK
+Special/FlareLight	            DSFLLITE
+Special/FlareLoop	            DSFLLOOP
+Special/CyliLoop	            FLAMLOOP
+Special/Workbench               DSWRKBNC
+Explode/Large                   LEXP1
+weapons/lampclickon               DSLMPCK1
+weapons/lampclickoff               DSLMPCK2
+items/bakpakpk                   BAKPAK
+items/NightVisionOn              NVGON
+items/NightVisionOff             NVGOFF
+
+
+Weapons/falfire1        		FAL1
+weapons/faldistant         	    FAL2
+$rolloff weapons/faldistant 3200 7400
+$volume weapons/faldistant 0.8
+weapons/falfire2           	    FAL3
+weapons/falbolt         	    FALBF
+weapons/falmagin           	    FALI
+weapons/falmagout           	FALO
+
+Lucy/sight  LCYHOW
+Lucy/bite   LCYBIT
+Lucy/Spit   LCYSPT
+Lucy/Jump   LCYJMP
+Lucy/Pain   LCYPAN
+Lucy/walk   LCYWLK
+Lucy/run    LCYRUN
+$random LUCY/Fidget1 { LCYFGTA LCYFGTB}
+LCYFGTA  LCYFG1
+LCYFGTB  LCYFG2
+
+RJRichochet1 RJRIC01
+RJRichochet2 RJRIC02
+RJRichochet3 RJRIC03
+RJRichochet4 RJRIC04
+RJRichochet5 RJRIC05
+
+
+$random RJRichochet {RJRichochet1 RJRichochet2 RJRichochet3 RJRichochet4 RJRichochet5}
+
+
+Special/Gibdeath     DSGIBDTH
+$random Special/fleshdrop { fleshdrop1 fleshdrop2 fleshdrop3}
+fleshdrop1          DSGIBDP1
+fleshdrop2          DSGIBDP2
+fleshdrop3          DSGIBDP3
+
+$random Misc/casing { casing1 casing2 casing3}
+casing1          DSCASIN1
+casing2          DSCASIN2
+casing3          DSCASIN3
+
+$random Misc/shellhit { shellhit1 shellhit2 shellhit3}
+shellhit1          DSSHELL1
+shellhit2          DSSHELL2
+shellhit3          DSSHELL3
+
+$random bullet/ricochet { rico1 rico2 rico3 rico4 rico5 rico6}
+rico1          DSRICOT1
+rico2          DSRICOT2
+rico3          DSRICOT3
+rico4          DSRICOT4
+rico5          DSRICOT5
+rico6          DSRICOT6
+
+$random weapons/Heavyfire { MgFir1 MgFir2}
+MgFir1 MGFIRE1
+MgFir2 MGFIRE2
+$rolloff weapons/heavyfire 2500 3200 
+
+$random pl_death { player/death1 player/death2 player/death3 }
+player/death1 dspldth1
+player/death2 dspldth2
+player/death3 dspldth3
+
+$random pl_pain100 { player/pain1 player/pain2 player/pain3 }
+player/pain1 dsppain1
+player/pain2 dsppain2
+player/pain3 dsppain3
+
+$random pl_pain75 { player/pain4 player/pain5 player/pain6 }
+player/pain4 dsppain4
+player/pain5 dsppain5
+player/pain6 dsppain6
+
+$random pl_pain50 { player/pain7 player/pain8 player/pain9 }
+player/pain7 dsppain7
+player/pain8 dsppain8
+player/pain9 dsppain9
+
+$random pl_pain25 { player/pain10 player/pain11 player/pain12 }
+player/pain10 dsppai10
+player/pain11 dsppai11
+player/pain12 dsppai12
+
+pl_fall dsplfall
+pl_xdeath dspdiehi
+player/male/land1 dsland1
+
+player/drown1   DSDRWN1
+player/drown2   DSDRWN2
+player/uwdeath DSDRWN3 
+player/Radpain DSRADP
+player/deathrads DSRADD
+
+$playeralias  	Player	male	*pain100	pl_pain100
+$playeralias  	Player	male	*pain75		pl_pain75
+$playeralias  	Player	male	*pain50		pl_pain50
+$playeralias  	Player	male	*pain25		pl_pain25
+$playeralias    Player  male    *death      pl_death
+$playeralias    Player  male    *falling    pl_fall
+$playeralias    Player male    *xdeath     pl_xdeath
+$playersound player male *gasp       dspgasp
+$playersound player male *dive       dswtrhit
+$playersound player male *surface    dssurfce
+$playeralias           player    male    *pain100-drowning       player/drown1
+$playeralias        player    male    *pain75-drowning        player/drown2 
+$playeralias        player    male    *pain50-drowning        player/drown1
+$playeralias        player    male    *pain25-drowning        player/drown2
+$playeralias           player    male    *death-drowning         player/uwdeath
+$playersound           player  male    *pain100-slime      DSRADP
+$playersoundup           player  male    *pain75-slime     DSRADP
+$playersoundup           player  male    *pain50-slime     DSRADP
+$playersoundup           player  male    *pain25-slime     DSRADP
+$playersound           player  male    *Death-slime      DSRADD
+
+$random special/firedeath {burndeth1 burndeth2 burndeth3 burndeth4}
+burndeth1 DSHMNFD1
+burndeth2 DSHMNFD2
+burndeth3 DSHMNFD3
+burndeth4 DSHMNFD4
+
+
+$volume FOOTSTEP/DEFAULT 0.8
+
+$random footstep/default { player/step1  player/step2  player/step3  player/step4 }
+player/step1              WALKDEF1
+player/step2              WALKDEF2
+player/step3              WALKDEF3
+player/step4              WALKDEF4
+
+$random footstep/dirt { player/drt1  player/drt2  player/drt3  player/drt4 }
+player/drt1             WALKDRT1
+player/drt2             WALKDRT2
+player/drt3             WALKDRT3
+player/drt4             WALKDRT4
+
+$random floor/water { player/watr1  player/watr2  player/watr3  player/watr4 }
+player/watr1             WALKWAT1
+player/watr2             WALKWAT2
+player/watr3             WALKWAT3
+player/watr4             WALKWAT4
+
+$random floor/slimy { player/mud1  player/mud2  player/mud3  player/mud4 }
+player/mud1             WALKMUD1
+player/mud2             WALKMUD2
+player/mud3             WALKMUD3
+player/mud4             WALKMUD4
+
+$random floor/carpet { player/soft1  player/soft2  player/soft3  player/soft4 }
+player/soft1             WALKCPT1
+player/soft2             WALKCPT2
+player/soft3             WALKCPT3
+player/soft4             WALKCPT4
+
+$random floor/wood { player/wood1  player/wood2  player/wood3  player/wood4 }
+player/wood1             WALKWOD1
+player/wood2             WALKWOD2
+player/wood3             WALKWOD3
+player/wood4             WALKWOD4
+
+$random floor/tile2 { player/tileb1  player/tileb2  player/tileb3  player/tileb4 }
+player/tileb1             WLKTILB1
+player/tileb2             WLKTILB2
+player/tileb3             WLKTILB3
+player/tileb4             WLKTILB4
+
+$random floor/hard { player/hard1  player/hard2  player/hard3  player/hard4 }
+player/hard1             WALKHRD1
+player/hard2             WALKHRD2
+player/hard3             WALKHRD3
+player/hard4             WALKHRD4
+
+$random floor/rock { player/rock1  player/rock2  player/rock3  player/rock4 }
+player/rock1             WALKROK1
+player/rock2             WALKROK2
+player/rock3             WALKROK3
+player/rock4             WALKROK4
+
+$random floor/metal { player/metal1  player/metal2  player/metal3  player/metal4 }
+player/metal1             WALKMET1
+player/metal2             WALKMET2
+player/metal3             WALKMET3
+player/metal4             WALKMET4
+
+$random floor/gravel { player/gravel1  player/gravel2  player/gravel3  player/gravel4 }
+player/gravel1             WALKGRV1
+player/gravel2             WALKGRV2
+player/gravel3             WALKGRV3
+player/gravel4             WALKGRV4
+
+$random floor/met2 { player/met21  player/met22  player/met23  player/met24 }
+player/met21             WLKMETB1
+player/met22             WLKMETB2
+player/met23             WLKMETB3
+player/met24             WLKMETB4
+// Menu Sounds
+
+
+//bike sounds
+bike/start		dsbiksta
+bike/drift      dsbikdrf
+bike/throttle   dsbikthr
+bike/stop		dsbiksto
+bike/revup		dsbikrev
+bike/idle		dsbikidl
+bike/skid       dsbikski
+bike/glance     bikglan1
+bike/crash      bikehit1
+bike/fireleft   bikegun1
+bike/fireright  bikegun2
+bike/dryleft   bikedry1
+bike/dryright  bikedry2
+
+woodbreak1 WOODBRK1
+woodbreak2 WOODBRK2
+$random break/wood {woodbreak1 woodbreak2}
+Floorfalling FLOORFALL
+
+items/asheskeys  dsnewkey
+items/keypickup    DSKYPKUP
+items/BWVuse                    BWVIAL
+
+
+explode/medium MEXP4
+
+$random special/geigerLow { geiger1 geiger2 geiger3}
+geiger1          DSGEIG01
+geiger2          DSGEIG02
+geiger3          DSGEIG03
+$random special/geigermed { geiger4 geiger5 geiger6}
+geiger4          DSGEIG04
+geiger5          DSGEIG05
+geiger6          DSGEIG06
+$random special/geigerhigh { geiger7 geiger8 geiger9}
+geiger7          DSGEIG07
+geiger8          DSGEIG08
+geiger9          DSGEIG09
+$random special/geigerextreme { geiger10 geiger11 geiger12}
+geiger10          DSGEIG10
+geiger11          DSGEIG11
+geiger12          DSGEIG12
+
+
+
+

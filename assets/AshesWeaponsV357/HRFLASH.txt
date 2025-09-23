@@ -1,0 +1,36 @@
+#library "HRFLASH"
+#include "zcommon.acs"
+
+Script "HRFLASHLIGHTCHECK" ENTER
+{
+    if (CheckInventory("flashlit")>0)
+	{
+	 giveInventory("PowerFlashlight",1);
+	 delay(16);
+	 takeinventory("batteries",1);
+	}
+	if (CheckInventory("flashlit")<1)
+	{
+	 takeInventory("PowerFlashlight",1);
+	}
+	delay(16);
+	restart;
+}
+Script "LANTERNLIGHTCHECK" ENTER
+{
+    if (CheckInventory("lightlit")==1)
+	{
+	  SpawnForced("LanternGlow", GetActorX(0), GetActorY(0)+32, GetActorZ(0)+32);
+	}
+	 delay(2);
+	 restart;
+}
+Script "Solardrain" ENTER 
+{
+if(checkinventory("LightLit")>0)
+	{
+	 takeinventory("batteries",1);
+}
+ delay(24);
+	 restart;
+}

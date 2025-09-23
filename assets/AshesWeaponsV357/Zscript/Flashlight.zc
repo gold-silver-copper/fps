@@ -1,0 +1,130 @@
+
+// Manages the components of the beam, and attaches it to its source
+class PowerFlashlight : Powerup
+{
+    Property EnergyType : energyType;               // Light flickers when player is low on this inventory class
+    Property Offset : ofsX, ofsY, ofsZ;             // Beam offset, relative to attack height
+
+    // Beam properties
+    Property SpotColor : spotColor;
+    Property SpotRange : spotRange;                 // Note: I think range depends on beam angle, too
+    Property SpotInnerAngle : spotInnerAngle;       // Max brightness inside this angle from center
+    Property SpotOuterAngle : spotOuterAngle;       // No light outside this angle
+
+    
+
+    Default
+    {
+        Inventory.MaxAmount 1;
+        Powerup.Duration 0x7FFFFFFF;
+
+        PowerFlashlight.EnergyType "Batteries";
+        PowerFlashlight.Offset 1, 0, 0; // ofsX is 1 so player doesn't illuminate themself
+
+        PowerFlashlight.SpotColor 0xffffff;
+		PowerFlashlight.SpotRange 384;
+        PowerFlashlight.SpotInnerAngle 8;
+        PowerFlashlight.SpotOuterAngle 28;
+    }
+
+    class<Inventory> energyType;
+    double ofsX, ofsY, ofsZ;
+
+    Color spotColor;
+    int spotRange;
+    double spotInnerAngle;
+    double spotOuterAngle;
+
+    FlashlightBeam spot;
+
+    override void AttachToOwner(Actor other)
+    {
+        Super.AttachToOwner(other);
+
+        spot = FlashlightBeam(Spawn("FlashlightBeam", other.pos));
+        spot.master = other;
+        spot.offset = (ofsX, ofsY, ofsZ);
+        spot.args[0] = spotColor.r;
+        spot.args[1] = spotColor.g;
+        spot.args[2] = spotColor.b;
+        spot.args[3] = spotRange;
+        spot.spotInnerAngle = spotInnerAngle;
+        spot.spotOuterAngle = spotOuterAngle;
+		spot.bNoShadowMap = true;
+    }
+
+    override void DoEffect()
+    {
+        Super.DoEffect();
+		int energy = energyType ? owner.CountInv(energyType) : effectTics;
+		if (energy <= 0)
+        {
+            spot.args[3] = 0;
+		}
+    }
+
+    override void DetachFromOwner()
+    {
+        spot.Destroy();
+        Super.DetachFromOwner();
+    }
+}
+
+
+// Spotlight that follows its master around
+class FlashlightBeam : SpotLight
+{
+    Vector3 offset;
+
+    override void Tick()
+    {
+        Super.Tick();
+
+        Vector3 beamPos = master.pos;
+        beamPos.xy += AngleToVector(master.angle, offset.x);
+        beamPos.xy += AngleToVector(master.angle - 90, offset.y);
+
+        let plyr = PlayerPawn(master);
+        if (plyr && plyr.player)
+        {
+            beamPos.z += (plyr.height / 2 + plyr.attackZOffset) * plyr.player.crouchFactor;
+        }
+        else
+        {
+            beamPos.z += master.height / 2;
+        }
+
+        SetOrigin(beamPos, true);
+
+        vel = master.vel;
+        angle = master.angle;
+        pitch = master.pitch;
+    }
+}
+
+// Drains player resource depending on amount in inventory
+// 1 ResourceDrain = 1 unit per minute
+class ResourceDrain : Inventory
+{
+    Property ResourceType : resourceType;
+
+    Default
+    {
+        Inventory.MaxAmount 260;
+        ResourceDrain.ResourceType "Batteries";
+    }
+
+    class<Inventory> resourceType;
+    double spent;
+
+    override void DoEffect()
+    {
+        spent += double(amount) / ticRate / 60;
+
+        if (spent >= 1)
+        {
+            owner.TakeInventory(resourceType, int(spent));
+            spent -= Floor(Spent);
+        }
+    }
+}

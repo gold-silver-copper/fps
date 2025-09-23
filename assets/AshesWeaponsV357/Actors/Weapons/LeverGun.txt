@@ -1,0 +1,732 @@
+ACTOR LEVERfired : Ammo
+{
+ Inventory.MaxAmount 7
+ Ammo.BackpackMaxAmount 7
+ +IGNORESKILL
+}
+ACTOR ShottySelector : actor replaces shotgun
+{
+States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_JumpIf(GetCVar("ActionChoice") == 0, "Weapon1")
+		TNT1 A 0 A_JumpIf(GetCVar("ActionChoice") == 1, "Weapon2")
+		TNT1 A 0 A_JumpIf(GetCVar("ActionChoice") == 2, "Weapon3")
+		Stop
+    Weapon1:
+		TNT1 A 0 A_jump(96,"Weapon3")
+	Weapon2:
+		TNT1 A 0 A_SpawnItem("PumpySpawn")
+		Stop
+	Weapon3:
+		TNT1 A 0 A_SpawnItem("LeverSpawn")
+		Stop
+	}
+}
+ACTOR LeverSpawn : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.6
+	Inventory.Icon "LVGIA0"
+	Inventory.PickupMessage "Got the Lever-action Shotgun!"
+	Inventory.PickupSound "items/gunspickup"
+	+DROPPED
+	States
+	{
+	Spawn:
+		LVGP A 10
+		LVGP A 1 bright
+		loop
+	Pickup:
+		TNT1 A 0 A_JumpIfInventory("Leveraction2", 1, 3) //Skips giving you the normal HunterShotgun if you have the upgrade
+		TNT1 A 0 A_GiveInventory("Leveraction")
+		TNT1 A 0 A_Jump(256, 2)
+		TNT1 A 0 A_GiveInventory("shotgunAmmo", 4)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR LeveractionBuild2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "LVGIB0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		LVGP B 10
+		loop
+	Pickup:
+	    TNT1 A 0 A_GiveInventory("LeverAction2")
+		TNT1 A 2
+		TNT1 A 0 A_selectweapon("Leveraction2")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 2
+		Stop
+	}
+}
+ACTOR Leveraction : weapon
+{
+  SpawnID 27
+  Weapon.SelectionOrder 1300
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 0
+  Weapon.AmmoGive1 0
+  Weapon.AmmoGive2 2
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.AmmoType2 "Shotgunammo"
+  Weapon.AmmoType1 "LEVERfired"
+  Inventory.PickupMessage "Got the Lever Action Shotgun!"
+  Inventory.PickupSound "items/gunspickup"
+   Inventory.Icon "LVGIA0"
+  weapon.slotnumber 3
+  Weapon.Kickback 120
+  +AMMO_CHECKBOTH
+  +NOALERT
+  scale 0.6
+  weapon.upsound "weapons/Grizlydeploy"
+  Obituary "%o was terminated by %k."
+  Tag "Lever Action Shotgun"
+  States
+  {
+  Ready:
+    LEAF G 0 a_JumpIfInventory("lightlit",1,"Readylamp")
+    LEAF G 0 a_JumpIfInventory("LEVERfired",1,"ReadyLoaded")
+    LEAF G 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+    Loop
+  ReadyLoaded:
+    LEAG A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+    Loop
+  ReadyLamp:
+     LEAO U 0 a_JumpIfInventory("LEVERfired",1,"readylamploaded")
+     LEAO U 0 a_JumpIfInventory("batteries",1,2)
+	 LEAO U 0 a_jump(256,"Unlight")
+	 LEAO U 0 a_light2
+     LEAO U 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+	  LEAO U 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+	  LEAO U 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+     loop
+ ReadyLampLoaded:
+     LEAO U 0 a_JumpIfInventory("batteries",1,2)
+	 LEAO U 0 a_jump(256,"Unlight")
+	 LEAO U 0 a_light2
+     LEAO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+	  LEAO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+	  LEAO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+     loop
+  Deselect:
+    "----" #  0 A_LIGHT0
+    "----" #  0 A_lower
+    "----" #  1 A_Lower
+    Loop
+  Select:
+    TNT1 A 0 A_takeinventory("flashlit",1)
+    TNT1 A 0 a_JumpIfInventory("LEVERfired",1,"SelectLoaded")
+    LEAF G 1 A_Raise
+	LEAF G 0 A_Raise
+    Loop
+   SelectLoaded:
+    LEAG A 1 A_Raise
+	LEAG A 0 A_Raise
+    Loop
+  Fire:
+    "----" # 0 a_JumpIfInventory("lightlit",1,"FireLamp")
+    "----" # 0 a_JumpIfInventory("LEVERfired",1,"FireReal")
+    Goto Reload
+  FireLamp:
+     "----" # 0 a_JumpIfInventory("LEVERfired",1,"FireLampReal")
+    Goto Reload
+  FireReal:
+	TNT1 A 0 A_PlaySound ("weapons/grizlygun", CHAN_WEAPON)
+    LEAF A 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leverdistant", CHAN_AUTO)
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireBullets (3, 3, 6, 16, "hitpuff", FBF_NORANDOM | FBF_USEAMMO)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	LEAF B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light0
+    LEAF C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	LEAF D 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	LEAF E 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_AlertMonsters
+	LEAF A 0 A_JumpIfInventory("LEVERfired",1,"Pump")
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	LEAF G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+    LEAF G 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAF G 0 A_checkreload
+	LEAF G 2 A_refire("empty")
+	Goto ready
+  Pump:
+	LEAP ABC 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leveropen", CHAN_ITEM)
+    LEAP DEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAP G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_spawnitemex("shellCasingspawner",-10,-10,32,-10)
+	TNT1 A 0 A_PlaySound ("weapons/leverclose", CHAN_ITEM)
+	LEAP GGHIJKL 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAG A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    Goto Ready
+  FireLampReal:
+	 "----" # 0 A_PlaySound ("weapons/grizlygun", CHAN_WEAPON)
+    LEAI A 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leverdistant", CHAN_AUTO)
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireBullets (3, 3, 6, 16, "hitpuff", FBF_NORANDOM | FBF_USEAMMO)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	LEAI B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    LEAI C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	LEAI D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAI D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	LEAI E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAI E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_AlertMonsters
+	LEAI A 0 A_JumpIfInventory("LEVERfired",1,"LampPump")
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	LEAI F 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAI F 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	LEAI G 0 A_checkreload
+	LEAI G 1 A_refire("emptyLamp")
+	Goto ready
+  LampPump:
+    TNT1 A 0 A_PlaySound ("weapons/LEAGlydeploy", CHAN_AUTO)
+	LEAC A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC B 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC F 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leveropen", CHAN_ITEM)
+    LEAC G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC H 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC J 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("SpincockSpawner",10,0,5,-3)
+	LEAC K 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC L 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC M 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 5 A_PlaySound ("weapons/leverclose", CHAN_ITEM)
+	LEAC N 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC O 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC P 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC P 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC Q 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAC Q 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAO J 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    Goto Ready
+  Reload:
+         "----" # 0 A_JumpIfInventory("LEVERfired",1,"ReloadLoaded")
+		 "----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+         "----" # 0 A_JumpIfInventory("shotgunammo",1,"Reloadempty")
+        Goto Ready
+  ReloadLoaded:
+         "----" # 0 A_JumpIfInventory("LEVERfired",7,"Ready")
+		 "----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+         "----" # 0 A_JumpIfInventory("shotgunammo",1,"ReloadloadedStart")
+        Goto Ready
+	Reloadempty:
+	     "----" # 0
+		LEAR ABC 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	    TNT1 A 0 A_PlaySound ("weapons/leveropen", CHAN_ITEM)
+	    LEAR DEFG 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	ReloadFirstShell:
+	    LEAR HIJ 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+	    TNT1 A 0 A_PlaySound ("weapons/leverload",CHAN_ITEM)
+		LEAR A 0 A_Giveinventory("LEVERfired",1)
+		LEAR A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		LEAR KLMN 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		LEAR A 0 A_refire("reloaddone")
+		LEAR A 0 a_JumpIfInventory("shotgunammo",1,"shellloaded")
+		Goto Reloaddone
+	ReloadLoadedStart:
+		LEAZ ABC 1 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+	    TNT1 A 0 A_PlaySound ("weapons/leveropen", CHAN_ITEM)
+	    LEAZ DEF 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		LEAR A 0 A_refire("reloaddone")
+	ShellLoaded:
+	    TNT1 A 0 A_JumpIfInventory("LEVERfired",6,"ReloadLast")
+	    LEAT GGHIJ 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+	    TNT1 A 0 A_PlaySound ("weapons/leverload",CHAN_ITEM)
+		LEAR A 0 A_Giveinventory("LEVERfired",1)
+		LEAR A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		LEAR KLMN 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		LEAR A 0 A_refire("reloaddone")
+		LEAR A 0 a_JumpIfInventory("shotgunammo",1,"shellloaded")
+		Goto Reloaddone
+	Reloadlast:
+	    LEAT GGHIJ 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+	    TNT1 A 0 A_PlaySound ("weapons/leverload",CHAN_ITEM)
+		LEAR A 0 A_Giveinventory("LEVERfired",1)
+		LEAR A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		LEAR A 0 A_refire("reloaddone")
+		LEAT KLMN 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+	ReloadDone:
+        LEAR O 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	    LEAR P 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+        LEAR Q 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound ("weapons/leverclose",CHAN_ITEM)
+        LEAC DDEFGHIJKLM 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		TNT1 A 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		LEAZ NOPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		LEAG A 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+        Goto Ready
+ ZOOM:
+	TNT1 A 0 a_JumpIfInventory("lightlit",1,"unlight")
+ Light:
+	TNT1 A 0 A_JumpIfInventory("LEVERfired",1,"ZOOMLoaded")
+	LEAO M 2 a_playsound("weapons/revolverup")
+	LEAO NOP 2 
+	LEAO QRS 2 
+	LEAO T 2 A_giveinventory("lightlit",1) 
+	LEAO U 1 a_playsound("weapons/lampclickon")
+    goto readylamp
+  unlight:
+	TNT1 A 0 A_JumpIfInventory("LEVERfired",1,"unlightLoaded")
+	LEAO U 1 a_playsound("weapons/lampclickoff")
+	LEAO T 2 a_light0
+	LEAO SRQ 2
+	LEAO P 1  
+    LEAO ON 1  a_playsound("weapons/revolverup")
+	LEAO M 1 A_takeinventory("lightlit",1)
+    goto ready
+  ZOOMloaded:
+	LEAO B 2 a_playsound("weapons/revolverup")
+	LEAO CDE 2 
+	LEAO FG 2 
+	LEAO I 2 A_giveinventory("lightlit",1) 
+	LEAO J 1 a_playsound("weapons/lampclickon")
+    goto readylamp
+  unlightloaded:
+	LEAO J 1 a_playsound("weapons/lampclickoff")
+	LEAO I 2 a_light0
+	LEAO H 2
+	LEAO GFE 2
+	LEAO D 1 
+    LEAO C 1  a_playsound("weapons/revolverup")
+	LEAO B 1 A_takeinventory("lightlit",1)
+    goto ready
+  USer1:
+        TNT1 A 0 a_JumpIfInventory("lightlit",1,"LightUser1")
+		TNT1 A 0 A_JumpIfInventory("LEVERfired",1,"punchLoaded")
+        LEAO MNOP 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		LEAO PONM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  LightUser1:
+        LEAO I 0 a_light0
+        TNT1 A 0 A_JumpIfInventory("LEVERfired",1,"LightLoaded")
+        LEAO IHGF 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		LEAO FGHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  PunchLoaded:
+        LEAO BCDE 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        WPUN ABC 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		LEAO EDCB 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	 LightLoaded:
+        LEAO IHGF 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		LEAO FGHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	empty:
+        LEAF G 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+        LEAF G 0  a_refire("empty")
+        goto ready
+	emptylamp:
+        LEAO U 2  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        LEAO U 0  a_refire("emptylamp")
+        goto readylamp
+  Spawn:
+    LVGP A 10
+	LVGP A 1 bright
+    loop
+  }
+}
+ACTOR Leveraction2 : LeverAction
+{
+  SpawnID 27
+  Weapon.SelectionOrder 1300
+  Weapon.AmmoUse1 1
+  Weapon.AmmoUse2 0
+  Weapon.AmmoGive1 0
+  Weapon.AmmoGive2 2
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.AmmoType2 "Shotgunammo"
+  Weapon.AmmoType1 "LEVERfired"
+  Inventory.PickupMessage "Got the Rapid Action Shotgun!"
+  Inventory.PickupSound "items/gunspickup"
+   Inventory.Icon "LVGIB0"
+  weapon.slotnumber 3
+  Weapon.Kickback 120
+  +AMMO_CHECKBOTH
+  +NOALERT
+   +CHEATNOTWEAPON
+  scale 0.6
+  weapon.upsound "weapons/LEAGlydeploy"
+  Tag "Rapid Action Shotgun"
+  States
+  {
+  Ready:
+    L2AF G 0 a_JumpIfInventory("lightlit",1,"Readylamp")
+    L2AF G 0 a_JumpIfInventory("LEVERfired",1,"ReadyLoaded")
+    L2AF G 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+    Loop
+  ReadyLoaded:
+    L2AG A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWUSER1|WRF_ALLOWZOOM|WRF_ALLOWUSER1)
+    Loop
+  ReadyLamp:
+      L2AO U 0 a_JumpIfInventory("LEVERfired",1,"readylamploaded")
+     L2AO U 0 a_JumpIfInventory("batteries",1,2)
+	 L2AO U 0 a_jump(256,"Unlight")
+	 L2AO U 0 a_light2
+     L2AO U 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+	  L2AO U 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+	  L2AO U 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+     loop
+ ReadyLampLoaded:
+     L2AO U 0 a_JumpIfInventory("batteries",1,2)
+	 L2AO U 0 a_jump(256,"Unlight")
+	 L2AO U 0 a_light2
+     L2AO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+	  L2AO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+	  L2AO J 1 BRIGHT A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM|WRF_ALLOWUSER1|WRF_ALLOWUSER1)
+     loop
+  Deselect:
+    "----" #  0 A_LIGHT0
+    "----" #  0 A_lower
+    "----" #  1 A_Lower
+    Loop
+  Select:
+    TNT1 A 0 A_takeinventory("flashlit",1)
+    TNT1 A 0 A_takeinventory("leveraction",1)
+    TNT1 A 0 a_JumpIfInventory("LEVERfired",1,"SelectLoaded")
+    L2AF G 1 A_Raise
+	L2AF G 0 A_Raise
+    Loop
+   SelectLoaded:
+    L2AG A 1 A_Raise
+	L2AG A 0 A_Raise
+    Loop
+  Fire:
+    "----" # 0 a_JumpIfInventory("lightlit",1,"FireLamp")
+    "----" # 0 a_JumpIfInventory("LEVERfired",1,"FireReal")
+    Goto Reload
+  FireLamp:
+     "----" # 0 a_JumpIfInventory("LEVERfired",1,"FireLampReal")
+    Goto Reload
+  FireReal:
+	TNT1 A 0 A_PlaySound ("weapons/grizlygun", CHAN_WEAPON)
+    L2AF A 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leverdistant", CHAN_AUTO)
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireBullets (3, 3, 6, 16, "hitpuff", FBF_NORANDOM | FBF_USEAMMO)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	L2AF B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	TNT1 A 0 A_Light0
+    L2AF C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AF D 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AF E 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_AlertMonsters
+	L2AF A 0 A_JumpIfInventory("LEVERfired",1,"Pump")
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AF G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+    L2AF G 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AF G 0 A_checkreload
+	L2AF G 2 A_refire("empty")
+	Goto ready
+  Pump:
+	L2AP ABC 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leveropen", CHAN_ITEM)
+    L2AP DEFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AP G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_spawnitemex("shellCasingspawner",-10,-10,32,-10)
+	TNT1 A 0 A_PlaySound ("weapons/leverclose", CHAN_ITEM)
+	L2AP GGHIJKL 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AG A 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    Goto Ready
+  FireLampReal:
+	 "----" # 0 A_PlaySound ("weapons/grizlygun", CHAN_WEAPON)
+    L2AI A 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leverdistant", CHAN_AUTO)
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireBullets (3, 3, 6, 16, "hitpuff", FBF_NORANDOM | FBF_USEAMMO)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	L2AI B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+    L2AI C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AI D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AI D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AI E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AI E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_AlertMonsters
+	L2AI A 0 A_JumpIfInventory("LEVERfired",1,"LampPump")
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AI F 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AI F 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AI G 0 A_checkreload
+	L2AI G 1 A_refire("emptyLamp")
+	Goto ready
+  LampPump:
+    TNT1 A 0 A_PlaySound ("weapons/LEAGlydeploy", CHAN_AUTO)
+	L2AC A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC B 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC E 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC F 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leveropen", CHAN_ITEM)
+    L2AC G 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC H 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC I 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC J 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_FireCustomMissile("SpincockSpawner",10,0,5,-3)
+	L2AC K 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC L 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC M 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 5 A_PlaySound ("weapons/leverclose", CHAN_ITEM)
+	L2AC N 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC O 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC P 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC P 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC Q 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AC Q 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AO J 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    Goto Ready
+  Altfire:
+     "----" # 0 a_JumpIfInventory("LEVERfired",1,"FireRealAlt")
+    Goto Reload
+   FireRealAlt:
+	TNT1 A 0 A_PlaySound ("weapons/grizlygun", CHAN_WEAPON)
+    L2AF A 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leverdistant", CHAN_AUTO)
+	TNT1 A 0 A_SetPitch(Pitch-1)
+	TNT1 A 0 A_FireBullets (3, 3, 6, 16, "hitpuff", FBF_NORANDOM)
+	TNT1 A 0 A_Light2
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	L2AF B 1 BRIGHT A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch-2)
+	TNT1 A 0 A_FireCustomMissile("GunSmokeSpawner",0,0,8,0)
+	L2AR A 0 A_TakeInventory("LEVERfired",1,TIF_NOTAKEINFINITE)
+	TNT1 A 0 A_Light0
+    L2AF C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	LEAF A 0 A_JumpIfInventory("LEVERfired",1,"PumpAlt")
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AF D 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AF E 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_AlertMonsters
+	L2AF G 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    L2AF G 3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AF G 0 A_checkreload
+	L2AF G 2 A_refire("empty")
+	Goto ready
+  PumpAlt:
+	L2AF D 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_SetPitch(Pitch+0.5)
+	L2AF H 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_PlaySound ("weapons/leveropen", CHAN_ITEM)
+	L2AF IJK 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	TNT1 A 0 A_AlertMonsters
+	L2AF L 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+    TNT1 A 0 A_FireCustomMissile("shellCasingSpawner",0,0,15,-3)
+	TNT1 A 0 A_PlaySound ("weapons/leverclose", CHAN_ITEM)
+    L2AF MNOFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+	L2AG A 2 A_refire("Altfire")
+	Goto ready
+  Reload:
+         "----" # 0 A_JumpIfInventory("LEVERfired",1,"ReloadLoaded")
+		 "----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+         "----" # 0 A_JumpIfInventory("shotgunammo",1,"Reloadempty")
+        Goto Ready
+  ReloadLoaded:
+         "----" # 0 A_JumpIfInventory("LEVERfired",7,"Ready")
+		 "----" # 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+         "----" # 0 A_JumpIfInventory("shotgunammo",1,"ReloadloadedStart")
+        Goto Ready
+	Reloadempty:
+	     "----" # 0
+		L2AR ABC 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	    TNT1 A 0 A_PlaySound ("weapons/leveropen", CHAN_ITEM)
+	    L2AR DEFG 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	ReloadFirstShell:
+	    L2AR HIJ 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+	    TNT1 A 0 A_PlaySound ("weapons/leverload",CHAN_ITEM)
+		L2AR A 0 A_Giveinventory("LEVERfired",1)
+		L2AR A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		L2AR KLMN 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		LEAR A 0 A_refire("reloaddone")
+		L2AR A 0 a_JumpIfInventory("shotgunammo",1,"shellloaded")
+		Goto Reloaddone
+	ReloadLoadedStart:
+		L2AK ABC 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	    TNT1 A 0 A_PlaySound ("weapons/leveropen", CHAN_ITEM)
+		LEAR A 0 A_refire("reloaddone")
+	    L2AK DEF 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	ShellLoaded:
+	    TNT1 A 0 A_JumpIfInventory("LEVERfired",6,"ReloadLast")
+	    L2AT GGHIJ 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+	    TNT1 A 0 A_PlaySound ("weapons/leverload",CHAN_ITEM)
+		L2AR A 0 A_Giveinventory("LEVERfired",1)
+		L2AR A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		L2AR KLMN 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+		LEAR A 0 A_refire("reloaddone")
+		L2AR A 0 a_JumpIfInventory("shotgunammo",1,"shellloaded")
+		Goto Reloaddone
+	Reloadlast:
+	    L2AT GGHIJ 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+	    TNT1 A 0 A_PlaySound ("weapons/leverload",CHAN_ITEM)
+		L2AR A 0 A_Giveinventory("LEVERfired",1)
+		L2AR A 0 A_TakeInventory("shotgunammo",1,TIF_NOTAKEINFINITE)
+		LEAR A 0 A_refire("reloaddone")
+		L2AT KLMN 2 A_WeaponReady(WRF_NOPRIMARY|WRF_ALLOWUSER1)
+	ReloadDone:
+        L2AR O 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+	    L2AR P 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+        L2AR Q 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		TNT1 A 0 A_PlaySound ("weapons/leverclose",CHAN_ITEM)
+        L2AC DDEFGHIJKLM 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		TNT1 A 3 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		L2AK NOPQ 2 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+		L2AG A 1 A_WeaponReady(WRF_NOFIRE|WRF_ALLOWUSER1)
+        Goto Ready
+ ZOOM:
+	TNT1 A 0 a_JumpIfInventory("lightlit",1,"unlight")
+ Light:
+	TNT1 A 0 A_JumpIfInventory("LEVERfired",1,"ZOOMLoaded")
+	L2AO M 2 a_playsound("weapons/revolverup")
+	L2AO NOP 2 
+	L2AO QRS 2 
+	L2AO T 2 A_giveinventory("lightlit",1) 
+	L2AO U 1 a_playsound("weapons/lampclickon")
+    goto readylamp
+  unlight:
+	TNT1 A 0 A_JumpIfInventory("LEVERfired",1,"unlightLoaded")
+	L2AO U 1 a_playsound("weapons/lampclickoff")
+	L2AO T 2 a_light0
+	L2AO SRQ 2
+	L2AO P 1  
+    L2AO ON 1  a_playsound("weapons/revolverup")
+	L2AO M 1 A_takeinventory("lightlit",1)
+    goto ready
+  ZOOMloaded:
+	L2AO B 2 a_playsound("weapons/revolverup")
+	L2AO CDE 2 
+	L2AO FG 2 
+	L2AO I 2 A_giveinventory("lightlit",1) 
+	L2AO J 1 a_playsound("weapons/lampclickon")
+    goto readylamp
+  unlightloaded:
+	L2AO J 1 a_playsound("weapons/lampclickoff")
+	L2AO I 2 a_light0
+	L2AO H 2
+	L2AO GFE 2
+	L2AO D 1 
+    L2AO C 1  a_playsound("weapons/revolverup")
+	L2AO B 1 A_takeinventory("lightlit",1)
+    goto ready
+  USer1:
+        TNT1 A 0 a_JumpIfInventory("lightlit",1,"LightUser1")
+		TNT1 A 0 A_JumpIfInventory("LEVERfired",1,"punchLoaded")
+        L2AO MNOP 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		L2AO PONM 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  LightUser1:
+        L2AO I 0 a_light0
+        TNT1 A 0 A_JumpIfInventory("LEVERfired",1,"LightLoaded")
+        L2AO IHGF 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		L2AO FGHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+  PunchLoaded:
+        L2AO BCDE 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+       TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		L2AO EDCB 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	 LightLoaded:
+        L2AO IHGF 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  	    TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+	    KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		L2AO FGHI 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		goto ready
+	empty:
+        L2AF G 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+        L2AF G 0  a_refire("empty")
+        goto ready
+	emptylamp:
+        L2AO U 2  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+        L2AO U 0  a_refire("emptylamp")
+        goto readylamp
+  Spawn:
+    LVGP B 10
+	LVGP B 1 bright
+    loop
+  }
+}
+

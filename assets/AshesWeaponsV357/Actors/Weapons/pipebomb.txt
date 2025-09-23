@@ -1,0 +1,297 @@
+Actor PipeBomb1
+{
+    Radius 4
+	Height 4
+	Speed 20
+	scale 0.5
+	Damage 5
+	gravity 0.6
+	Projectile
+	-NOGRAVITY
+	+DOOMBOUNCE
+	+CANBOUNCEWATER
+	+FLOORCLIP
+	+EXTREMEDEATH
+	BounceFactor 0.5
+	wallBounceFactor 0.5
+    ReactionTime 48
+	decal "scorch"
+	seesound "weapons/pipebounce"
+   Obituary "%o catches %k's hot potato."
+    States
+  {
+  Spawn:
+    PBOM A 0
+    PBOM A 1  A_PlaySound("weapons/fuseloop", CHAN_ITEM, 1.0)
+	PBOM A 1  A_Countdown
+    PBOM BCDEF 2 A_Countdown
+	Goto Spawn 
+  Death:
+    TNT1 A 2 A_SpawnItemEx("HEExplode")
+	TNT1 A 0 A_PlaySound("weapons/grenexplode", CHAN_ITEM, 1.0, 0, 0.5)	
+	TNT1 A 0 A_explode(150, 256)
+	  TNT1 A 0 A_SetTranslucent (0.85,1)
+	  TNT1 A 0 A_AlertMonsters
+    Stop
+  }
+}
+Actor Pipebomb2 : Pipebomb1 { Speed 22  ReactionTime 40}
+Actor Pipebomb3 : Pipebomb1 { Speed 24 ReactionTime 36}
+Actor Pipebomb4 : Pipebomb1 { Speed 26 ReactionTime 32}
+Actor Pipebomb5 : Pipebomb1 { Speed 28 ReactionTime 28}
+Actor Pipebomb6 : Pipebomb1 { Speed 30 ReactionTime 24}
+Actor Pipebomb7 : Pipebomb1 { Speed 32 ReactionTime 20}
+Actor Pipebomb8 : Pipebomb1 { Speed 34 ReactionTime 16}
+Actor Pipebomb9 : Pipebomb1 { Speed 36 ReactionTime 12}
+Actor Pipebomb10 : Pipebomb1 { Speed 38 ReactionTime 8}
+Actor Pipebomb11 : Pipebomb1 { Speed 40 ReactionTime 4}
+
+ACTOR TripPipe: SwitchableDecoration
+{
+   Radius 12
+   Height 16
+   Mass 1000000
+   Health 10
+   Damage 1
+   SeeSound "weapons/tripplace"
+   deathsound "weapons/tripwire"
+   Activation THINGSPEC_DEFAULT | THINGSPEC_ACTIVATE
+   ExplosionDamage 192
+   ExplosionRadius 128
+   +USESPECIAL
+   Speed 0
+   scale 0.5
+   +NOBLOOD
+   +SHOOTABLE
+   +EXTREMEDEATH
+   +THRUSPECIES
+   +CANBOUNCEWATER
+   +FLOORCLIP
+   +FLOORHUGGER
+   +MISSILE
+   Obituary "%o tripped over %k's wire."
+   States
+   {
+   Spawn:
+      TBOM A 0 A_Gravity
+      TBOM A 25
+	  TBOM B 3
+      Loop
+   Xdeath:
+      TBOM A 15 a_scream
+   Death:
+    TNT1 A 2 A_SpawnItemEx("HEExplode")
+	TNT1 A 0 A_PlaySound("weapons/grenexplode", CHAN_ITEM, 1.0, 0, 0.5)	
+	TNT1 A 0 A_explode
+	TNT1 A 0 A_AlertMonsters
+    Stop
+	 Active:
+	 TNT1 A 0 A_PlaySound("weapons/tripdisarm", CHAN_WEAPON)
+    TNT1 A 0 A_spawnItemEx("Pipebomb")
+	stop
+   }
+}
+ACTOR TripPipeMine: SwitchableDecoration 1985
+{
+   Radius 12
+   Height 16
+   Mass 1000000
+   Health 10
+   Damage 1
+   SeeSound "weapons/tripplace"
+   deathsound "weapons/tripwire"
+   Activation THINGSPEC_DEFAULT | THINGSPEC_ACTIVATE
+   ExplosionDamage 192
+   ExplosionRadius 128
+   +USESPECIAL
+   Speed 0
+   scale 0.5
+   +NOBLOOD
+   +SHOOTABLE
+   +EXTREMEDEATH
+   +CANBOUNCEWATER
+   +FLOORCLIP
+   +FLOORHUGGER
+   +MISSILE
+   +SOLID
+   +TOUCHY
+   Obituary "%o tripped over a boobytrap."
+   States
+   {
+   Spawn:
+      TBOM A 0 A_Gravity
+      TBOM A 25
+	  TBOM B 3
+      Loop
+   Xdeath:
+      TBOM A 15 a_scream
+   Death:
+    TNT1 A 0 A_SpawnItemEx("HEExplode")
+	TNT1 A 2 A_PlaySound("weapons/grenexplode", CHAN_ITEM, 1.0, 0, 0.5)	
+	TNT1 A 0 A_explode
+	TNT1 A 0 A_AlertMonsters
+    Stop
+   Active:
+    TNT1 A 0 A_PlaySound("weapons/tripdisarm", CHAN_WEAPON)	
+    TNT1 A 0 A_spawnItemEx("Pipebomb")
+	stop
+   }
+}
+ACTOR PipeCharge : Inventory
+{
+   Inventory.MaxAmount 21
+}
+actor pipebomb: Weapon replaces rocketammo
+{
+  Radius 20
+  Height 16
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  Weapon.Selectionorder 2300
+  +NOALERT
+  +ignoreskill
+  +NOAUTOAIM
+  Weapon.AmmoUse 1
+ Weapon.AmmoGive 1
+ Weapon.AmmoType "pipeammo"
+  Weapon.Kickback 100
+  Weapon.SlotNumber 6 
+  scale 0.7
+  Inventory.PickupMessage "Got the pipebomb"
+  Tag "Pipebomb"
+  Inventory.PickupSound "items/ammopickup"
+  States
+  {
+  Spawn:
+    ROCK A 10
+	ROCK A 1 bright
+    loop
+  Ready:
+    PIPE A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+	loop
+  Deselect:
+    "----"  # 0 A_StopSound(CHAN_WEAPON)
+    "----"  # 0 A_lower
+    "----"  # 1 A_Lower
+    Loop
+  Select: 
+   TNT1 A 0 A_takeInventory("flashlit")
+    PIPE A 0 A_jumpifInventory("pipeammo", 1, 2)
+	PIPE Q 0 A_TakeInventory("pipebomb", 10)
+    PIPE A 1 A_Raise
+	PIPE A 0 A_Raise
+    Loop
+  Fire:
+    PIPE A 1 A_PlaySound("weapons/zippo", CHAN_WEAPON)
+    PIPE ABCD 2 bright
+	PIPE EFGHE 2 bright
+	PIPE I 2 bright A_PlaySound("weapons/fuselit", CHAN_WEAPON)
+	PIPE JK 2 bright
+	PIPE LMNO 2 bright A_PlaySound("weapons/fuseloop", CHAN_WEAPON, 1.0, true)
+	TNT1 A 5 A_TakeInventory("pipecharge", 21)
+	TNT1 A 1 A_ReFire
+	PIPE PQ 1 
+	TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+	PIPE R 2 A_ThrowGrenade(pipebomb1)
+    Goto throwend
+  Hold:
+	    NULL A 1 
+		NULL A 4 A_GiveInventory("PipeCharge", 1)
+		NULL A 0 A_jumpifInventory("pipecharge", 21, "oops")
+		NULL A 0 A_ReFire
+		NULL A 0 A_JumpIfInventory("PipeCharge", 19, "Throw10")
+		NULL A 0 A_JumpIfInventory("PipeCharge", 17, "Throw9")
+		NULL A 0 A_JumpIfInventory("PipeCharge", 15, "Throw8")
+		NULL A 0 A_JumpIfInventory("PipeCharge", 13, "Throw7")
+		NULL A 0 A_JumpIfInventory("PipeCharge", 11, "Throw6")
+		NULL A 0 A_JumpIfInventory("PipeCharge", 9, "Throw5")
+		NULL A 0 A_JumpIfInventory("PipeCharge", 7, "Throw4")
+		NULL A 0 A_JumpIfInventory("PipeCharge", 5, "Throw3")
+		NULL A 0 A_JumpIfInventory("PipeCharge", 3, "Throw2")
+		NULL A 0 A_JumpIfInventory("PipeCharge", 1, "Throw1")
+	Throw1:
+	    PIPE PQ 1 
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+	    PIPE R 2 A_ThrowGrenade(pipebomb2,8)
+	    Goto ThrowEnd
+	Throw2:
+	    PIPE PQ 1
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+	    PIPE R 2 A_ThrowGrenade(pipebomb3,9)
+	    Goto ThrowEnd
+	Throw3:
+	    PIPE PQ 1 
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+	    PIPE R 2 A_ThrowGrenade(pipebomb4,10)
+	    Goto ThrowEnd
+	Throw4:
+	    PIPE PQ 1
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+		PIPE R 2 A_ThrowGrenade(pipebomb5,11)
+	    Goto ThrowEnd
+	Throw5:
+	    PIPE PQ 1 
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+	    PIPE R 2 A_ThrowGrenade(pipebomb6,12)
+	    Goto ThrowEnd
+	Throw6:
+	    PIPE PQ 1
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+		PIPE R 2 A_ThrowGrenade(pipebomb7,13)
+	    Goto ThrowEnd
+	Throw7:
+	    PIPE PQ 1 
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+	    PIPE R 2 A_ThrowGrenade(pipebomb8,14)
+	    Goto ThrowEnd
+	Throw8:
+	    PIPE PQ 1
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+	    PIPE R 2 A_ThrowGrenade(pipebomb9,15)
+	    Goto ThrowEnd
+	Throw9:
+	    PIPE PQ 1 
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+	    PIPE R 2 A_ThrowGrenade(pipebomb10,16)
+	    Goto ThrowEnd
+	Throw10:
+	    PIPE PQ 1 
+		TNT1 A 0 A_PlaySound("weapons/pipethrow", CHAN_WEAPON)
+	    PIPE R 2 A_ThrowGrenade(pipebomb11,17)
+        Goto ThrowEnd	
+	ThrowEnd:
+	    NULL A 0 A_ClearReFire
+	    PIPE STU 1
+		PIPE V 2
+		PIPE W 2
+		PEMT A 0 A_jumpifInventory("pipeammo", 1, 2)
+		PIPE Q 0 A_TakeInventory("pipebomb", 10,TIF_NOTAKEINFINITE)
+		TNT1 A 4
+		goto deselect
+		TNT1 A 2
+		PIPE ZYX 2
+		Goto Ready
+   	oops:
+	    TNT1 A 1 A_ClearReFire
+		TNT1 A 0 A_StopSound(CHAN_WEAPON)
+	    NULL A 0 A_ThrowGrenade(HEMISFIRE)
+		TNT1 A 8 A_PlaySound("weapons/grenexplode", CHAN_ITEM, 1.0, 0, 0.5)
+		NULL A 0
+		TNT1 A 0 A_TakeInventory("pipecharge", 21)
+		Goto Ready
+	Altfire:
+	    PIP2 ABCD 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 0 A_PlaySound("weapons/tripwire", CHAN_WEAPON)
+		PIP2 EFGHIJK 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		TNT1 A 1  A_FireCustomMissile("trippipe",0,0,0,0)
+		TNT1 A 0 A_TakeInventory("pipeammo", 1,TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_PlaySound("weapons/tripplace", CHAN_WEAPON)
+		PEMT A 0 A_jumpifInventory("pipeammo", 1, 2)
+		PIPE Q 0 A_TakeInventory("pipebomb", 10,TIF_NOTAKEINFINITE)
+		TNT1 A 24
+		goto deselect
+        PIPE ZYX 2
+		Goto Ready
+}}

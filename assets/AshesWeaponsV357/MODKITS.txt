@@ -1,0 +1,371 @@
+#library "MODKITS"
+#include "zcommon.acs"
+
+Script "ModkitCheck" (void)
+{
+if(checkweapon("Crowbar"))
+{
+giveinventory("Crowbar2",1);
+takeinventory("crowbar",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the Cro-Hammer Head (PULVERISER MOD)!");
+setweapon("Crowbar2");
+terminate;
+}
+if(checkweapon("revolver"))
+{
+giveinventory("revolver2",1);
+takeinventory("revolver",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the Extended Barrel (DAMAGE MOD)!");
+setweapon("revolver2");
+terminate;
+}
+else if(checkweapon("revolver2"))
+{
+giveinventory("revolver3",1);
+takeinventory("revolver2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+Print(s:"You installed the Custom mechanism (TRIGGER MOD)!");
+takeinventory("ItemModkit",1);
+setweapon("revolver3");
+terminate;
+}
+else if(checkweapon("Glock"))
+{
+giveinventory("glock2",1);
+takeinventory("glock",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the Laser sight (ACCURACY MOD)!");
+setweapon("Glock2");
+terminate;
+}
+else if(checkweapon("Glock2"))
+{
+giveinventory("glock3",1);
+takeinventory("glock2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the Burst-fire trigger (BURST MOD)!");
+setweapon("Glock3");
+terminate;
+}
+else if(checkweapon("PolicePistol"))
+{
+giveinventory("PolicePistol2",1);
+takeinventory("PolicePistol",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the pistol suppressor (STEALTH MOD)!");
+setweapon("PolicePistol2");
+terminate;
+}
+else if(checkweapon("PolicePistol2"))
+{
+giveinventory("PolicePistol3",1);
+takeinventory("PolicePistol2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the hi-cap magazine (CAPACITY MOD)!");
+setweapon("PolicePistol3");
+terminate;
+}
+else if(checkweapon("PumpAction"))
+{
+giveinventory("Pumpaction2",1);
+takeinventory("Pumpaction",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the bayonet (MELEE MOD)!");
+setweapon("Pumpaction2");
+terminate;
+}
+else if(checkweapon("PumpAction2"))
+{
+giveinventory("Pumpaction3",1);
+takeinventory("Pumpaction2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the magazine adaptor (RELOAD MOD)!");
+setweapon("Pumpaction3");
+terminate;
+}
+else if(checkweapon("LeverAction"))
+{
+giveinventory("LeverAction2",1);
+takeinventory("LeverAction",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the rapid trigger (ALTFIRE MOD)!");
+setweapon("LeverAction2");
+terminate;
+}
+else if(checkweapon("Sawedoff"))
+{
+giveinventory("Sawedoff2",1);
+takeinventory("Sawedoff",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the extra barrel (TRIPLE MOD)!");
+setweapon("Sawedoff2");
+terminate;
+}
+else if(checkweapon("Sawedoff2"))
+{
+giveinventory("Sawedoff3",1);
+takeinventory("Sawedoff2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the shoulder stock (RECOIL MOD)!");
+setweapon("Sawedoff3");
+terminate;
+}
+else if(checkweapon("Huntershotgun"))
+{
+giveinventory("Huntershotgun2",1);
+takeinventory("Huntershotgun",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the shell saddle (RELOAD MOD)!");
+setweapon("Huntershotgun2");
+terminate;
+}
+else if(checkweapon("Huntershotgun2"))
+{
+giveinventory("Huntershotgun3",1);
+takeinventory("Huntershotgun2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the underbarrel mount (FLASHLIGHT MOD)!");
+setweapon("Huntershotgun3");
+terminate;
+}
+else if(checkweapon("Ingram"))
+{
+giveinventory("Ingram2",1);
+takeinventory("Ingram",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the suppressor (STEALTH MOD)!");
+setweapon("Ingram2");
+terminate;
+}
+else if(checkweapon("Ingram2"))
+{
+giveinventory("Ingram3",1);
+takeinventory("Ingram2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the full overhaul (HANDLING MOD)!");
+setweapon("Ingram3");
+terminate;
+}
+else if(checkweapon("Greaser"))
+{
+giveinventory("Greaser2",1);
+takeinventory("Greaser",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the extended barrel and dot sight(PRECISION MOD)!");
+setweapon("Greaser2");
+terminate;
+}
+else if(checkweapon("Greaser2"))
+{
+giveinventory("Greaser3",1);
+takeinventory("Greaser2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the drum magazine(CAPACITY MOD)!");
+setweapon("Greaser3");
+terminate;
+}
+else if(checkweapon("m16"))
+{
+giveinventory("m162",1);
+takeinventory("m16",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the heavy barrel & trigger mech (AUTOFIRE MOD)!");
+setweapon("M162");
+terminate;
+}
+else if(checkweapon("m162"))
+{
+giveinventory("m163",1);
+takeinventory("m162",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the pipebomb launcher (ALTFIRE MOD)!");
+setweapon("M163");
+terminate;
+}
+else if(checkweapon("modrifle1"))
+{
+giveinventory("modrifle2",1);
+takeinventory("modrifle1",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the ACOG scope (MARKSMAN MOD)!");
+setweapon("modrifle2");
+terminate;
+}
+else if(checkweapon("modrifle2"))
+{
+giveinventory("modrifle3",1);
+takeinventory("modrifle2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the MG configuration (CAPACITY MOD)!");
+setweapon("modrifle3");
+terminate;
+}
+else if(checkweapon("Napalmgun"))
+{
+giveinventory("Napalmgun2",1);
+takeinventory("Napalmgun",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+setweapon("Napalmgun2");
+Print(s:"You installed the Expanded tank (CAPACITY MOD)!");
+terminate;
+}
+else if(checkweapon("Napalmgun2"))
+{
+giveinventory("Napalmgun3",1);
+takeinventory("Napalmgun2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the improved nozzles (RANGE MOD)!");
+setweapon("Napalmgun3");
+terminate;
+}
+else if(checkweapon("Protogun"))
+{
+giveinventory("Protogun2",1);
+takeinventory("Protogun",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+setweapon("Protogun2");
+Print(s:"You installed the Emergency Exhaust Tank (ALTFIRE MOD)!");
+terminate;
+}
+else if(checkweapon("Protogun2"))
+{
+giveinventory("Protogun3",1);
+takeinventory("Protogun2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the Hyper Nozzles Build (RANGE MOD)!");
+setweapon("Protogun3");
+terminate;
+}
+else if(checkweapon("JunkerMusket"))
+{
+giveinventory("JunkerMusket2",1);
+takeinventory("JunkerMusket",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+setweapon("Junkermusket2");
+Print(s:"You installed the magazine adaptor (CAPACITY MOD)!");
+terminate;
+}
+else if(checkweapon("JunkerMusket2"))
+{
+giveinventory("JunkerMusket3",1);
+takeinventory("JunkerMusket2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+setweapon("Junkermusket3");
+Print(s:"You installed the bug-zapper driver (CHARGE MOD)!");
+terminate;
+}
+else if(checkweapon("Xbow"))
+{
+giveinventory("Xbow2",1);
+takeinventory("Xbow",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+setweapon("Xbow2");
+Print(s:"You installed the double bow frame(CAPACITY MOD)!");
+terminate;
+}
+else if(checkweapon("Xbow2"))
+{
+giveinventory("Xbow3",1);
+takeinventory("Xbow2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+setweapon("Xbow3");
+Print(s:"You installed the reinforced frame(EXPLOSIVE AMMO MOD)!");
+terminate;
+}
+else if(checkweapon("Killerpig"))
+{
+giveinventory("Killerpig2",1);
+takeinventory("Killerpig",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+setweapon("Killerpig2");
+Print(s:"You installed the gas launcher (SALVO MOD)!");
+terminate;
+}
+else if(checkweapon("Killerpig2"))
+{
+giveinventory("Killerpig3",1);
+takeinventory("Killerpig2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the improved motor (ROF MOD)!");
+setweapon("Killerpig3");
+terminate;
+}
+else if(checkweapon("Jackhammer"))
+{
+giveinventory("Jackhammer2",1);
+takeinventory("Jackhammer",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+setweapon("Jackhammer2");
+Print(s:"You installed the pointy piston (PENETRATION MOD)!");
+terminate;
+}
+else if(checkweapon("Jackhammer2"))
+{
+giveinventory("Jackhammer3",1);
+takeinventory("Jackhammer2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+setweapon("Jackhammer3");
+Print(s:"You installed the remapped engine (EFFICIENCY MOD)!");
+terminate;
+}
+else if(checkweapon("FAL"))
+{
+giveinventory("FAL2",1);
+takeinventory("FAL",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the modified trigger mechanism (AUTOFIRE MOD)!");
+setweapon("FAL2");
+terminate;
+}
+else if(checkweapon("FAL2"))
+{
+giveinventory("FAL3",1);
+takeinventory("FAL2",1);
+PlaySound(0,"special/workbench",CHAN_ITEM);
+takeinventory("ItemModkit",1);
+Print(s:"You installed the bottle-reflex-scope (SNOOPER MOD)!");
+setweapon("FAL3");
+terminate;
+}
+else
+{
+Print(s:"This weapon cannot be modified further");
+terminate;
+}
+}

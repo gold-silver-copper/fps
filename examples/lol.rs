@@ -42,6 +42,7 @@ fn main() {
         .add_plugins(bevy::render::diagnostic::RenderDiagnosticsPlugin)
         .add_plugins(iyes_perf_ui::PerfUiPlugin)
         .add_plugins(PhysicsPlugins::new(FixedPostUpdate))
+        .add_plugins(GoldenUI)
         .add_plugins(GunPlayPlugin)
         // .add_plugins(PhysicsDebugPlugin::default())
         .add_plugins(GoldenControllerPlugin)

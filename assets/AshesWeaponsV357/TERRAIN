@@ -1,0 +1,89 @@
+splash DoomWater
+{
+   smallclass      WaterSplashBase
+   smallclip      12
+   smallsound      world/drip
+
+   baseclass      WaterSplashBase
+   chunkclass      WaterSplash
+   chunkxvelshift   8
+   chunkyvelshift   8
+   chunkzvelshift   8
+   chunkbasezvel   2
+   sound         world/watersplash
+   noalert
+}
+splash Blood
+{
+    smallclass		SludgeChunk
+	smallclip		12
+	smallsound		world/sludgegloop
+
+	baseclass		SludgeSplash
+	chunkclass		SludgeChunk
+	chunkxvelshift	8
+	chunkyvelshift	8
+	chunkzvelshift	8
+	chunkbasezvel	1
+	sound			world/sludgegloop
+	noalert
+}
+
+splash Slime
+{
+    smallclass		SlimeChunk
+	smallclip		12
+	smallsound		world/sludgegloop
+
+	baseclass		SlimeSplash
+	chunkclass		SlimeChunk
+	chunkxvelshift	8
+	chunkyvelshift	8
+	chunkzvelshift	8
+	chunkbasezvel	1
+	sound			world/sludgegloop
+	noalert
+}
+
+
+terrain DoomWater
+{
+	splash			DoomWater
+	footclip		16
+	liquid
+}
+terrain Blood
+{
+	splash			Blood
+	footclip		10
+	liquid
+}
+terrain Nukage
+{
+	splash			Slime
+	footclip		10
+	liquid
+}
+
+floor fwater1 Doomwater
+floor fwater2 Doomwater
+floor fwater3 Doomwater
+floor fwater4 Doomwater
+floor BLOOD1 Blood
+floor BLOOD2 Blood
+floor BLOOD3 Blood
+floor NUKAGE1 Nukage
+floor NUKAGE2 Nukage
+floor NUKAGE3 Nukage
+floor SLIME01 Doomwater
+floor SLIME02 Doomwater
+floor SLIME03 Doomwater
+floor SLIME04 Doomwater
+floor SLIME05 Doomwater
+floor SLIME06 Doomwater
+floor SLIME07 Doomwater
+floor SLIME08 Doomwater
+floor LAVA1 Blood
+floor LAVA2 Blood
+floor LAVA3 Blood
+floor LAVA4 Blood

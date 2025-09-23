@@ -1,0 +1,340 @@
+Actor LaserDotGreen : FastProjectile
+{
+radius 2
+height 2
++FORCEXYBILLBOARD
++NOGRAVITY
++NOBLOCKMAP
++BLOODLESSIMPACT
++SKYEXPLODE
++DONTSPLASH
++NOTRIGGER
++NOTONAUTOMAP
+-ALLOWPARTICLES
++NOTIMEFREEZE
+speed 150
+damage 0
+scale .25
+missileheight 8
+states
+	{
+	Spawn:
+		TNT1 A 5
+		stop
+	Death:
+		TNT1 A 1 Bright A_SpawnItem("Laserdotpuffgreen",0,5)
+		stop
+	}
+}
+Actor Laserdotpuffgreen : BulletPuff
+{
+    +FORCEXYBILLBOARD
+    +NOGRAVITY
+    +NOBLOCKMAP
+	+ALWAYSPUFF
+	+PUFFGETSOWNER
+	+BLOODLESSIMPACT
+	+PUFFONACTORS
+	+SKYEXPLODE
+	+DONTSPLASH
+	+NOTRIGGER
+   	+NOTONAUTOMAP
+	-ALLOWPARTICLES
+	+NOTIMEFREEZE
+	VSpeed 0
+	Renderstyle Add
+	Scale 0.2
+	States
+	{
+		Spawn:
+		Crash:
+		Death:
+		XDeath:
+			LDOT B 2 Bright
+			Stop
+	}
+}
+
+Actor Laserdot100w : BulletPuff
+{
+    +FORCEXYBILLBOARD
+    +NOGRAVITY
+    +NOBLOCKMAP
+	+ALWAYSPUFF
+	+PUFFGETSOWNER
+	+BLOODLESSIMPACT
+	+PUFFONACTORS
+	+SKYEXPLODE
+	+DONTSPLASH
+	+NOTRIGGER
+   	+NOTONAUTOMAP
+	-ALLOWPARTICLES
+	+NOTIMEFREEZE
+	VSpeed 0
+	Renderstyle Add
+	Scale 0.9
+	damagetype fire
+	States
+	{
+		Spawn:
+		Crash:
+		Death:
+		XDeath:
+			LDOT C 2 Bright
+			Stop
+	}
+}
+ACTOR Lazerswap1 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "LZRPB0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		LZRP B 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Lazergun2")
+		TNT1 A 0 A_takeInventory("Lazergun")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR Lazerswap2 : CustomInventory
+{
+	Inventory.Amount 0
+	scale 0.7
+	Inventory.Icon "LZRPC0"
+	+DROPPED
+	States
+	{
+	Spawn:
+		LZRP C 10
+		loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("Lazergun3")
+		TNT1 A 0 A_takeInventory("Lazergun2")
+		TNT1 A 0 A_takeInventory("Lazergun")
+		TNT1 A 0 A_PlaySound("special/workbench",CHAN_ITEM)
+		TNT1 A 0
+		Stop
+	}
+}
+ACTOR LazerAmmo : Ammo 
+{
+ Inventory.Amount 50
+ Inventory.MaxAmount 50
+ Ammo.BackpackAmount 0
+ Ammo.BackpackMaxAmount 50
+ Inventory.Icon "BAMOA0"
+ Inventory.PickupSound "items/pickupclip"
+ Inventory.PickupMessage "Got the lazer batteries."
+ scale 0.6
+ States
+ {
+ Spawn:
+  BAMO A 10
+  BAMO A 1 bright
+  loop
+ }
+}
+ACTOR Lazergun : Weapon 13102
+{
+  Weapon.SelectionOrder 3700
+  Weapon.Kickback 100
+  Obituary "%o was blinded to death by %k."
+  Inventory.Icon "LZRIA0"
+  Inventory.PickupSound "items/gunspickup"
+   weapon.upsound "weapons/revolverup"
+  Tag "Lazer Gun"
+  weapon.slotnumber 0
+  +WEAPON.MELEEWEAPON
+  +NOALERT
+  +NOAUTOFIRE
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  States
+  {
+  Ready:
+    LZRP A 1 A_WeaponReady(WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+    Loop
+ Deselect:
+  LZRP A 0 A_lower
+  LZRP A 1 A_Lower
+  Loop
+ Select:
+  TNT1 A 0 A_takeInventory("flashlit")
+  LZRP A 1 A_Raise
+  LZRP A 0 A_Raise
+  Loop
+ Fire:
+  LZRP A 0 A_gunFLASH
+  LZRP A 0 A_PlayWeaponSound("weapons/laserpistol")
+  LZRP B 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  LZRP A 0 A_FireCustomMissile("LaserDot",0,0,0,0)
+  LZRP B 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  LZRP B 0 A_FireCustomMissile("LaserDot",0,0,0,0)
+   LZRP C 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  LZRP B 0 A_FireCustomMissile("LaserDot",0,0,0,0)
+   LZRP D 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  LZRP B 0 A_FireCustomMissile("LaserDot",0,0,0,0)
+   LZRP E 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  LZRP B 0 A_FireCustomMissile("LaserDot",0,0,0,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  LZRP FGDEC 1 A_WeaponReady(WRF_ALLOWUSER1)
+  goto ready
+ User1:	
+  LZRP HIJK 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+  KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  LZRP KJIH 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  goto ready
+  Zoom:
+	    LZRP A 0  A_giveinventory("lightlit",1)
+	    LZRP A 0  A_SelectWeapon("crowbar")
+		LZRP A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+ Spawn:
+       LZRG A 10
+       LZRG A 1 bright
+		loop
+}
+}
+ACTOR Lazergun2 : Lazergun
+{
+  Weapon.SelectionOrder 3700
+  Weapon.Kickback 100
+  Obituary "%o was blinded to death by %k."
+  Inventory.Icon "LZRIB0"
+  Tag "Green Lazer Gun"
+  weapon.slotnumber 0
+  +WEAPON.MELEEWEAPON
+  +NOALERT
+  +NOAUTOFIRE
+  +CHEATNOTWEAPON
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  States
+  {
+  Ready:
+    L2RP A 1 A_WeaponReady(WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+    Loop
+ Deselect:
+  L2RP A 0 A_lower
+  L2RP A 1 A_Lower
+  Loop
+ Select:
+  TNT1 A 0 A_takeInventory("flashlit")
+  L2RP A 1 A_Raise
+  L2RP A 0 A_Raise
+  Loop
+ Fire:
+  L2RP A 0 A_gunFLASH
+  L2RP A 0 A_PlayWeaponSound("weapons/laserpistol")
+  L2RP B 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  L2RP A 0 A_FireCustomMissile("LaserDotGreen",0,0,0,0)
+  L2RP B 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  L2RP B 0 A_FireCustomMissile("LaserDotGreen",0,0,0,0)
+   L2RP C 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  L2RP B 0 A_FireCustomMissile("LaserDotGreen",0,0,0,0)
+   L2RP D 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  L2RP B 0 A_FireCustomMissile("LaserDotGreen",0,0,0,0)
+   L2RP E 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  L2RP B 0 A_FireCustomMissile("LaserDotGreen",0,0,0,0)
+  TNT1 A 0 A_AlertMonsters(256)
+  L2RP FGDEC 1 A_WeaponReady(WRF_ALLOWUSER1)
+  goto ready
+ User1:	
+  L2RP HIJK 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+  KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  L2RP KJIH 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  goto ready
+  Zoom:
+	    L2RP A 0  A_giveinventory("lightlit",1)
+	    L2RP A 0  A_SelectWeapon("crowbar")
+		L2RP A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+   Spawn:
+       LZRG B 10
+       LZRG B 1 bright
+		loop
+}
+}
+ACTOR Lazergun3 : Lazergun
+{
+  Weapon.SelectionOrder 3700
+  Weapon.Kickback 100
+  Weapon.AmmoUse 1
+  Weapon.AmmoType "Lazerammo"
+  Obituary "%o was vaporized by %k."
+  Inventory.Icon "LZRIC0"
+  Tag "Super-Lazer Gun"
+  Inventory.PickupSound "items/gunspickup"
+  weapon.upsound "weapons/revolverup"
+  weapon.slotnumber 0
+  +WEAPON.MELEEWEAPON
+  +NOALERT
+  +NOAUTOFIRE
+  +CHEATNOTWEAPON
+  Weapon.BobStyle Alpha
+	Weapon.BobSpeed 1.5
+	Weapon.BobRangeX .2
+	Weapon.BobRangeY .5
+  States
+  {
+  Ready:
+    L3RP A 1 A_WeaponReady(WRF_ALLOWUSER1|WRF_ALLOWZOOM)
+    Loop
+ Deselect:
+  L3RP A 0 A_lower
+  L3RP A 1 A_Lower
+  Loop
+ Select:
+  TNT1 A 0 A_takeInventory("flashlit")
+  L3RP A 1 A_Raise
+  L3RP A 0 A_Raise
+  Loop
+ Fire:
+  L3RP A 0 A_gunFLASH
+  L3RP A 0 A_PlaySound("weapons/laserblaster",CHAN_WEAPON)
+  L3RP B 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  L3RP B 0 A_railattack(25,5,true,none,"cyan",RGF_NOPIERCING|RGF_SILENT,0,"Laserdot100w",0,0,0,0,0.1,0.1)
+  L3RP B 1  A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  L3RP B 0 A_railattack(25,5,false,none,"cyan",RGF_NOPIERCING|RGF_SILENT,0,"Laserdot100w",0,0,0,0,0.1,0.1)
+  L3RP A 0 A_AlertMonsters(256)
+  L3RP A 5 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  goto ready
+ User1:	
+  L3RP HIJK 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A    3 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  KNIF ABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 0 A_CustomPunch(random(5, 10) * 5, TRUE, 0, "knifePuff", 80)
+  KNIF EFG 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  TNT1 A 10 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  L3RP KJIH 2 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+  goto ready
+ Zoom:
+	    L3RP A 0  A_giveinventory("lightlit",1)
+	    L3RP A 0  A_SelectWeapon("crowbar")
+		L3RP A 0  A_SelectWeapon("crowbar2")
+		goto deselect
+   Spawn:
+       LZRG C 10
+       LZRG C 1 bright
+		loop
+}
+}
