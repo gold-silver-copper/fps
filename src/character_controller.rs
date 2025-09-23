@@ -78,6 +78,7 @@ pub struct GoldenController {
     /// If the distance to the ground is less than this value, the player is considered grounded
     pub grounded_distance: f32,
     pub walk_speed: f32,
+    pub step_height: f32,
 
     pub forward_speed: f32,
     pub side_speed: f32,
@@ -86,6 +87,7 @@ pub struct GoldenController {
     pub air_acceleration: f32,
 
     pub acceleration: f32,
+    pub step_offset: f32,
 
     pub crouch_speed: f32,
     /// If the dot product (alignment) of the normal of the surface and the upward vector,
@@ -127,10 +129,12 @@ impl Default for GoldenController {
     fn default() -> Self {
         Self {
             //used for projecting collision to ground, to check if player has traction
-            grounded_distance: 0.22,
+            grounded_distance: 0.15,
             //collider height and radius
             radius: 0.4,
             height: 1.0,
+            step_height: 0.4,
+            step_offset: 0.0,
 
             walk_speed: 7.0,
             mass: 80.0,
@@ -378,6 +382,9 @@ pub fn fps_controller_move(
         let lean_amount = controller.lean_degree * controller.lean_max;
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
+        if input.lean.abs() > 0.1 {
+            println!("leaning")
+        }
 
         match bottom_down_hit {
             // NEAR GROUND
@@ -421,60 +428,60 @@ pub fn fps_controller_move(
                 }
 
                 if has_traction {
-                    if controller.ground_tick > 1
-                        && top_up_hit.is_none()
-                        && input.movement.length_squared() > 0.1
+                    // Only try steps when grounded, moving, and not blocked above
+                    if top_up_hit.is_none() && input.movement.length_squared() > 0.1 && !input.jump
                     {
-                        /* STEPS */
+                        // Origins
 
-                        let front_dir = yaw_rotation * -Vec3::Z; // world-space right
-
-                        let front_feet_shape = Collider::cylinder(
-                            controller.radius * 0.99,
-                            controller.grounded_distance,
-                        );
-                        let front_body_shape =
-                            Collider::cylinder(controller.radius * 0.99, current_height);
                         let feet_origin = transform.translation - collider_y_offset(&collider)
-                            + Vec3::new(0.0, controller.grounded_distance * 1.0, 0.0);
-                        let stair_body_origin = transform.translation
-                            + Vec3::new(0.0, controller.grounded_distance * 1.0, 0.0);
+                            + Vec3::new(0.0, controller.grounded_distance, 0.0);
+                        let body_origin = feet_origin + Vec3::Y * controller.step_height * 2.0;
 
-                        if input.lean.abs() > 0.1 {
-                            println!("leaning")
-                        }
+                        let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
 
-                        let front_feet_hit = spatial_query_pipeline.cast_shape(
-                            &front_feet_shape,
+                        let body_shape =
+                            Collider::cylinder(controller.radius * 0.95, current_height);
+
+                        // Cast at foot level
+                        if let Some(foot_hit) = spatial_query_pipeline.cast_shape(
+                            &foot_shape,
                             feet_origin,
                             Quat::IDENTITY,
-                            Dir3::new(old_wish_dir).unwrap(),
-                            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
+                            Dir3::new(wish_direction).unwrap(),
+                            &ShapeCastConfig::from_max_distance(controller.step_height),
                             &filter,
-                        );
+                        ) {
+                            println!("foot normal {:#?}", foot_hit.normal1);
+                            println!("hit normal {:#?}", hit.normal1);
+                            println!("Feet hit");
+                            // Cast again at body level
 
-                        let front_body_hit = spatial_query_pipeline.cast_shape(
-                            &front_body_shape,
-                            stair_body_origin,
-                            Quat::IDENTITY,
-                            Dir3::new(old_wish_dir).unwrap(),
-                            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
-                            &filter,
-                        );
+                            let body_hit = spatial_query_pipeline.cast_shape(
+                                &body_shape,
+                                body_origin,
+                                Quat::IDENTITY,
+                                Dir3::new(wish_direction).unwrap(),
+                                &ShapeCastConfig::from_max_distance(controller.step_height),
+                                &filter,
+                            );
 
-                        if front_feet_hit.is_some() && front_body_hit.is_none() {
-                            controller.ground_tick = 0;
-                            transform.translation +=
-                                Vec3::new(0.0, controller.grounded_distance, 0.0);
-                            controller.crouch_degree += controller.grounded_distance;
-                            /*    let jump_force = Vec3 {
-                                x: 0.0,
-                                y: -controller.jump_force,
-                                z: 0.0,
-                            };
-                            external_force.apply_impulse(jump_force); */
+                            if body_hit.is_some() {
+                                println!("body hit");
+                            }
+                            // If foot hits but body does not → step up
+                            if body_hit.is_none() && foot_hit.normal1.y < 0.1 {
+                                controller.ground_tick = 0;
+                                transform.translation.y += controller.step_height;
+                                controller.crouch_degree += 0.1;
+                                let down_force = Vec3 {
+                                    x: 0.0,
+                                    y: -controller.jump_force,
+                                    z: 0.0,
+                                };
+                                external_force.apply_impulse(down_force + wish_direction);
 
-                            println!("FRONT FEET HIT")
+                                println!("Stepped up!");
+                            }
                         }
                     }
 
