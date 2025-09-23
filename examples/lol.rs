@@ -2,13 +2,28 @@ use std::f32::consts::TAU;
 
 use avian3d::prelude::*;
 use bevy::{
+    core_pipeline::{
+        bloom::{Bloom, BloomCompositeMode},
+        tonemapping::Tonemapping,
+    },
+    math::ops,
+    prelude::*,
+};
+use bevy::{
     gltf::{Gltf, GltfMesh, GltfNode},
     math::Vec3Swizzles,
-    prelude::*,
     render::camera::Exposure,
     window::CursorGrabMode,
 };
+
 use fps::*;
+use iyes_perf_ui::{
+    entries::{
+        PerfUiFixedTimeEntries, PerfUiFramerateEntries, PerfUiSystemEntries, PerfUiWindowEntries,
+    },
+    prelude::PerfUiDefaultEntries,
+    *,
+};
 
 const SPAWN_POINT: Vec3 = Vec3::new(0.0, 1.625, 0.0);
 
@@ -16,12 +31,18 @@ fn main() {
     App::new()
         .insert_resource(AmbientLight {
             color: Color::WHITE,
-            brightness: 10000.0,
+            brightness: 5000.0,
             affects_lightmapped_meshes: true,
         })
         .insert_resource(ClearColor(Color::linear_rgb(0.83, 0.96, 0.96)))
         .add_plugins((DefaultPlugins))
+        .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(bevy::diagnostic::EntityCountDiagnosticsPlugin)
+        .add_plugins(bevy::diagnostic::SystemInformationDiagnosticsPlugin)
+        .add_plugins(bevy::render::diagnostic::RenderDiagnosticsPlugin)
+        .add_plugins(iyes_perf_ui::PerfUiPlugin)
         .add_plugins(PhysicsPlugins::new(FixedPostUpdate))
+        .add_plugins(GunPlayPlugin)
         // .add_plugins(PhysicsDebugPlugin::default())
         .add_plugins(GoldenControllerPlugin)
         .add_plugins(bevy_framepace::FramepacePlugin)
@@ -32,7 +53,7 @@ fn main() {
             (
                 manage_cursor,
                 scene_colliders,
-                display_text,
+                //    display_text,
                 respawn,
                 rotate_this,
             ),
@@ -54,15 +75,16 @@ fn setup(
 ) {
     let mut window = window.single_mut().unwrap();
     window.title = String::from("Minimal FPS Controller Example");
+    commands.spawn(PerfUiDefaultEntries::default());
 
     let e = commands
         .spawn((
             DirectionalLight {
-                illuminance: light_consts::lux::FULL_DAYLIGHT,
+                illuminance: light_consts::lux::CIVIL_TWILIGHT,
                 shadows_enabled: true,
                 ..default()
             },
-            Transform::from_xyz(4.0, 7.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+            Transform::from_xyz(40.0, 20.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
         ))
         .id();
 
@@ -121,6 +143,13 @@ fn setup(
     let e = commands
         .spawn((
             Camera3d::default(),
+            Camera {
+                hdr: true, // 1. HDR is required for bloom
+                //      clear_color: ClearColorConfig::Custom(Color::BLACK),
+                ..default()
+            },
+            Tonemapping::TonyMcMapface, // 2. Using a tonemapper that desaturates to white is recommended
+            Bloom::NATURAL,             // 3. Enable bloom for the camera
             Projection::Perspective(PerspectiveProjection {
                 fov: TAU / 5.0,
                 ..default()
@@ -167,7 +196,6 @@ fn setup(
             },
         ))
         .id();
-    println!("text ent, {:#?}", e);
 }
 
 fn rotate_this(mut query: Query<(&mut Transform, &mut RotateThis)>) {
