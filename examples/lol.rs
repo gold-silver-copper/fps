@@ -20,7 +20,8 @@ fn main() {
             affects_lightmapped_meshes: true,
         })
         .insert_resource(ClearColor(Color::linear_rgb(0.83, 0.96, 0.96)))
-        .add_plugins((DefaultPlugins, PhysicsDebugPlugin::default()))
+        //        .add_plugins((PhysicsDebugPlugin::default()))
+        .add_plugins((DefaultPlugins,))
         .add_plugins(PhysicsPlugins::new(FixedPostUpdate))
         // .add_plugins(PhysicsDebugPlugin::default())
         .add_plugins(GoldenControllerPlugin)

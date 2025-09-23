@@ -275,9 +275,10 @@ pub fn fps_controller_move(
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
         // limit move speed while leaning or crouching
-        let max_speed = controller.walk_speed
+        let max_speed = (controller.walk_speed
             * (1.0 - controller.crouch_degree / 2.0)
-            * (1.0 - controller.lean_degree.abs() / 2.0);
+            * (1.0 - controller.lean_degree.abs() / 2.0))
+            .max(3.0);
         wish_speed = f32::min(wish_speed, max_speed);
 
         /* Crouching */
@@ -483,8 +484,8 @@ pub fn fps_controller_move(
                             x: 0.0,
                             y: controller.jump_force,
                             z: 0.0,
-                        };
-                        external_force.apply_impulse(jump_force * scale_vec);
+                        } * scale_vec;
+                        external_force.apply_impulse(jump_force);
                     }
                 }
                 controller.ground_tick = controller.ground_tick.saturating_add(1);
