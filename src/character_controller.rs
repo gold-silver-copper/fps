@@ -525,12 +525,12 @@ pub fn fps_controller_move(
             // Decay offset toward 0
             controller.step_offset -= offset_change;
             if controller.step_offset < epsilon {
-                let down_force = Vec3 {
+                /*    let down_force = Vec3 {
                     x: 0.0,
                     y: -controller.jump_force,
                     z: 0.0,
                 };
-                external_force.apply_impulse(down_force);
+                //    external_force.apply_impulse(down_force); */
                 // if not set back to 0.0 it will keep getting smaller but not to zero
                 controller.step_offset = 0.0;
             }
