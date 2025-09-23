@@ -317,7 +317,6 @@ pub fn fps_controller_move(
         /* Leaning */
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // world-space right
-        let old_degree = controller.lean_degree;
 
         let lean_step = controller.leaning_speed * dt;
 
@@ -358,6 +357,8 @@ pub fn fps_controller_move(
         if left_hit.is_some() && (target_lean < 0.0) {
             target_lean = -lhd;
         }
+        controller.lean_degree = controller.lean_degree.clamp(-lhd, rhd);
+        let old_degree = controller.lean_degree;
 
         // Apply lean degree modifier
         target_lean *= 1.0 - input.lean_degree_mod;
@@ -369,9 +370,7 @@ pub fn fps_controller_move(
             controller.lean_degree = target_lean;
         }
 
-        let max_lean = (1.0 - input.lean_degree_mod).min(rhd);
-        let min_lean = -(1.0 - input.lean_degree_mod).max(-lhd);
-        controller.lean_degree = controller.lean_degree.clamp(min_lean, max_lean);
+        controller.lean_degree = controller.lean_degree.clamp(-lhd, rhd);
 
         let degree_change = controller.lean_degree - old_degree;
 
