@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use avian3d::prelude::*;
+use avian3d::{parry::math::DEFAULT_EPSILON, prelude::*};
 use bevy::{
     gltf::{Gltf, GltfMesh, GltfNode},
     math::Vec3Swizzles,
@@ -102,22 +102,20 @@ fn setup(
             GravityScale(1.0),
             Transform::from_translation(SPAWN_POINT),
             LogicalPlayer,
-            GoldenControllerInput {
-                pitch: -TAU / 12.0,
-                yaw: TAU * 5.0 / 8.0,
-                ..default()
-            },
             LinearDamping(0.5),
-            GoldenController {
+        ))
+        .insert(CameraConfig {
+            height_offset: -0.2,
+        })
+        .insert(PlayerControllerBundle {
+            controller: GoldenController {
                 radius,
                 height,
                 mass,
 
                 ..default()
             },
-        ))
-        .insert(CameraConfig {
-            height_offset: -0.2,
+            ..default()
         })
         .id();
 

@@ -1,3 +1,4 @@
+use std::f32::consts::TAU;
 use std::f32::consts::*;
 
 use avian3d::{parry::shape::SharedShape, prelude::*};
@@ -31,6 +32,14 @@ impl Plugin for GoldenControllerPlugin {
     }
 }
 
+#[derive(Bundle, Default)]
+pub struct PlayerControllerBundle {
+    pub controller: GoldenController,
+    pub keys: GoldenControllerKeys,
+    pub mutables: GoldenControllerMutables,
+    pub input: GoldenControllerInput,
+}
+
 #[derive(Component)]
 pub struct LogicalPlayer;
 
@@ -61,8 +70,8 @@ impl Default for GoldenControllerInput {
         Self {
             jump: false,
             crouch: false,
-            pitch: 0.0,
-            yaw: 0.0,
+            pitch: -TAU / 12.0,
+            yaw: TAU * 5.0 / 8.0,
             movement: Vec3::ZERO,
             lean: 0.0,
             lean_degree_mod: 0.0,
@@ -87,7 +96,6 @@ pub struct GoldenController {
     pub air_acceleration: f32,
 
     pub acceleration: f32,
-    pub step_offset: f32,
 
     pub crouch_speed: f32,
     /// If the dot product (alignment) of the normal of the surface and the upward vector,
@@ -95,34 +103,20 @@ pub struct GoldenController {
     pub traction_normal_cutoff: f32,
 
     pub height: f32,
-    pub ground_tick: u8,
+
     pub air_damp: f32,
 
-    pub pitch: f32,
-    pub yaw: f32,
     pub friction: f32,
     pub mass: f32,
-    pub lean_degree: f32,
 
-    pub sensitivity: f32,
     pub enable_input: bool,
-    pub crouch_degree: f32,
+
     pub jump_force: f32,
     pub lean_max: f32,
-
-    pub key_forward: KeyCode,
-    pub key_back: KeyCode,
-    pub key_left: KeyCode,
-    pub key_right: KeyCode,
 
     pub air_friction: f32,
     pub lean_side_impulse: f32,
     pub leaning_speed: f32,
-
-    pub key_lean_left: KeyCode,
-    pub key_lean_right: KeyCode,
-    pub key_crouch: KeyCode,
-    pub key_jump: KeyCode,
 }
 
 impl Default for GoldenController {
@@ -134,7 +128,6 @@ impl Default for GoldenController {
             radius: 0.4,
             height: 1.0,
             step_height: 0.4,
-            step_offset: 0.0,
 
             walk_speed: 7.0,
             mass: 80.0,
@@ -156,16 +149,10 @@ impl Default for GoldenController {
             //how fast you can rotate in the air, higher value allows you to surf like in cs
             air_acceleration: 10.0,
 
-            //degrees determine the amount you are currently crouched/leaned, used for variable crouching and leaning
-            crouch_degree: 0.0,
-            lean_degree: 0.0,
             //max angle degree of leaning, if it is too high there can be clipping bugs when turning fast, very bad
             lean_max: 0.35,
             //how fast you lean
             leaning_speed: 2.0,
-
-            //how long you have been on the ground, used for some hacky stuff
-            ground_tick: 0,
 
             //how fast the player accelerates on the ground, a too low value can break horizontal movement when leaning
             acceleration: 3.0,
@@ -173,12 +160,29 @@ impl Default for GoldenController {
             traction_normal_cutoff: 0.6,
             friction: 0.9,
 
-            pitch: 0.0,
-            yaw: 0.0,
             //how much to move horizontally while leaning
             lean_side_impulse: 65.0,
 
             enable_input: true,
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct GoldenControllerKeys {
+    pub key_forward: KeyCode,
+    pub key_back: KeyCode,
+    pub key_left: KeyCode,
+    pub key_right: KeyCode,
+    pub key_lean_left: KeyCode,
+    pub key_lean_right: KeyCode,
+    pub key_crouch: KeyCode,
+    pub key_jump: KeyCode,
+}
+
+impl Default for GoldenControllerKeys {
+    fn default() -> Self {
+        Self {
             key_forward: KeyCode::KeyW,
             key_back: KeyCode::KeyS,
             key_left: KeyCode::KeyA,
@@ -187,7 +191,32 @@ impl Default for GoldenController {
             key_lean_right: KeyCode::KeyE,
             key_crouch: KeyCode::ShiftLeft,
             key_jump: KeyCode::Space,
-            //  movement sensitivity
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct GoldenControllerMutables {
+    pub step_offset: f32,
+    pub ground_tick: u8,
+    pub pitch: f32,
+    pub yaw: f32,
+    pub lean_degree: f32,
+    pub sensitivity: f32,
+    pub crouch_degree: f32,
+}
+
+impl Default for GoldenControllerMutables {
+    fn default() -> Self {
+        Self {
+            step_offset: 0.0,
+            //degrees determine the amount you are currently crouched/leaned, used for variable crouching and leaning
+            crouch_degree: 0.0,
+            lean_degree: 0.0,
+            //how long you have been on the ground, used for some hacky stuff
+            ground_tick: 0,
+            pitch: 0.0,
+            yaw: 0.0,
             sensitivity: 0.001,
         }
     }
@@ -211,7 +240,8 @@ pub fn fps_controller_move(
         (
             Entity,
             &GoldenControllerInput,
-            &mut GoldenController,
+            &GoldenController,
+            &mut GoldenControllerMutables,
             &mut Collider,
             &mut Transform,
             &mut LinearVelocity,
@@ -227,7 +257,8 @@ pub fn fps_controller_move(
     for (
         entity,
         input,
-        mut controller,
+        controller,
+        mut controller_mutables,
         mut collider,
         mut transform,
         mut velocity,
@@ -263,8 +294,6 @@ pub fn fps_controller_move(
             &filter,
         );
 
-        let scale_vec = Vec3::splat(controller.mass);
-
         let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
         let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
         move_to_world.z_axis *= -1.0; // Forward is -Z
@@ -276,8 +305,8 @@ pub fn fps_controller_move(
         }
         // limit move speed while leaning or crouching
         let max_speed = (controller.walk_speed
-            * (1.0 - controller.crouch_degree / 2.0)
-            * (1.0 - controller.lean_degree.abs() / 2.0))
+            * (1.0 - controller_mutables.crouch_degree / 2.0)
+            * (1.0 - controller_mutables.lean_degree.abs() / 2.0))
             .max(3.0);
         wish_speed = f32::min(wish_speed, max_speed);
 
@@ -293,26 +322,27 @@ pub fn fps_controller_move(
         let epsilon = 0.01; // deadzone threshold, used for lean as well
 
         // Smoothly move actual crouch_degree toward target
-        if (controller.crouch_degree - target_crouch).abs() > epsilon {
-            if controller.crouch_degree < target_crouch {
-                controller.crouch_degree += controller.crouch_speed * dt;
-            } else if controller.crouch_degree > target_crouch {
+        if (controller_mutables.crouch_degree - target_crouch).abs() > epsilon {
+            if controller_mutables.crouch_degree < target_crouch {
+                controller_mutables.crouch_degree += controller.crouch_speed * dt;
+            } else if controller_mutables.crouch_degree > target_crouch {
                 // Only allow standing up if there's no ceiling
                 if top_up_hit.is_none() {
-                    controller.crouch_degree -= controller.crouch_speed * dt;
+                    controller_mutables.crouch_degree -= controller.crouch_speed * dt;
                 }
             }
         } else {
             // Snap to target when within epsilon to avoid jitter
-            controller.crouch_degree = target_crouch;
+            controller_mutables.crouch_degree = target_crouch;
         }
 
         // Clamp for safety
-        controller.crouch_degree = controller.crouch_degree.clamp(0.0, 1.0);
+        controller_mutables.crouch_degree = controller_mutables.crouch_degree.clamp(0.0, 1.0);
 
         // Update collider height
 
-        let current_height = (controller.height / 2.0) / (4.0 * controller.crouch_degree + 1.0);
+        let current_height =
+            (controller.height / 2.0) / (4.0 * controller_mutables.crouch_degree + 1.0);
         collider.set_shape(SharedShape::capsule_y(current_height, controller.radius));
 
         /* Leaning */
@@ -358,28 +388,29 @@ pub fn fps_controller_move(
         if left_hit.is_some() && (target_lean < 0.0) {
             target_lean = -lhd;
         }
-        controller.lean_degree = controller.lean_degree.clamp(-lhd, rhd);
-        let old_degree = controller.lean_degree;
+        controller_mutables.lean_degree = controller_mutables.lean_degree.clamp(-lhd, rhd);
+        let old_degree = controller_mutables.lean_degree;
 
         // Apply lean degree modifier
         target_lean *= 1.0 - input.lean_degree_mod;
 
         // Smooth toward target with epsilon deadzone
-        if (controller.lean_degree - target_lean).abs() > epsilon {
-            controller.lean_degree += lean_step * (target_lean - controller.lean_degree).signum();
+        if (controller_mutables.lean_degree - target_lean).abs() > epsilon {
+            controller_mutables.lean_degree +=
+                lean_step * (target_lean - controller_mutables.lean_degree).signum();
         } else {
-            controller.lean_degree = target_lean;
+            controller_mutables.lean_degree = target_lean;
         }
 
-        controller.lean_degree = controller.lean_degree.clamp(-lhd, rhd);
+        controller_mutables.lean_degree = controller_mutables.lean_degree.clamp(-lhd, rhd);
 
-        let degree_change = controller.lean_degree - old_degree;
+        let degree_change = controller_mutables.lean_degree - old_degree;
 
         // Shift collider sideways to simulate body lean (peeking)
         transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
 
         // Rotate to show visual lean
-        let lean_amount = controller.lean_degree * controller.lean_max;
+        let lean_amount = controller_mutables.lean_degree * controller.lean_max;
         let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
         transform.rotation = (yaw_rotation * lean_rotation).normalize();
         if input.lean.abs() > 0.1 {
@@ -412,7 +443,7 @@ pub fn fps_controller_move(
                         velocity.0,
                         dt,
                     );
-                    external_force.apply_impulse(add * scale_vec);
+                    external_force.apply_impulse(add * controller.mass);
                 } else {
                     //When bhopping with jump held, use air accel logic for smoother movement
                     wish_speed = f32::min(wish_speed, controller.air_speed_cap);
@@ -424,7 +455,7 @@ pub fn fps_controller_move(
                         dt,
                     );
 
-                    external_force.apply_impulse(add * scale_vec);
+                    external_force.apply_impulse(add * controller.mass);
                 }
 
                 if has_traction {
@@ -461,7 +492,7 @@ pub fn fps_controller_move(
 
                                 // If foot hits but body does not → step up
                                 if body_hit.is_none() {
-                                    controller.step_offset = controller.step_height;
+                                    controller_mutables.step_offset = controller.step_height;
 
                                     println!("Stepped up!");
                                 }
@@ -469,7 +500,7 @@ pub fn fps_controller_move(
                         }
                     }
 
-                    if controller.ground_tick < 3 {
+                    if controller_mutables.ground_tick < 3 {
                         //This fixes bug that pushes player randomly upon landing
                         let linear_velocity = velocity.0;
                         let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
@@ -484,16 +515,16 @@ pub fn fps_controller_move(
                             x: 0.0,
                             y: controller.jump_force,
                             z: 0.0,
-                        } * scale_vec;
+                        } * controller.mass;
                         external_force.apply_impulse(jump_force);
                     }
                 }
-                controller.ground_tick = controller.ground_tick.saturating_add(1);
+                controller_mutables.ground_tick = controller_mutables.ground_tick.saturating_add(1);
             }
 
             //IN AIR
             None => {
-                controller.ground_tick = 0;
+                controller_mutables.ground_tick = 0;
 
                 damping.0 = controller.air_damp;
 
@@ -510,21 +541,21 @@ pub fn fps_controller_move(
                     dt,
                 );
 
-                external_force.apply_impulse(add * scale_vec);
+                external_force.apply_impulse(add * controller.mass);
             }
         }
 
-        if controller.step_offset > 0.0 {
-            controller.ground_tick = 0;
+        if controller_mutables.step_offset > 0.0 {
+            controller_mutables.ground_tick = 0;
             let step_speed = 15.0; // larger = faster snap
-            let offset_change = controller.step_offset * dt * step_speed;
+            let offset_change = controller_mutables.step_offset * dt * step_speed;
 
             // Apply part of the offset
             transform.translation.y += offset_change;
 
             // Decay offset toward 0
-            controller.step_offset -= offset_change;
-            if controller.step_offset < epsilon {
+            controller_mutables.step_offset -= offset_change;
+            if controller_mutables.step_offset < epsilon {
                 /*    let down_force = Vec3 {
                     x: 0.0,
                     y: -controller.jump_force,
@@ -532,7 +563,7 @@ pub fn fps_controller_move(
                 };
                 //    external_force.apply_impulse(down_force); */
                 // if not set back to 0.0 it will keep getting smaller but not to zero
-                controller.step_offset = 0.0;
+                controller_mutables.step_offset = 0.0;
             }
         }
 
@@ -549,17 +580,18 @@ pub fn fps_controller_move(
 pub fn fps_controller_input(
     key_input: Res<ButtonInput<KeyCode>>,
     mut mouse_events: EventReader<MouseMotion>,
-    mut query: Query<(&GoldenController, &mut GoldenControllerInput)>,
+    mut query: Query<(
+        &GoldenControllerKeys,
+        &GoldenControllerMutables,
+        &mut GoldenControllerInput,
+    )>,
 ) {
-    for (controller, mut input) in query
-        .iter_mut()
-        .filter(|(controller, _)| controller.enable_input)
-    {
+    for (controller, controller_mutables, mut input) in query.iter_mut() {
         let mut mouse_delta = Vec2::ZERO;
         for mouse_event in mouse_events.read() {
             mouse_delta += mouse_event.delta;
         }
-        mouse_delta *= controller.sensitivity;
+        mouse_delta *= controller_mutables.sensitivity;
 
         input.pitch = (input.pitch - mouse_delta.y)
             .clamp(-FRAC_PI_2 + ANGLE_EPSILON, FRAC_PI_2 - ANGLE_EPSILON);
@@ -586,7 +618,7 @@ pub fn fps_controller_input(
 
 fn scroll_events(
     mut evr_scroll: EventReader<MouseWheel>,
-    mut query: Query<(&GoldenController, &mut GoldenControllerInput)>,
+    mut query: Query<(&GoldenControllerKeys, &mut GoldenControllerInput)>,
 ) {
     let mut mod_shift = 0.0;
 
@@ -612,10 +644,7 @@ fn scroll_events(
     }
     mod_shift = mod_shift.clamp(-1.0, 1.0);
 
-    for (controller, mut input) in query
-        .iter_mut()
-        .filter(|(controller, _)| controller.enable_input)
-    {
+    for (controller, mut input) in query.iter_mut() {
         if input.lean.abs() > 0.1 {
             input.lean_degree_mod += mod_shift;
             input.lean_degree_mod = input.lean_degree_mod.clamp(0.0, 1.0);
@@ -626,7 +655,9 @@ fn scroll_events(
     }
 }
 
-pub fn fps_controller_look(mut query: Query<(&mut GoldenController, &GoldenControllerInput)>) {
+pub fn fps_controller_look(
+    mut query: Query<(&mut GoldenControllerMutables, &GoldenControllerInput)>,
+) {
     for (mut controller, input) in query.iter_mut() {
         controller.pitch = input.pitch;
         controller.yaw = input.yaw;
@@ -689,19 +720,24 @@ fn get_axis(key_input: &Res<ButtonInput<KeyCode>>, key_pos: KeyCode, key_neg: Ke
 pub fn fps_controller_render(
     mut render_query: Query<(&mut Transform, &RenderPlayer), With<RenderPlayer>>,
     logical_query: Query<
-        (&Transform, &Collider, &GoldenController, &CameraConfig),
+        (
+            &Transform,
+            &Collider,
+            &GoldenControllerMutables,
+            &CameraConfig,
+        ),
         (With<LogicalPlayer>, Without<RenderPlayer>),
     >,
 ) {
     for (mut render_transform, render_player) in render_query.iter_mut() {
-        if let Ok((logical_transform, collider, controller, camera_config)) =
+        if let Ok((logical_transform, collider, controller_mutables, camera_config)) =
             logical_query.get(render_player.logical_entity)
         {
             let collider_offset = collider_y_offset(collider);
             let camera_offset = Vec3::Y * camera_config.height_offset;
             render_transform.translation =
                 logical_transform.translation + collider_offset + camera_offset;
-            let pitch_quat = Quat::from_euler(EulerRot::YXZ, 0.0, controller.pitch, 0.0);
+            let pitch_quat = Quat::from_euler(EulerRot::YXZ, 0.0, controller_mutables.pitch, 0.0);
             render_transform.rotation = logical_transform.rotation.mul_quat(pitch_quat);
         }
     }
