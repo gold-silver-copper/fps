@@ -398,7 +398,7 @@ pub fn fps_controller_move(
                 let has_traction =
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
                 damping.0 = controller.air_damp * 5.0;
-                let old_wish_dir = wish_direction;
+
                 if !input.jump {
                     // This is for walking up slopes well
 
@@ -471,14 +471,11 @@ pub fn fps_controller_move(
                             // If foot hits but body does not → step up
                             if body_hit.is_none() && foot_hit.normal1.y < 0.1 {
                                 controller.ground_tick = 0;
-                                transform.translation.y += controller.step_height;
-                                controller.crouch_degree += 0.1;
-                                let down_force = Vec3 {
-                                    x: 0.0,
-                                    y: -controller.jump_force,
-                                    z: 0.0,
-                                };
-                                external_force.apply_impulse(down_force + wish_direction);
+                                //     transform.translation.y += controller.step_height;
+                                //   controller.crouch_degree += 0.1;
+                                /*  */
+
+                                controller.step_offset = controller.step_height;
 
                                 println!("Stepped up!");
                             }
@@ -527,6 +524,26 @@ pub fn fps_controller_move(
                 );
 
                 external_force.apply_impulse(add * scale_vec);
+            }
+        }
+
+        if controller.step_offset > 0.0 {
+            let step_speed = 20.0; // larger = faster snap
+            let offset_change = controller.step_offset * dt * step_speed;
+
+            // Apply part of the offset
+            transform.translation.y += offset_change;
+
+            // Decay offset toward 0
+            controller.step_offset -= offset_change;
+            if controller.step_offset < epsilon {
+                let down_force = Vec3 {
+                    x: 0.0,
+                    y: -controller.jump_force,
+                    z: 0.0,
+                };
+                external_force.apply_impulse(down_force);
+                controller.step_offset = 0.0;
             }
         }
 
