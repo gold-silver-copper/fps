@@ -139,6 +139,7 @@ fn setup(
             },
             ..default()
         })
+        .insert(PlayerStuffBundle::default())
         .id();
 
     let e = commands

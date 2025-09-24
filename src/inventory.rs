@@ -15,6 +15,12 @@ fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>) {
     }
 }
 
+#[derive(Bundle, Default)]
+pub struct PlayerStuffBundle {
+    pub inventory: PlayerInventory,
+    pub stats: PlayerStats,
+}
+
 #[derive(Default, Component)]
 pub struct PlayerInventory {
     pub bandages: u16,
@@ -27,6 +33,8 @@ pub struct PlayerInventory {
 pub struct PlayerStats {
     pub health: i16,
     pub armor: i16,
+    pub max_health: i16,
+    pub max_armor: i16,
 }
 
 impl Default for PlayerStats {
@@ -34,6 +42,8 @@ impl Default for PlayerStats {
         Self {
             health: 100,
             armor: 100,
+            max_health: 100,
+            max_armor: 200,
         }
     }
 }

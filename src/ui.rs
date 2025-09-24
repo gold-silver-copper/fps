@@ -6,11 +6,15 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 
+use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::style::Color;
 use ratatui::{
     prelude::{Stylize, Terminal},
     widgets::{Block, Borders, Paragraph, Wrap},
 };
-use soft_ratatui::SoftBackend;
+use soft_ratatui::{RgbPixmap, SoftBackend};
+
+use crate::{GoldenControllerKeys, PlayerInventory, PlayerStats};
 static FONT_DATA: &[u8] = include_bytes!("../assets/fira_mono.ttf");
 pub struct GoldenUI;
 
@@ -91,7 +95,7 @@ struct Crosshair;
 struct SoftTerminal(Terminal<SoftBackend>);
 impl Default for SoftTerminal {
     fn default() -> Self {
-        let mut backend = SoftBackend::new_with_font(15, 15, 16, FONT_DATA);
+        let mut backend = SoftBackend::new_with_font(15, 15, 11, FONT_DATA);
         //backend.set_font_size(12);
         Self(Terminal::new(backend).unwrap())
     }
@@ -113,44 +117,65 @@ fn handle_resize_events(
         softatui.backend_mut().resize(av_wid, av_hei);
     }
 }
-
 // Render to the terminal and to egui , both are immediate mode
 fn ui_example_system(
     mut softatui: ResMut<SoftTerminal>,
     mut images: ResMut<Assets<Image>>,
     my_handle: Res<MyRatatui>,
+    query: Query<(&PlayerStats, &PlayerInventory), With<GoldenControllerKeys>>,
 ) {
-    softatui
-        .draw(|frame| {
-            let area = frame.area();
-            let textik = format!("Hello bevy! The window area is {}", area);
-            frame.render_widget(
-                Paragraph::new(textik)
-                    .block(Block::new().title("Ratatui").borders(Borders::ALL))
-                    .white()
-                    .on_black()
-                    .wrap(Wrap { trim: false }),
-                area,
-            );
-        })
-        .expect("epic fail");
+    if let Ok((stats, inv)) = query.single() {
+        softatui
+            .draw(|frame| {
+                let area = frame.area();
 
-    let width = softatui.backend().get_pixmap_width() as u32;
-    let height = softatui.backend().get_pixmap_height() as u32;
-    let data = softatui.backend().get_pixmap_data_as_rgba();
+                // Split the frame into two parts
+                let chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([
+                        Constraint::Min(0),    // Top part takes the rest
+                        Constraint::Length(1), // Bottom part is 3 characters high
+                    ])
+                    .split(area);
 
-    let image = images.get_mut(&my_handle.0).expect("Image not found");
-    *image = Image::new(
-        Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
-        },
-        TextureDimension::D2,
-        data,
-        TextureFormat::Rgba8Unorm,
-        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-    );
+                // Fill the top part with magenta
+                frame.render_widget(
+                    Paragraph::new("").block(
+                        Block::new()
+                            .borders(Borders::NONE)
+                            .bg(Color::Rgb(MAGENTA.0, MAGENTA.1, MAGENTA.2)),
+                    ),
+                    chunks[0],
+                );
+
+                // Bottom part with border and text
+                frame.render_widget(
+                    Paragraph::new("Hello bevy! This is the bottom section")
+                        .white()
+                        .on_black()
+                        .wrap(Wrap { trim: false }),
+                    chunks[1],
+                );
+            })
+            .expect("epic fail");
+
+        let width = softatui.backend().get_pixmap_width() as u32;
+        let height = softatui.backend().get_pixmap_height() as u32;
+        let data = to_rgba_magenta_alpha(&softatui.backend().rgb_pixmap);
+
+        let image = images.get_mut(&my_handle.0).expect("Image not found");
+        *image = Image::new(
+            Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+            TextureDimension::D2,
+            data,
+            TextureFormat::Rgba8Unorm,
+            RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+        );
+    }
 }
 fn ratatui_setup(
     mut commands: Commands,
@@ -159,7 +184,7 @@ fn ratatui_setup(
 ) {
     let width = softatui.backend().get_pixmap_width() as u32;
     let height = softatui.backend().get_pixmap_height() as u32;
-    let data = softatui.backend().get_pixmap_data_as_rgba();
+    let data = to_rgba_magenta_alpha(&softatui.backend().rgb_pixmap);
 
     let image = Image::new(
         Extent3d {
@@ -197,4 +222,21 @@ fn ratatui_setup(
             ));
         });
     commands.insert_resource(MyRatatui(handle));
+}
+
+pub const MAGENTA: (u8, u8, u8) = (255, 0, 255);
+
+pub fn to_rgba_magenta_alpha(mapik: &RgbPixmap) -> Vec<u8> {
+    let mut rgba_data = Vec::with_capacity(mapik.width() * mapik.height() * 4);
+    for chunk in mapik.data().chunks_exact(3) {
+        let r = chunk[0];
+        let g = chunk[1];
+        let b = chunk[2];
+        if (r, g, b) == MAGENTA {
+            rgba_data.extend_from_slice(&[r, g, b, 0]);
+        } else {
+            rgba_data.extend_from_slice(&[r, g, b, 255]);
+        }
+    }
+    rgba_data
 }
