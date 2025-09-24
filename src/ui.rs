@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::{PrimaryWindow, WindowResized};
 use bevy::{
     asset::RenderAssetUsages,
     prelude::*,
@@ -17,7 +18,7 @@ impl Plugin for GoldenUI {
     fn build(&self, app: &mut App) {
         app.init_resource::<SoftTerminal>()
             .add_systems(Startup, (setup_crosshair, setup_gun, ratatui_setup))
-            .add_systems(Update, ui_example_system);
+            .add_systems(Update, (ui_example_system, handle_resize_events));
     }
 }
 
@@ -99,6 +100,20 @@ impl Default for SoftTerminal {
 #[derive(Resource)]
 struct MyRatatui(Handle<Image>);
 
+/// System that reacts to window resize
+fn handle_resize_events(
+    mut resize_reader: EventReader<WindowResized>,
+    mut softatui: ResMut<SoftTerminal>,
+) {
+    for event in resize_reader.read() {
+        let cur_pix_width = softatui.backend().char_width;
+        let cur_pix_height = softatui.backend().char_height;
+        let av_wid = (event.width / cur_pix_width as f32) as u16;
+        let av_hei = (event.height / cur_pix_height as f32) as u16;
+        softatui.backend_mut().resize(av_wid, av_hei);
+    }
+}
+
 // Render to the terminal and to egui , both are immediate mode
 fn ui_example_system(
     mut softatui: ResMut<SoftTerminal>,
@@ -113,13 +128,13 @@ fn ui_example_system(
                 Paragraph::new(textik)
                     .block(Block::new().title("Ratatui").borders(Borders::ALL))
                     .white()
-                    .on_blue()
+                    .on_black()
                     .wrap(Wrap { trim: false }),
                 area,
             );
         })
         .expect("epic fail");
-    println!("UPDATING");
+
     let width = softatui.backend().get_pixmap_width() as u32;
     let height = softatui.backend().get_pixmap_height() as u32;
     let data = softatui.backend().get_pixmap_data_as_rgba();
@@ -161,11 +176,11 @@ fn ratatui_setup(
 
     commands
         .spawn(Node {
-            width: Val::Percent(80.0),
+            width: Val::Percent(100.0),
             height: Val::Percent(100.0),
             flex_direction: FlexDirection::Column,
             justify_content: JustifyContent::FlexEnd,
-            align_items: AlignItems::FlexEnd,
+            align_items: AlignItems::Center,
             row_gap: Val::Px(0.0),
             ..default()
         })
@@ -173,7 +188,7 @@ fn ratatui_setup(
             parent.spawn((
                 ImageNode::new(handle.clone()),
                 Node {
-                    height: Val::Percent(50.0), // 25% of screen height
+                    //   height: Val::Percent(50.0), // 25% of screen height
                     //    width: Val::Percent(50.0),  // 25% of screen height
                     ..default()
                 },
