@@ -10,3 +10,5 @@ pub use input_plugin::*;
 
 mod ui;
 pub use ui::*;
+mod inventory;
+pub use inventory::*;

@@ -3,3 +3,25 @@ Customizeable texturemap on a base human form. Allows for clothes, items, player
 can loot items off dead bodies
 quake movement
 all bullets are physical entities
+
+
+Weapon Damage
+----------------
+
+The damage of a gun is calculated based on the ammo x barrel length. A longer barrel increases velocity of a bullet.
+Distance affects damage drop off at larger distance, but in very close combat the enemy gets a penalty due to proximity of the blast from barrel.
+
+Weapons Stats:
+Bulkiness (how fast you can bring it to action or maneuver it)
+Attachments (folding stock, laser, sights, silencer)
+Magazine (Magazine capacity)
+Rate of Fire ( the cyclic rate of the weapon)
+Weight
+Recoil is calculated based on the weight, bulkiness,rate of fire, and ammo type
+Range depends on barrel length and ammo
+Accuracy depends on barrel length and ammo, but maybe some guns can have a bonus such as extra accurate barrel
+
+Ammo Stats:
+Bullet Type (lead, FMJ, steel core, etc)
+Caliber (9mm, 50cal)
+Powder( black powder, smokeless, amount of powder, HP rounds)
