@@ -6,8 +6,10 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 
+use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout};
-use ratatui::style::Color;
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Bar, Gauge};
 use ratatui::{
     prelude::{Stylize, Terminal},
     widgets::{Block, Borders, Paragraph, Wrap},
@@ -15,7 +17,7 @@ use ratatui::{
 use soft_ratatui::{RgbPixmap, SoftBackend};
 
 use crate::{GoldenControllerKeys, PlayerInventory, PlayerStats};
-static FONT_DATA: &[u8] = include_bytes!("../assets/fira_mono.ttf");
+static FONT_DATA: &[u8] = include_bytes!("../assets/zpix.bdf");
 pub struct GoldenUI;
 
 impl Plugin for GoldenUI {
@@ -95,7 +97,7 @@ struct Crosshair;
 struct SoftTerminal(Terminal<SoftBackend>);
 impl Default for SoftTerminal {
     fn default() -> Self {
-        let mut backend = SoftBackend::new_with_font(15, 15, 11, FONT_DATA);
+        let mut backend = SoftBackend::new_with_font(15, 15, FONT_DATA);
         //backend.set_font_size(12);
         Self(Terminal::new(backend).unwrap())
     }
@@ -134,28 +136,11 @@ fn ui_example_system(
                     .direction(Direction::Vertical)
                     .constraints([
                         Constraint::Min(0),    // Top part takes the rest
-                        Constraint::Length(1), // Bottom part is 3 characters high
+                        Constraint::Length(6), // Bottom part is 3 characters high
                     ])
                     .split(area);
-
-                // Fill the top part with magenta
-                frame.render_widget(
-                    Paragraph::new("").block(
-                        Block::new()
-                            .borders(Borders::NONE)
-                            .bg(Color::Rgb(MAGENTA.0, MAGENTA.1, MAGENTA.2)),
-                    ),
-                    chunks[0],
-                );
-
-                // Bottom part with border and text
-                frame.render_widget(
-                    Paragraph::new("Hello bevy! This is the bottom section")
-                        .white()
-                        .on_black()
-                        .wrap(Wrap { trim: false }),
-                    chunks[1],
-                );
+                render_top_section(frame, chunks[0]);
+                render_bottom_bar(frame, chunks[1]);
             })
             .expect("epic fail");
 
@@ -177,6 +162,53 @@ fn ui_example_system(
         );
     }
 }
+
+fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
+    // Split the frame into two parts
+    let bar_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 4); 4])
+        .split(chunk);
+
+    // Bottom part with border and text
+    frame.render_widget(
+        Gauge::default()
+            .block(Block::bordered())
+            .gauge_style(Color::Blue)
+            .on_dark_gray()
+            .ratio(50.0 / 100.0)
+            .label("50/100"),
+        bar_chunks[0],
+    );
+    // Bottom part with border and text
+    frame.render_widget(
+        Paragraph::new("m🦀🦀🦀eow")
+            .white()
+            .on_green()
+            .wrap(Wrap { trim: false }),
+        bar_chunks[1],
+    );
+    // Bottom part with border and text
+    frame.render_widget(
+        Paragraph::new("w火火火oof")
+            .white()
+            .on_black()
+            .wrap(Wrap { trim: false }),
+        bar_chunks[2],
+    );
+}
+fn render_top_section(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
+    // Fill the top part with magenta
+    frame.render_widget(
+        Paragraph::new("").block(
+            Block::new()
+                .borders(Borders::NONE)
+                .bg(Color::Rgb(MAGENTA.0, MAGENTA.1, MAGENTA.2)),
+        ),
+        chunk,
+    );
+}
+
 fn ratatui_setup(
     mut commands: Commands,
     mut softatui: ResMut<SoftTerminal>,
