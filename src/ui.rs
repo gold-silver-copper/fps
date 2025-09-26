@@ -5,7 +5,9 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-
+use embedded_graphics_unicodefonts::{
+    mono_8x13_atlas, mono_8x13_bold_atlas, mono_8x13_italic_atlas,
+};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
@@ -14,10 +16,11 @@ use ratatui::{
     prelude::{Stylize, Terminal},
     widgets::{Block, Borders, Paragraph, Wrap},
 };
-use soft_ratatui::{RgbPixmap, SoftBackend};
+
+use soft_ratatui::{EmbeddedGraphics, RgbPixmap, SoftBackend};
 
 use crate::{GoldenControllerKeys, PlayerInventory, PlayerStats};
-static FONT_DATA: &[u8] = include_bytes!("../assets/zpix.bdf");
+
 pub struct GoldenUI;
 
 impl Plugin for GoldenUI {
@@ -94,10 +97,13 @@ struct Crosshair;
 
 // Create resource to hold the ratatui terminal
 #[derive(Resource, Deref, DerefMut)]
-struct SoftTerminal(Terminal<SoftBackend>);
+struct SoftTerminal(Terminal<SoftBackend<EmbeddedGraphics>>);
 impl Default for SoftTerminal {
     fn default() -> Self {
-        let mut backend = SoftBackend::new_with_font(15, 15, FONT_DATA);
+        let font_regular = mono_8x13_atlas();
+        let font_italic = mono_8x13_italic_atlas();
+        let font_bold = mono_8x13_bold_atlas();
+        let backend = SoftBackend::new(100, 50, font_regular, None, None);
         //backend.set_font_size(12);
         Self(Terminal::new(backend).unwrap())
     }
@@ -173,7 +179,7 @@ fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
     // Bottom part with border and text
     frame.render_widget(
         Gauge::default()
-            .block(Block::bordered())
+            .block(Block::bordered().border_type(ratatui::widgets::BorderType::Double))
             .gauge_style(Color::Blue)
             .on_dark_gray()
             .ratio(50.0 / 100.0)
@@ -182,7 +188,7 @@ fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
     );
     // Bottom part with border and text
     frame.render_widget(
-        Paragraph::new("m🦀🦀🦀eow")
+        Paragraph::new("meow")
             .white()
             .on_green()
             .wrap(Wrap { trim: false }),
@@ -190,11 +196,20 @@ fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
     );
     // Bottom part with border and text
     frame.render_widget(
-        Paragraph::new("w火火火oof")
+        Paragraph::new("woof")
             .white()
             .on_black()
             .wrap(Wrap { trim: false }),
         bar_chunks[2],
+    );
+    frame.render_widget(
+        Gauge::default()
+            .block(Block::bordered())
+            .gauge_style(Color::Blue)
+            .on_dark_gray()
+            .ratio(50.0 / 100.0)
+            .label("50/100"),
+        bar_chunks[3],
     );
 }
 fn render_top_section(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
