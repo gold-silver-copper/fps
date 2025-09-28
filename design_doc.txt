@@ -5,6 +5,11 @@ quake movement
 all bullets are physical entities
 
 
+notes
+icnrease accel
+change collision to rectangle
+Fortunately, Avian has a built-in solution that only requires you to attach TransformInterpolation to your props!
+
 Weapon Damage
 ----------------
 

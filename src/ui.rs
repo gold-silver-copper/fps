@@ -17,11 +17,12 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Wrap},
 };
 
-use soft_ratatui::{EmbeddedGraphics, RgbPixmap, SoftBackend};
+use soft_ratatui::{Bdf, CosmicText, EmbeddedGraphics, RgbPixmap, SoftBackend};
 
 use crate::{GoldenControllerKeys, PlayerInventory, PlayerStats};
 
 pub struct GoldenUI;
+static FONTIK: &str = include_str!("../assets/cozette.bdf");
 
 impl Plugin for GoldenUI {
     fn build(&self, app: &mut App) {
@@ -97,6 +98,19 @@ struct Crosshair;
 
 // Create resource to hold the ratatui terminal
 #[derive(Resource, Deref, DerefMut)]
+struct SoftTerminal(Terminal<SoftBackend<Bdf>>);
+impl Default for SoftTerminal {
+    fn default() -> Self {
+        let font_regular = mono_8x13_atlas();
+        let font_italic = mono_8x13_italic_atlas();
+        let font_bold = mono_8x13_bold_atlas();
+        let backend = SoftBackend::<Bdf>::new(100, 50, (6, 13), FONTIK);
+        //backend.set_font_size(12);
+        Self(Terminal::new(backend).unwrap())
+    }
+}
+/*// Create resource to hold the ratatui terminal
+#[derive(Resource, Deref, DerefMut)]
 struct SoftTerminal(Terminal<SoftBackend<EmbeddedGraphics>>);
 impl Default for SoftTerminal {
     fn default() -> Self {
@@ -107,7 +121,7 @@ impl Default for SoftTerminal {
         //backend.set_font_size(12);
         Self(Terminal::new(backend).unwrap())
     }
-}
+} */
 
 #[derive(Resource)]
 struct MyRatatui(Handle<Image>);
@@ -188,15 +202,17 @@ fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
     );
     // Bottom part with border and text
     frame.render_widget(
-        Paragraph::new("meow")
-            .white()
-            .on_green()
-            .wrap(Wrap { trim: false }),
+        Paragraph::new(
+            "mAAAAAeow\nAAAAAAAA\nAAAAAAAAabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUWYXZQ",
+        )
+        .white()
+        .on_green()
+        .wrap(Wrap { trim: false }),
         bar_chunks[1],
     );
     // Bottom part with border and text
     frame.render_widget(
-        Paragraph::new("woof")
+        Paragraph::new("w░o▓of\n LOL")
             .white()
             .on_black()
             .wrap(Wrap { trim: false }),
