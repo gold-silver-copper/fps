@@ -4415,7 +4415,7 @@ dependencies = [
 
 [[package]]
 name = "soft_ratatui"
-version = "0.0.10"
+version = "0.0.13"
 dependencies = [
  "copper-bdf-parser",
  "ratatui",

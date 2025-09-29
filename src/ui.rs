@@ -20,7 +20,7 @@ use soft_ratatui::{Bdf, RgbPixmap, SoftBackend};
 use crate::{GoldenControllerKeys, PlayerInventory, PlayerStats};
 
 pub struct GoldenUI;
-static FONT_BDF: &str = include_str!("../assets/cozette.bdf");
+static FONT_BDF: &str = include_str!("../assets/scientifica-11.bdf");
 
 impl Plugin for GoldenUI {
     fn build(&self, app: &mut App) {
@@ -98,7 +98,7 @@ struct Crosshair;
 struct SoftTerminal(Terminal<SoftBackend<Bdf>>);
 impl Default for SoftTerminal {
     fn default() -> Self {
-        let backend = SoftBackend::<Bdf>::new(100, 50, (6, 13), FONT_BDF, None, None);
+        let backend = SoftBackend::<Bdf>::new(100, 50, (5, 11), FONT_BDF, None, None);
         //backend.set_font_size(12);
         Self(Terminal::new(backend).unwrap())
     }
@@ -176,7 +176,7 @@ fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
     // Bottom part with border and text
     frame.render_widget(
         Gauge::default()
-            .block(Block::bordered().border_type(ratatui::widgets::BorderType::Double))
+            .block(Block::bordered().border_type(ratatui::widgets::BorderType::QuadrantOutside))
             .gauge_style(Color::Blue)
             .on_dark_gray()
             .ratio(50.0 / 100.0)
@@ -195,7 +195,7 @@ fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
     );
     // Bottom part with border and text
     frame.render_widget(
-        Paragraph::new("w░o▓of\n LOL")
+        Paragraph::new("w░░░░░o▓▓▓▓of\n LOL")
             .white()
             .on_black()
             .wrap(Wrap { trim: false }),
