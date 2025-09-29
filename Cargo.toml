@@ -11,7 +11,7 @@ bevy = "0.16.1"
 
 #bevy_enhanced_input = "0.18.2"
 bevy_framepace = "0.19.1"
-embedded-graphics-unicodefonts = "0.2.0"
+
 iyes_perf_ui = "0.5.0"
 ratatui = { version = "0.29.0", default-features = false }
-soft_ratatui = { path = "../soft_ratatui" }
+soft_ratatui = { path = "../soft_ratatui" ,default-features=false, features = ["bdf-parser"]}

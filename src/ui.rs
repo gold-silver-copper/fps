@@ -5,9 +5,7 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use embedded_graphics_unicodefonts::{
-    mono_8x13_atlas, mono_8x13_bold_atlas, mono_8x13_italic_atlas,
-};
+
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
@@ -17,12 +15,12 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Wrap},
 };
 
-use soft_ratatui::{Bdf, CosmicText, EmbeddedGraphics, RgbPixmap, SoftBackend};
+use soft_ratatui::{Bdf, RgbPixmap, SoftBackend};
 
 use crate::{GoldenControllerKeys, PlayerInventory, PlayerStats};
 
 pub struct GoldenUI;
-static FONTIK: &str = include_str!("../assets/cozette.bdf");
+static FONT_BDF: &str = include_str!("../assets/cozette.bdf");
 
 impl Plugin for GoldenUI {
     fn build(&self, app: &mut App) {
@@ -96,33 +94,15 @@ fn setup_gun(mut commands: Commands, asset_server: Res<AssetServer>) {
 #[derive(Component)]
 struct Crosshair;
 
-// Create resource to hold the ratatui terminal
 #[derive(Resource, Deref, DerefMut)]
 struct SoftTerminal(Terminal<SoftBackend<Bdf>>);
 impl Default for SoftTerminal {
     fn default() -> Self {
-        let font_regular = mono_8x13_atlas();
-        let font_italic = mono_8x13_italic_atlas();
-        let font_bold = mono_8x13_bold_atlas();
-        let backend = SoftBackend::<Bdf>::new(100, 50, (6, 13), FONTIK);
+        let backend = SoftBackend::<Bdf>::new(100, 50, (6, 13), FONT_BDF, None, None);
         //backend.set_font_size(12);
         Self(Terminal::new(backend).unwrap())
     }
 }
-/*// Create resource to hold the ratatui terminal
-#[derive(Resource, Deref, DerefMut)]
-struct SoftTerminal(Terminal<SoftBackend<EmbeddedGraphics>>);
-impl Default for SoftTerminal {
-    fn default() -> Self {
-        let font_regular = mono_8x13_atlas();
-        let font_italic = mono_8x13_italic_atlas();
-        let font_bold = mono_8x13_bold_atlas();
-        let backend = SoftBackend::new(100, 50, font_regular, None, None);
-        //backend.set_font_size(12);
-        Self(Terminal::new(backend).unwrap())
-    }
-} */
-
 #[derive(Resource)]
 struct MyRatatui(Handle<Image>);
 
@@ -166,7 +146,10 @@ fn ui_example_system(
 
         let width = softatui.backend().get_pixmap_width() as u32;
         let height = softatui.backend().get_pixmap_height() as u32;
-        let data = to_rgba_magenta_alpha(&softatui.backend().rgb_pixmap);
+        let data = softatui
+            .backend()
+            .rgb_pixmap
+            .to_rgba_with_color_as_transparent(&(255, 0, 255));
 
         let image = images.get_mut(&my_handle.0).expect("Image not found");
         *image = Image::new(
@@ -219,12 +202,9 @@ fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
         bar_chunks[2],
     );
     frame.render_widget(
-        Gauge::default()
-            .block(Block::bordered())
-            .gauge_style(Color::Blue)
-            .on_dark_gray()
-            .ratio(50.0 / 100.0)
-            .label("50/100"),
+        Paragraph::new(
+            "火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火",
+        ).black(),
         bar_chunks[3],
     );
 }
@@ -234,7 +214,7 @@ fn render_top_section(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
         Paragraph::new("").block(
             Block::new()
                 .borders(Borders::NONE)
-                .bg(Color::Rgb(MAGENTA.0, MAGENTA.1, MAGENTA.2)),
+                .bg(Color::Rgb(255, 0, 255)),
         ),
         chunk,
     );
@@ -247,7 +227,10 @@ fn ratatui_setup(
 ) {
     let width = softatui.backend().get_pixmap_width() as u32;
     let height = softatui.backend().get_pixmap_height() as u32;
-    let data = to_rgba_magenta_alpha(&softatui.backend().rgb_pixmap);
+    let data = softatui
+        .backend()
+        .rgb_pixmap
+        .to_rgba_with_color_as_transparent(&(255, 0, 255));
 
     let image = Image::new(
         Extent3d {
@@ -285,21 +268,4 @@ fn ratatui_setup(
             ));
         });
     commands.insert_resource(MyRatatui(handle));
-}
-
-pub const MAGENTA: (u8, u8, u8) = (255, 0, 255);
-
-pub fn to_rgba_magenta_alpha(mapik: &RgbPixmap) -> Vec<u8> {
-    let mut rgba_data = Vec::with_capacity(mapik.width() * mapik.height() * 4);
-    for chunk in mapik.data().chunks_exact(3) {
-        let r = chunk[0];
-        let g = chunk[1];
-        let b = chunk[2];
-        if (r, g, b) == MAGENTA {
-            rgba_data.extend_from_slice(&[r, g, b, 0]);
-        } else {
-            rgba_data.extend_from_slice(&[r, g, b, 255]);
-        }
-    }
-    rgba_data
 }
