@@ -1,3 +1,4 @@
+use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
 use bevy::window::{PrimaryWindow, WindowResized};
 use bevy::{
@@ -17,10 +18,10 @@ use ratatui::{
 
 use soft_ratatui::{Bdf, RgbPixmap, SoftBackend};
 
-use crate::{GoldenControllerKeys, PlayerInventory, PlayerStats};
+use crate::{GoldenControllerKeys, LogicalPlayer, PlayerInventory, PlayerStats};
 
 pub struct GoldenUI;
-static FONT_BDF: &str = include_str!("../assets/spleen.bdf");
+static FONT_BDF: &str = include_str!("../assets/spleen-12x24.bdf");
 
 impl Plugin for GoldenUI {
     fn build(&self, app: &mut App) {
@@ -98,7 +99,7 @@ struct Crosshair;
 struct SoftTerminal(Terminal<SoftBackend<Bdf>>);
 impl Default for SoftTerminal {
     fn default() -> Self {
-        let backend = SoftBackend::<Bdf>::new(100, 50, (16, 32), FONT_BDF, None, None);
+        let backend = SoftBackend::<Bdf>::new(100, 50, (12, 24), FONT_BDF, None, None);
         //backend.set_font_size(12);
         Self(Terminal::new(backend).unwrap())
     }
@@ -123,9 +124,14 @@ fn handle_resize_events(
 fn ui_example_system(
     mut softatui: ResMut<SoftTerminal>,
     mut images: ResMut<Assets<Image>>,
+    mut controller_query: Query<(&Transform, &LinearVelocity), With<LogicalPlayer>>,
     my_handle: Res<MyRatatui>,
     query: Query<(&PlayerStats, &PlayerInventory), With<GoldenControllerKeys>>,
 ) {
+    let mut speed_text = String::new();
+    for (transform, velocity) in &mut controller_query {
+        speed_text = format!("spd: {:.2}", velocity.0.xz().length());
+    }
     if let Ok((stats, inv)) = query.single() {
         softatui
             .draw(|frame| {
@@ -136,11 +142,11 @@ fn ui_example_system(
                     .direction(Direction::Vertical)
                     .constraints([
                         Constraint::Min(0),    // Top part takes the rest
-                        Constraint::Length(6), // Bottom part is 3 characters high
+                        Constraint::Length(1), // Bottom part is 3 characters high
                     ])
                     .split(area);
                 render_top_section(frame, chunks[0]);
-                render_bottom_bar(frame, chunks[1]);
+                render_bottom_bar(frame, chunks[1], speed_text);
             })
             .expect("epic fail");
 
@@ -166,7 +172,7 @@ fn ui_example_system(
     }
 }
 
-fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
+fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect, speed_text: String) {
     // Split the frame into two parts
     let bar_chunks = Layout::default()
         .direction(Direction::Horizontal)
@@ -176,7 +182,7 @@ fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
     // Bottom part with border and text
     frame.render_widget(
         Gauge::default()
-            .block(Block::bordered().border_type(ratatui::widgets::BorderType::QuadrantInside))
+            .block(Block::new())
             .gauge_style(Color::Blue)
             .on_dark_gray()
             .ratio(50.0 / 100.0)
@@ -201,12 +207,7 @@ fn render_bottom_bar(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
             .wrap(Wrap { trim: false }),
         bar_chunks[2],
     );
-    frame.render_widget(
-        Paragraph::new(
-            "火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火火",
-        ).black(),
-        bar_chunks[3],
-    );
+    frame.render_widget(Paragraph::new(speed_text).black(), bar_chunks[3]);
 }
 fn render_top_section(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
     // Fill the top part with magenta

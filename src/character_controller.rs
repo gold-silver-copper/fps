@@ -129,14 +129,14 @@ impl Default for GoldenController {
             height: 1.0,
             step_height: 0.4,
 
-            walk_speed: 7.0,
+            walk_speed: 6.0,
             mass: 80.0,
 
             //how fast your character enters crouched position
             crouch_speed: 4.0,
 
             //air friction is actually contact friction to objects while in air, dont change this
-            air_friction: 0.1,
+            air_friction: 0.0,
             //air damp is actual air friction
             air_damp: 0.3,
             //force to apply when jumping, higher force = higher jumps
@@ -155,10 +155,10 @@ impl Default for GoldenController {
             leaning_speed: 2.0,
 
             //how fast the player accelerates on the ground, a too low value can break horizontal movement when leaning
-            acceleration: 3.0,
+            acceleration: 4.0,
 
             traction_normal_cutoff: 0.6,
-            friction: 0.9,
+            friction: 0.0,
 
             //how much to move horizontally while leaning
             lean_side_impulse: 65.0,
@@ -428,7 +428,7 @@ pub fn fps_controller_move(
                 // check if player is on walkable slope
                 let has_traction =
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
-                damping.0 = controller.air_damp * 5.0;
+                damping.0 = controller.air_damp * 10.0;
 
                 if !input.jump {
                     // This is for walking up slopes well
@@ -500,14 +500,14 @@ pub fn fps_controller_move(
                         }
                     }
 
-                    if controller_mutables.ground_tick < 3 {
+                    if controller_mutables.ground_tick < 10 {
                         //This fixes bug that pushes player randomly upon landing
                         let linear_velocity = velocity.0;
                         let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
                         velocity.0 -= normal_force;
                     }
                     if !input.jump && input.movement.length_squared() < 0.1 {
-                        damping.0 = controller.air_damp * 10.0;
+                        damping.0 = controller.air_damp * 30.0;
                     }
 
                     if input.jump && velocity.0.y < 1.0 {
@@ -547,7 +547,7 @@ pub fn fps_controller_move(
 
         if controller_mutables.step_offset > 0.0 {
             controller_mutables.ground_tick = 0;
-            let step_speed = 15.0; // larger = faster snap
+            let step_speed = 20.0; // larger = faster snap
             let offset_change = controller_mutables.step_offset * dt * step_speed;
 
             // Apply part of the offset
