@@ -449,12 +449,12 @@ pub fn fps_controller_move(
                 }
 
                 if has_traction {
-                    gravity.0 = 0.0;
+                    gravity.0 = 1.0;
                     // Only try steps when grounded, moving, and not blocked above
                     if top_up_hit.is_none() && input.movement.length_squared() > 0.1 && !input.jump
                     {
                         let feet_origin = transform.translation - collider_y_offset(&collider)
-                            + Vec3::new(0.0, controller.grounded_distance / 2.5, 0.0);
+                            + Vec3::new(0.0, controller.grounded_distance / 1.0, 0.0);
                         let body_origin = feet_origin + Vec3::Y * controller.step_height * 1.5;
 
                         let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
@@ -468,7 +468,7 @@ pub fn fps_controller_move(
                             feet_origin,
                             Quat::IDENTITY,
                             Dir3::new(wish_direction).unwrap(),
-                            &ShapeCastConfig::from_max_distance(controller.step_height / 2.0),
+                            &ShapeCastConfig::from_max_distance(controller.step_height / 1.0),
                             &filter,
                         ) {
                             if foot_hit.normal1.y < 0.1 {
@@ -477,9 +477,7 @@ pub fn fps_controller_move(
                                     body_origin,
                                     Quat::IDENTITY,
                                     Dir3::new(wish_direction).unwrap(),
-                                    &ShapeCastConfig::from_max_distance(
-                                        controller.step_height / 2.0,
-                                    ),
+                                    &ShapeCastConfig::from_max_distance(controller.step_height),
                                     &filter,
                                 );
 
@@ -534,26 +532,39 @@ pub fn fps_controller_move(
                 external_force.apply_impulse(add * controller.mass);
             }
         }
+        //WALKING UP STAIRS CODE
+        // WALKING UP STAIRS - IMPROVED VERSION
         if controller_mutables.step_offset > 0.0 {
             controller_mutables.ground_tick = 0;
             let step_speed = 10.0; // larger = faster snap
             let offset_change = controller_mutables.step_offset * dt * step_speed;
+            // Store original position for collision testing
+            let original_pos = transform.translation;
 
-            // Apply part of the offset
-            transform.translation.y += offset_change * 2.0;
-            controller_mutables.crouch_degree += offset_change * 1.0;
-            let wishik = wish_direction * dt;
-            transform.translation += wishik;
-            // Decay offset toward 0
-            controller_mutables.step_offset -= offset_change;
-            if controller_mutables.step_offset < epsilon {
-                /*   let down_force = Vec3 {
-                    x: 0.0,
-                    y: -controller.jump_force,
-                    z: 0.0,
-                };
-                external_force.apply_impulse(down_force); */
-                // if not set back to 0.0 it will keep getting smaller but not to zero
+            // Try to move up and forward in one frame
+            let step_up_amount = controller_mutables.step_offset.min(controller.step_height);
+            let target_pos = original_pos
+                + Vec3::Y * step_up_amount
+                + wish_direction * dt * controller.walk_speed * 0.5;
+
+            // Check if target position is valid (no collisions)
+            let collision_test = spatial_query_pipeline.cast_shape(
+                &collider,
+                target_pos,
+                transform.rotation,
+                Dir3::new(wish_direction).unwrap_or(Dir3::Y), // Zero direction for overlap test
+                &ShapeCastConfig::from_max_distance(0.001),
+                &filter,
+            );
+
+            if collision_test.is_none() {
+                // Safe to move to target position
+                transform.translation = target_pos;
+                controller_mutables.step_offset -= step_up_amount;
+            }
+
+            // Clean up small values
+            if controller_mutables.step_offset < 0.01 {
                 controller_mutables.step_offset = 0.0;
             }
         }
