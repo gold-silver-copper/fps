@@ -468,7 +468,7 @@ pub fn fps_controller_move(
                             feet_origin,
                             Quat::IDENTITY,
                             Dir3::new(wish_direction).unwrap(),
-                            &ShapeCastConfig::from_max_distance(controller.step_height / 1.0),
+                            &ShapeCastConfig::from_max_distance(controller.step_height / 2.0),
                             &filter,
                         ) {
                             if foot_hit.normal1.y < 0.1 {
@@ -536,16 +536,16 @@ pub fn fps_controller_move(
         // WALKING UP STAIRS - IMPROVED VERSION
         if controller_mutables.step_offset > 0.0 {
             controller_mutables.ground_tick = 0;
-            let step_speed = 10.0; // larger = faster snap
+            let step_speed = 20.0; // larger = faster snap
             let offset_change = controller_mutables.step_offset * dt * step_speed;
             // Store original position for collision testing
             let original_pos = transform.translation;
 
             // Try to move up and forward in one frame
-            let step_up_amount = controller_mutables.step_offset.min(controller.step_height);
+            let step_up_amount = offset_change;
             let target_pos = original_pos
                 + Vec3::Y * step_up_amount
-                + wish_direction * dt * controller.walk_speed * 0.5;
+                + wish_direction * dt * controller.walk_speed;
 
             // Check if target position is valid (no collisions)
             let collision_test = spatial_query_pipeline.cast_shape(
