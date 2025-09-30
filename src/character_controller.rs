@@ -140,14 +140,14 @@ impl Default for GoldenController {
             //air damp is actual air friction
             air_damp: 0.3,
             //force to apply when jumping, higher force = higher jumps
-            jump_force: 6.0,
+            jump_force: 5.5,
 
             forward_speed: 30.0,
             side_speed: 30.0,
             air_speed_cap: 2.0,
 
             //how fast you can rotate in the air, higher value allows you to surf like in cs
-            air_acceleration: 10.0,
+            air_acceleration: 9.0,
 
             //max angle degree of leaning, if it is too high there can be clipping bugs when turning fast, very bad
             lean_max: 0.35,
@@ -246,7 +246,7 @@ pub fn fps_controller_move(
             &mut Transform,
             &mut LinearVelocity,
             &mut ExternalImpulse,
-            &mut Friction,
+            &mut GravityScale,
             &mut LinearDamping,
         ),
         With<LogicalPlayer>,
@@ -263,7 +263,7 @@ pub fn fps_controller_move(
         mut transform,
         mut velocity,
         mut external_force,
-        mut friction,
+        mut gravity,
         mut damping,
     ) in query.iter_mut()
     {
@@ -416,26 +416,16 @@ pub fn fps_controller_move(
         if input.lean.abs() > 0.1 {
             println!("leaning")
         }
-
+        gravity.0 = 1.0;
         match bottom_down_hit {
             // NEAR GROUND
             Some(hit) => {
-                //High Friction for controllable character
-                friction.dynamic_coefficient = controller.friction;
-                friction.static_coefficient = controller.friction;
-                friction.combine_rule = CoefficientCombine::GeometricMean;
-
                 // check if player is on walkable slope
                 let has_traction =
                     Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
                 damping.0 = controller.air_damp * 10.0;
 
                 if !input.jump {
-                    // This is for walking up slopes well
-
-                    wish_direction =
-                        wish_direction - hit.normal1 * Vec3::dot(wish_direction, hit.normal1);
-
                     let add = acceleration(
                         wish_direction,
                         wish_speed,
@@ -459,11 +449,12 @@ pub fn fps_controller_move(
                 }
 
                 if has_traction {
+                    gravity.0 = 0.0;
                     // Only try steps when grounded, moving, and not blocked above
                     if top_up_hit.is_none() && input.movement.length_squared() > 0.1 && !input.jump
                     {
                         let feet_origin = transform.translation - collider_y_offset(&collider)
-                            + Vec3::new(0.0, controller.grounded_distance, 0.0);
+                            + Vec3::new(0.0, controller.grounded_distance / 2.5, 0.0);
                         let body_origin = feet_origin + Vec3::Y * controller.step_height * 1.5;
 
                         let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
@@ -477,7 +468,7 @@ pub fn fps_controller_move(
                             feet_origin,
                             Quat::IDENTITY,
                             Dir3::new(wish_direction).unwrap(),
-                            &ShapeCastConfig::from_max_distance(controller.step_height),
+                            &ShapeCastConfig::from_max_distance(controller.step_height / 2.0),
                             &filter,
                         ) {
                             if foot_hit.normal1.y < 0.1 {
@@ -486,7 +477,9 @@ pub fn fps_controller_move(
                                     body_origin,
                                     Quat::IDENTITY,
                                     Dir3::new(wish_direction).unwrap(),
-                                    &ShapeCastConfig::from_max_distance(controller.step_height),
+                                    &ShapeCastConfig::from_max_distance(
+                                        controller.step_height / 2.0,
+                                    ),
                                     &filter,
                                 );
 
@@ -528,9 +521,6 @@ pub fn fps_controller_move(
 
                 damping.0 = controller.air_damp;
 
-                friction.dynamic_coefficient = controller.air_friction;
-                friction.static_coefficient = controller.air_friction;
-                friction.combine_rule = CoefficientCombine::Min;
                 wish_speed = f32::min(wish_speed, controller.air_speed_cap);
 
                 let add = acceleration(
@@ -544,29 +534,29 @@ pub fn fps_controller_move(
                 external_force.apply_impulse(add * controller.mass);
             }
         }
-
         if controller_mutables.step_offset > 0.0 {
             controller_mutables.ground_tick = 0;
-            let step_speed = 20.0; // larger = faster snap
+            let step_speed = 10.0; // larger = faster snap
             let offset_change = controller_mutables.step_offset * dt * step_speed;
 
             // Apply part of the offset
-            transform.translation.y += offset_change;
-
+            transform.translation.y += offset_change * 2.0;
+            controller_mutables.crouch_degree += offset_change * 1.0;
+            let wishik = wish_direction * dt;
+            transform.translation += wishik;
             // Decay offset toward 0
             controller_mutables.step_offset -= offset_change;
             if controller_mutables.step_offset < epsilon {
-                /*    let down_force = Vec3 {
+                /*   let down_force = Vec3 {
                     x: 0.0,
                     y: -controller.jump_force,
                     z: 0.0,
                 };
-                //    external_force.apply_impulse(down_force); */
+                external_force.apply_impulse(down_force); */
                 // if not set back to 0.0 it will keep getting smaller but not to zero
                 controller_mutables.step_offset = 0.0;
             }
         }
-
         //  Fixes wobbly velocity
         if velocity.0.z.abs() < 0.004 {
             velocity.0.z = 0.0;
