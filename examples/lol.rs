@@ -104,6 +104,8 @@ fn setup(
         .spawn((
             Collider::capsule(radius, height),
             Transform::from_translation(SPAWN_POINT),
+            RigidBody::Dynamic,
+            LockedAxes::ROTATION_LOCKED,
         ))
         .id();
 
