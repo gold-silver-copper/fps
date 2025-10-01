@@ -219,8 +219,10 @@ pub struct GoldenControllerSpatialHits {
     pub top_up: bool,
     pub bottom_down: bool,
     pub bottom_hit_normal: Vec3,
-    pub right_wall_hit: (bool, f32),
-    pub left_wall_hit: (bool, f32),
+    pub right_wall_dist: (bool, f32),
+    pub left_wall_dist: (bool, f32),
+    pub feet_front: bool,
+    pub body_step: bool,
 }
 
 impl Default for GoldenControllerMutables {
@@ -335,40 +337,10 @@ pub fn fps_controller_move(
             if has_traction {
                 // Only try steps when grounded, moving, and not blocked above
                 if !spatial_hits.top_up && input.movement.length_squared() > 0.1 && !input.jump {
-                    let feet_origin = transform.translation - collider_y_offset(&collider)
-                        + Vec3::new(0.0, controller.grounded_distance / 1.0, 0.0);
-                    let body_origin = feet_origin + Vec3::Y * controller.step_height * 1.5;
+                    if spatial_hits.feet_front && !spatial_hits.body_step {
+                        controller_mutables.step_offset = controller.step_height;
 
-                    let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
-
-                    let body_shape = scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN);
-
-                    // Cast at foot level
-                    if let Some(foot_hit) = spatial_query_pipeline.cast_shape(
-                        &foot_shape,
-                        feet_origin,
-                        Quat::IDENTITY,
-                        Dir3::new(wish_direction).unwrap(),
-                        &ShapeCastConfig::from_max_distance(controller.step_height / 2.0),
-                        &filter,
-                    ) {
-                        if foot_hit.normal1.y < 0.1 {
-                            let body_hit = spatial_query_pipeline.cast_shape(
-                                &body_shape,
-                                body_origin,
-                                Quat::IDENTITY,
-                                Dir3::new(wish_direction).unwrap(),
-                                &ShapeCastConfig::from_max_distance(controller.step_height),
-                                &filter,
-                            );
-
-                            // If foot hits but body does not → step up
-                            if body_hit.is_none() {
-                                controller_mutables.step_offset = controller.step_height;
-
-                                println!("Stepped up!");
-                            }
-                        }
+                        println!("Stepped up!");
                     }
                 }
 
@@ -494,6 +466,15 @@ pub fn fps_controller_spatial_hitter(
         // Better than a ray cast as it handles when you are near the edge of a surface
         let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
 
+        let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
+        let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
+        move_to_world.z_axis *= -1.0; // Forward is -Z
+        let mut wish_direction = move_to_world * (input.movement * speeds);
+        let wish_speed = wish_direction.length();
+        if wish_speed > f32::EPSILON {
+            // Avoid division by zero
+            wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
+        }
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
             // Consider when the controller is right up against a wall
             // We do not want the shape cast to detect it,
@@ -552,8 +533,8 @@ pub fn fps_controller_spatial_hitter(
         );
 
         match right_hit {
-            Some(h) => spatial_hits.right_wall_hit = (true, h.distance),
-            None => spatial_hits.right_wall_hit = (false, 1.0),
+            Some(h) => spatial_hits.right_wall_dist = (true, h.distance),
+            None => spatial_hits.right_wall_dist = (false, 1.0),
         }
 
         // Left wall check
@@ -566,8 +547,51 @@ pub fn fps_controller_spatial_hitter(
             &filter,
         );
         match left_hit {
-            Some(h) => spatial_hits.left_wall_hit = (true, h.distance),
-            None => spatial_hits.left_wall_hit = (false, 1.0),
+            Some(h) => spatial_hits.left_wall_dist = (true, h.distance),
+            None => spatial_hits.left_wall_dist = (false, 1.0),
+        }
+
+        if wish_direction.length_squared() > 0.1 {
+            let feet_origin = transform.translation - collider_y_offset(&collider)
+                + Vec3::new(0.0, controller.grounded_distance / 1.0, 0.0);
+            let body_origin = feet_origin + Vec3::Y * controller.step_height * 1.5;
+
+            let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
+
+            let body_shape = scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN);
+
+            // Cast at foot level
+            if let Some(foot_hit) = spatial_query_pipeline.cast_shape(
+                &foot_shape,
+                feet_origin,
+                Quat::IDENTITY,
+                Dir3::new(wish_direction).unwrap(),
+                &ShapeCastConfig::from_max_distance(controller.step_height / 2.0),
+                &filter,
+            ) {
+                if foot_hit.normal1.y < 0.1 {
+                    spatial_hits.feet_front = true;
+                } else {
+                    spatial_hits.feet_front = false;
+                }
+            } else {
+                spatial_hits.feet_front = false;
+            }
+            if let Some(_) = spatial_query_pipeline.cast_shape(
+                &body_shape,
+                body_origin,
+                Quat::IDENTITY,
+                Dir3::new(wish_direction).unwrap(),
+                &ShapeCastConfig::from_max_distance(controller.step_height),
+                &filter,
+            ) {
+                spatial_hits.body_step = true;
+            } else {
+                spatial_hits.body_step = false;
+            }
+        } else {
+            spatial_hits.feet_front = false;
+            spatial_hits.body_step = true;
         }
     }
 }
@@ -599,15 +623,16 @@ pub fn fps_controller_lean(
         let mut target_lean = input.lean;
 
         // Block intentional lean into wall
-        if spatial_hits.right_wall_hit.0 && (target_lean > 0.0) {
-            target_lean = spatial_hits.right_wall_hit.1;
+        if spatial_hits.right_wall_dist.0 && (target_lean > 0.0) {
+            target_lean = spatial_hits.right_wall_dist.1;
         }
-        if spatial_hits.left_wall_hit.0 && (target_lean < 0.0) {
-            target_lean = -spatial_hits.left_wall_hit.1;
+        if spatial_hits.left_wall_dist.0 && (target_lean < 0.0) {
+            target_lean = -spatial_hits.left_wall_dist.1;
         }
-        controller_mutables.lean_degree = controller_mutables
-            .lean_degree
-            .clamp(-spatial_hits.left_wall_hit.1, spatial_hits.right_wall_hit.1);
+        controller_mutables.lean_degree = controller_mutables.lean_degree.clamp(
+            -spatial_hits.left_wall_dist.1,
+            spatial_hits.right_wall_dist.1,
+        );
         let old_degree = controller_mutables.lean_degree;
 
         // Apply lean degree modifier
@@ -621,9 +646,10 @@ pub fn fps_controller_lean(
             controller_mutables.lean_degree = target_lean;
         }
 
-        controller_mutables.lean_degree = controller_mutables
-            .lean_degree
-            .clamp(-spatial_hits.left_wall_hit.1, spatial_hits.right_wall_hit.1);
+        controller_mutables.lean_degree = controller_mutables.lean_degree.clamp(
+            -spatial_hits.left_wall_dist.1,
+            spatial_hits.right_wall_dist.1,
+        );
 
         let degree_change = controller_mutables.lean_degree - old_degree;
 
