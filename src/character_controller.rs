@@ -35,7 +35,7 @@ impl Plugin for GoldenControllerPlugin {
                     fps_controller_move,
                     fps_controller_crouch,
                     fps_controller_lean,
-                    fps_controller_steps,
+                    //    fps_controller_steps,
                 )
                     .chain(),
             );
@@ -299,12 +299,6 @@ pub fn fps_controller_move(
         wish_speed = f32::min(wish_speed, max_speed);
 
         if spatial_hits.bottom_down {
-            let floating_force = Vec3 {
-                x: 0.0,
-                y: controller.jump_force,
-                z: 0.0,
-            };
-            external_force.apply_impulse(floating_force * 2.0);
             damping.0 = controller.air_damp * 10.0;
             if !input.jump {
                 let add = acceleration(
@@ -332,6 +326,12 @@ pub fn fps_controller_move(
             let has_traction = Vec3::dot(spatial_hits.bottom_hit_normal, Vec3::Y)
                 > controller.traction_normal_cutoff;
             if has_traction {
+                let floating_force = Vec3 {
+                    x: 0.0,
+                    y: controller.jump_force,
+                    z: 0.0,
+                };
+                external_force.apply_impulse(floating_force * 2.0);
                 // Only try steps when grounded, moving, and not blocked above
                 if !spatial_hits.top_up && input.movement.length_squared() > 0.1 && !input.jump {
                     if spatial_hits.feet_front && !spatial_hits.body_step {
@@ -503,7 +503,7 @@ pub fn fps_controller_spatial_hitter(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
-        let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
+        let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.2);
         let feet_origin = transform.translation - collider_y_offset(&collider)
             + Vec3::new(0.0, controller.grounded_distance, 0.0);
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
