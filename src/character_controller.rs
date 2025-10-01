@@ -31,6 +31,7 @@ impl Plugin for GoldenControllerPlugin {
             .add_systems(
                 FixedUpdate,
                 (
+                    force_flat,
                     fps_controller_spatial_hitter,
                     fps_controller_move,
                     //       fps_controller_crouch,
@@ -263,6 +264,19 @@ const ANGLE_EPSILON: f32 = 0.001953125;
 const CALC_EPSILON: f32 = 0.01;
 
 const SLIGHT_SCALE_DOWN: f32 = 0.99;
+// A simple system to rotate the root entity, and rotate all its children separately
+
+fn force_flat(
+    mut feet_query: Query<(&Transform, &FeetOf), Without<Body>>,
+
+    mut body_query: Query<&mut Transform, With<Body>>,
+) {
+    for (transform_feet, feetof) in &mut feet_query {
+        if let Ok(mut transform_body) = body_query.get_mut(feetof.0) {
+            transform_body.translation = transform_feet.translation;
+        }
+    }
+}
 
 pub fn fps_controller_move(
     mut query: Query<
@@ -487,23 +501,12 @@ pub fn fps_controller_spatial_hitter(
             &mut GoldenControllerSpatialHits,
             &Collider,
             &mut Transform,
-            &Children,
         ),
         With<LogicalPlayer>,
     >,
 ) {
-    for (entity, input, controller, mut spatial_hits, collider, transform, children) in
-        query.iter_mut()
-    {
-        // Shape cast downwards to find ground
-        // Better than a ray cast as it handles when you are near the edge of a surface
-
-        let mut filter_vec = vec![entity];
-        for child in children.iter() {
-            filter_vec.push(child);
-        }
-
-        let filter = SpatialQueryFilter::default().with_excluded_entities(filter_vec);
+    for (entity, input, controller, mut spatial_hits, collider, transform) in query.iter_mut() {
+        let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
 
         let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
         let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);

@@ -142,14 +142,11 @@ fn setup(
 
     let feet_entity = commands
         .spawn((
-            Collider::cylinder(radius, 0.2),
-            Transform::from_translation(-offsetik * 0.97),
-            //  LockedAxes::ROTATION_LOCKED,
-            //     RigidBody::Kinematic,
+            Collider::cylinder(10.0, 0.2),
+            Transform::from_translation(SPAWN_POINT),
+            FeetOf(body_entity), //     RigidBody::Kinematic,
         ))
         .id();
-
-    commands.entity(body_entity).add_related(feet_entity);
 
     let e = commands
         .spawn((
