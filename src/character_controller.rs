@@ -261,7 +261,7 @@ pub fn fps_controller_move(
             Entity,
             &GoldenControllerInput,
             &GoldenController,
-            &mut GoldenControllerSpatialHits,
+            &GoldenControllerSpatialHits,
             &mut GoldenControllerMutables,
             &Collider,
             &mut Transform,
@@ -278,7 +278,7 @@ pub fn fps_controller_move(
         entity,
         input,
         controller,
-        mut spatial_hits,
+        spatial_hits,
         mut controller_mutables,
         collider,
         mut transform,
@@ -552,43 +552,39 @@ pub fn fps_controller_spatial_hitter(
         }
 
         if wish_direction.length_squared() > 0.1 {
+            let dir = Dir3::new(wish_direction).unwrap();
+
             let feet_origin = transform.translation - collider_y_offset(&collider)
-                + Vec3::new(0.0, controller.grounded_distance / 1.0, 0.0);
+                + Vec3::new(0.0, controller.grounded_distance, 0.0);
+
             let body_origin = feet_origin + Vec3::Y * controller.step_height * 1.5;
 
             let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
-
             let body_shape = scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN);
 
-            // Cast at foot level
-            if let Some(foot_hit) = spatial_query_pipeline.cast_shape(
-                &foot_shape,
-                feet_origin,
-                Quat::IDENTITY,
-                Dir3::new(wish_direction).unwrap(),
-                &ShapeCastConfig::from_max_distance(controller.step_height / 2.0),
-                &filter,
-            ) {
-                if foot_hit.normal1.y < 0.1 {
-                    spatial_hits.feet_front = true;
-                } else {
-                    spatial_hits.feet_front = false;
-                }
-            } else {
-                spatial_hits.feet_front = false;
-            }
-            if let Some(_) = spatial_query_pipeline.cast_shape(
-                &body_shape,
-                body_origin,
-                Quat::IDENTITY,
-                Dir3::new(wish_direction).unwrap(),
-                &ShapeCastConfig::from_max_distance(controller.step_height),
-                &filter,
-            ) {
-                spatial_hits.body_step = true;
-            } else {
-                spatial_hits.body_step = false;
-            }
+            // Feet cast
+            spatial_hits.feet_front = spatial_query_pipeline
+                .cast_shape(
+                    &foot_shape,
+                    feet_origin,
+                    Quat::IDENTITY,
+                    dir,
+                    &ShapeCastConfig::from_max_distance(controller.step_height / 2.0),
+                    &filter,
+                )
+                .map_or(false, |hit| hit.normal1.y < 0.1);
+
+            // Body cast
+            spatial_hits.body_step = spatial_query_pipeline
+                .cast_shape(
+                    &body_shape,
+                    body_origin,
+                    Quat::IDENTITY,
+                    dir,
+                    &ShapeCastConfig::from_max_distance(controller.step_height),
+                    &filter,
+                )
+                .is_some();
         } else {
             spatial_hits.feet_front = false;
             spatial_hits.body_step = true;
