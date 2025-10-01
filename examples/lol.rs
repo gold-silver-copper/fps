@@ -44,7 +44,7 @@ fn main() {
         .add_plugins(PhysicsPlugins::new(FixedPostUpdate))
         .add_plugins(GoldenUI)
         .add_plugins(GunPlayPlugin)
-        // .add_plugins(PhysicsDebugPlugin::default())
+        .add_plugins(PhysicsDebugPlugin::default())
         .add_plugins(GoldenControllerPlugin)
         .add_plugins(bevy_framepace::FramepacePlugin)
         .add_plugins(MyInputPlugin)
@@ -99,13 +99,13 @@ fn setup(
     let height = 1.0;
     let radius = 0.4;
     let mass = 80.0;
-    let logical_entity = commands
+
+    let collidik = Collider::capsule(radius, height);
+    let offsetik = collider_y_offset(&collidik);
+
+    let body_entity = commands
         .spawn((
-            Collider::capsule(radius, height),
-            // A capsule can be used but is NOT recommended
-            // If you use it, you have to make sure each segment point is
-            // equidistant from the translation of the player transform
-            // Collider::capsule(0.5, height),
+            collidik,
             Friction {
                 dynamic_coefficient: 0.0,
                 static_coefficient: 0.0,
@@ -126,9 +126,7 @@ fn setup(
             LogicalPlayer,
             LinearDamping(0.5),
         ))
-        .insert(CameraConfig {
-            height_offset: -0.2,
-        })
+        .insert(CameraConfig { height_offset: 0.0 })
         .insert(PlayerControllerBundle {
             controller: GoldenController {
                 radius,
@@ -141,6 +139,17 @@ fn setup(
         })
         .insert(PlayerStuffBundle::default())
         .id();
+
+    let feet_entity = commands
+        .spawn((
+            Collider::cylinder(radius, 0.2),
+            Transform::from_translation(-offsetik * 0.97),
+            //  LockedAxes::ROTATION_LOCKED,
+            //     RigidBody::Kinematic,
+        ))
+        .id();
+
+    commands.entity(body_entity).add_related(feet_entity);
 
     let e = commands
         .spawn((
@@ -157,7 +166,9 @@ fn setup(
                 ..default()
             }),
             Exposure::SUNLIGHT,
-            RenderPlayer { logical_entity },
+            RenderPlayer {
+                logical_entity: body_entity,
+            },
         ))
         .id();
     println!("camera ent, {:#?}", e);

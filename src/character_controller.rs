@@ -33,14 +33,22 @@ impl Plugin for GoldenControllerPlugin {
                 (
                     fps_controller_spatial_hitter,
                     fps_controller_move,
-                    fps_controller_crouch,
+                    //       fps_controller_crouch,
                     fps_controller_lean,
-                    fps_controller_steps,
+                    //       fps_controller_steps,
                 )
                     .chain(),
             );
     }
 }
+
+#[derive(Component)]
+#[relationship(relationship_target = Body)]
+pub struct FeetOf(pub Entity);
+
+#[derive(Component)]
+#[relationship_target(relationship = FeetOf, linked_spawn)]
+pub struct Body(Entity);
 
 #[derive(Bundle, Default)]
 pub struct PlayerControllerBundle {
@@ -134,7 +142,7 @@ impl Default for GoldenController {
     fn default() -> Self {
         Self {
             //used for projecting collision to ground, to check if player has traction
-            grounded_distance: 0.15,
+            grounded_distance: 0.2,
             //collider height and radius
             radius: 0.4,
             height: 1.0,
@@ -254,7 +262,7 @@ impl Default for GoldenControllerMutables {
 const ANGLE_EPSILON: f32 = 0.001953125;
 const CALC_EPSILON: f32 = 0.01;
 
-const SLIGHT_SCALE_DOWN: f32 = 0.9;
+const SLIGHT_SCALE_DOWN: f32 = 0.99;
 
 pub fn fps_controller_move(
     mut query: Query<
@@ -479,14 +487,23 @@ pub fn fps_controller_spatial_hitter(
             &mut GoldenControllerSpatialHits,
             &Collider,
             &mut Transform,
+            &Children,
         ),
         With<LogicalPlayer>,
     >,
 ) {
-    for (entity, input, controller, mut spatial_hits, collider, transform) in query.iter_mut() {
+    for (entity, input, controller, mut spatial_hits, collider, transform, children) in
+        query.iter_mut()
+    {
         // Shape cast downwards to find ground
         // Better than a ray cast as it handles when you are near the edge of a surface
-        let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
+
+        let mut filter_vec = vec![entity];
+        for child in children.iter() {
+            filter_vec.push(child);
+        }
+
+        let filter = SpatialQueryFilter::default().with_excluded_entities(filter_vec);
 
         let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
         let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
@@ -843,7 +860,7 @@ pub fn fps_controller_look(
 
 /// Returns the offset that puts a point at the center of the player transform to the bottom of the collider.
 /// Needed for when we want to originate something at the foot of the player.
-fn collider_y_offset(collider: &Collider) -> Vec3 {
+pub fn collider_y_offset(collider: &Collider) -> Vec3 {
     Vec3::Y
         * if let Some(cylinder) = collider.shape().as_cylinder() {
             cylinder.half_height
