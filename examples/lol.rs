@@ -100,12 +100,17 @@ fn setup(
     let radius = 0.4;
     let mass = 80.0;
 
-    let collidik = Collider::capsule(radius, height);
-    let offsetik = collider_y_offset(&collidik);
-
     let body_entity = commands
         .spawn((
-            collidik,
+            Collider::capsule(radius, height),
+            Transform::from_translation(SPAWN_POINT),
+        ))
+        .id();
+
+    let feet_entity = commands
+        .spawn((
+            Collider::cylinder(10.0, 0.2),
+            FeetOf(body_entity),
             Friction {
                 dynamic_coefficient: 0.0,
                 static_coefficient: 0.0,
@@ -140,14 +145,6 @@ fn setup(
         .insert(PlayerStuffBundle::default())
         .id();
 
-    let feet_entity = commands
-        .spawn((
-            Collider::cylinder(10.0, 0.2),
-            Transform::from_translation(SPAWN_POINT),
-            FeetOf(body_entity), //     RigidBody::Kinematic,
-        ))
-        .id();
-
     let e = commands
         .spawn((
             Camera3d::default(),
@@ -164,7 +161,7 @@ fn setup(
             }),
             Exposure::SUNLIGHT,
             RenderPlayer {
-                logical_entity: body_entity,
+                logical_entity: feet_entity,
             },
         ))
         .id();

@@ -918,29 +918,46 @@ fn get_axis(key_input: &Res<ButtonInput<KeyCode>>, key_pos: KeyCode, key_neg: Ke
 // ██╔══██╗██╔══╝  ██║╚██╗██║██║  ██║██╔══╝  ██╔══██╗
 // ██║  ██║███████╗██║ ╚████║██████╔╝███████╗██║  ██║
 // ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝╚═════╝ ╚══════╝╚═╝  ╚═╝
+fn forces_flat(
+    mut feet_query: Query<(&Transform, &FeetOf), Without<Body>>,
 
+    mut body_query: Query<&mut Transform, With<Body>>,
+) {
+    for (transform_feet, feetof) in &mut feet_query {
+        if let Ok(mut transform_body) = body_query.get_mut(feetof.0) {
+            transform_body.translation = transform_feet.translation;
+        }
+    }
+}
 pub fn fps_controller_render(
-    mut render_query: Query<(&mut Transform, &RenderPlayer), With<RenderPlayer>>,
+    mut render_query: Query<(&mut Transform, &RenderPlayer), (With<RenderPlayer>, Without<Body>)>,
+    mut body_query: Query<(&Transform, &Collider), With<Body>>,
     logical_query: Query<
         (
             &Transform,
             &Collider,
             &GoldenControllerMutables,
+            &FeetOf,
             &CameraConfig,
         ),
-        (With<LogicalPlayer>, Without<RenderPlayer>),
+        (With<LogicalPlayer>, Without<RenderPlayer>, Without<Body>),
     >,
 ) {
     for (mut render_transform, render_player) in render_query.iter_mut() {
-        if let Ok((logical_transform, collider, controller_mutables, camera_config)) =
+        if let Ok((logical_transform, collider, controller_mutables, feetof, camera_config)) =
             logical_query.get(render_player.logical_entity)
         {
-            let collider_offset = collider_y_offset(collider);
-            let camera_offset = Vec3::Y * camera_config.height_offset;
-            render_transform.translation =
-                logical_transform.translation + collider_offset + camera_offset;
-            let pitch_quat = Quat::from_euler(EulerRot::YXZ, 0.0, controller_mutables.pitch, 0.0);
-            render_transform.rotation = logical_transform.rotation.mul_quat(pitch_quat);
+            println!("okay");
+            if let Ok((transform_body, collider_body)) = body_query.get_mut(feetof.0) {
+                println!("okay");
+                let collider_offset = collider_y_offset(collider_body);
+                let camera_offset = Vec3::Y * camera_config.height_offset;
+                render_transform.translation =
+                    transform_body.translation + collider_offset + camera_offset;
+                let pitch_quat =
+                    Quat::from_euler(EulerRot::YXZ, 0.0, controller_mutables.pitch, 0.0);
+                render_transform.rotation = logical_transform.rotation.mul_quat(pitch_quat);
+            }
         }
     }
 }
