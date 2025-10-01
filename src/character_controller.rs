@@ -454,12 +454,12 @@ pub fn fps_controller_spatial_hitter(
         input,
         controller,
         mut spatial_hits,
-        mut controller_mutables,
+        controller_mutables,
         collider,
-        mut transform,
-        mut velocity,
-        mut external_force,
-        mut damping,
+        transform,
+        velocity,
+        external_force,
+        damping,
     ) in query.iter_mut()
     {
         // Shape cast downwards to find ground
@@ -773,7 +773,7 @@ pub fn fps_controller_input(
 
 fn scroll_events(
     mut evr_scroll: EventReader<MouseWheel>,
-    mut query: Query<(&mut GoldenControllerInput)>,
+    mut query: Query<&mut GoldenControllerInput>,
 ) {
     let mut mod_shift = 0.0;
 

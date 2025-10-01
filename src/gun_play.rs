@@ -1,6 +1,6 @@
-use avian3d::{parry::shape::SharedShape, prelude::*};
+use avian3d::prelude::*;
 
-use bevy::{input::mouse::MouseMotion, prelude::*};
+use bevy::prelude::*;
 
 pub struct GunPlayPlugin;
 
@@ -19,10 +19,10 @@ fn shoot_bullet(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mouse: Res<ButtonInput<MouseButton>>,
-    query: Query<(&GlobalTransform), With<Camera3d>>,
+    query: Query<&GlobalTransform, With<Camera3d>>,
 ) {
     if mouse.pressed(MouseButton::Left) {
-        if let Ok((global)) = query.single() {
+        if let Ok(global) = query.single() {
             println!("OKAY");
             // Bullet spawn position = in front of player
             let forward = global.forward();

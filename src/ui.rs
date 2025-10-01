@@ -1,22 +1,21 @@
 use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
-use bevy::window::{PrimaryWindow, WindowResized};
+use bevy::window::WindowResized;
 use bevy::{
     asset::RenderAssetUsages,
-    prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout};
-use ratatui::style::{Color, Style};
-use ratatui::widgets::{Bar, Gauge};
+use ratatui::style::Color;
+use ratatui::widgets::Gauge;
 use ratatui::{
     prelude::{Stylize, Terminal},
     widgets::{Block, Borders, Paragraph, Wrap},
 };
 
-use soft_ratatui::{Bdf, RgbPixmap, SoftBackend};
+use soft_ratatui::{Bdf, SoftBackend};
 
 use crate::{GoldenControllerKeys, LogicalPlayer, PlayerInventory, PlayerStats};
 
@@ -223,7 +222,7 @@ fn render_top_section(frame: &mut Frame<'_>, chunk: ratatui::prelude::Rect) {
 
 fn ratatui_setup(
     mut commands: Commands,
-    mut softatui: ResMut<SoftTerminal>,
+    softatui: ResMut<SoftTerminal>,
     mut images: ResMut<Assets<Image>>,
 ) {
     let width = softatui.backend().get_pixmap_width() as u32;
