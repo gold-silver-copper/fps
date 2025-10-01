@@ -132,7 +132,7 @@ impl Default for GoldenController {
     fn default() -> Self {
         Self {
             //used for projecting collision to ground, to check if player has traction
-            grounded_distance: 0.4,
+            grounded_distance: 0.2,
             //collider height and radius
             radius: 0.4,
             height: 1.0,
@@ -320,12 +320,13 @@ pub fn fps_controller_move(
             let has_traction = Vec3::dot(spatial_hits.bottom_hit_normal, Vec3::Y)
                 > controller.traction_normal_cutoff;
             if has_traction {
+                println!("HAS TRACTION");
                 if !input.jump {
                     let current_height = spatial_hits.bottom_down_distance;
-                    let target_height = 0.5;
+                    let target_height = controller.grounded_distance;
                     let height_error = target_height - current_height;
-                    let freq = 0.8;
-                    let damping = 0.8;
+                    let freq = 6.0;
+                    let damping = 0.1;
 
                     let omega = 2.0 * std::f32::consts::PI * freq;
                     let k = controller.mass * omega * omega;
@@ -415,19 +416,15 @@ pub fn fps_controller_spatial_hitter(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
-        let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.2);
-        let feet_origin = transform.translation - collider_y_offset(&collider)
-            + Vec3::new(0.0, controller.grounded_distance, 0.0);
+        let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.1);
+        let feet_origin = transform.translation - collider_y_offset(&collider) * 0.98;
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
-            // Consider when the controller is right up against a wall
-            // We do not want the shape cast to detect it,
-            // so provide a slightly smaller collider in the XZ plane
             &foot_shape,
             feet_origin,
-            transform.rotation,
+            Quat::IDENTITY,
             -Dir3::Y,
             &ShapeCastConfig::from_max_distance(
-                controller.grounded_distance, //+ controller.lean_degree.abs() / 20.0 hack to stay grounded while leaning
+                controller.grounded_distance * 1.1, //+ controller.lean_degree.abs() / 20.0 hack to stay grounded while leaning
             ),
             &filter,
         );
