@@ -31,11 +31,13 @@ impl Plugin for GoldenControllerPlugin {
             .add_systems(
                 FixedUpdate,
                 (
+                    fps_controller_spatial_hitter,
                     fps_controller_move,
                     fps_controller_crouch,
                     fps_controller_lean,
-                    fps_controller_spatial_hitter,
-                ),
+                    fps_controller_steps,
+                )
+                    .chain(),
             );
     }
 }
@@ -255,16 +257,12 @@ const CALC_EPSILON: f32 = 0.01;
 const SLIGHT_SCALE_DOWN: f32 = 0.7;
 
 pub fn fps_controller_move(
-    spatial_query_pipeline: Res<SpatialQueryPipeline>,
     mut query: Query<
         (
-            Entity,
             &GoldenControllerInput,
             &GoldenController,
             &GoldenControllerSpatialHits,
             &mut GoldenControllerMutables,
-            &Collider,
-            &mut Transform,
             &mut LinearVelocity,
             &mut ExternalImpulse,
             &mut LinearDamping,
@@ -275,22 +273,15 @@ pub fn fps_controller_move(
     let dt = 1.0 / FPS as f32;
 
     for (
-        entity,
         input,
         controller,
         spatial_hits,
         mut controller_mutables,
-        collider,
-        mut transform,
         mut velocity,
         mut external_force,
         mut damping,
     ) in query.iter_mut()
     {
-        // Shape cast downwards to find ground
-        // Better than a ray cast as it handles when you are near the edge of a surface
-        let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
-
         let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
         let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
         move_to_world.z_axis *= -1.0; // Forward is -Z
@@ -383,6 +374,62 @@ pub fn fps_controller_move(
             external_force.apply_impulse(add * controller.mass);
         }
 
+        //  Fixes wobbly velocity
+        if velocity.0.z.abs() < 0.004 {
+            velocity.0.z = 0.0;
+        }
+        if velocity.0.x.abs() < 0.004 {
+            velocity.0.x = 0.0;
+        }
+    }
+}
+pub fn fps_controller_steps(
+    spatial_query_pipeline: Res<SpatialQueryPipeline>,
+    mut query: Query<
+        (
+            Entity,
+            &GoldenControllerInput,
+            &GoldenController,
+            &GoldenControllerSpatialHits,
+            &mut GoldenControllerMutables,
+            &Collider,
+            &mut Transform,
+            &mut LinearVelocity,
+            &mut ExternalImpulse,
+            &mut LinearDamping,
+        ),
+        With<LogicalPlayer>,
+    >,
+) {
+    let dt = 1.0 / FPS as f32;
+
+    for (
+        entity,
+        input,
+        controller,
+        spatial_hits,
+        mut controller_mutables,
+        collider,
+        mut transform,
+        mut velocity,
+        mut external_force,
+        mut damping,
+    ) in query.iter_mut()
+    {
+        // Shape cast downwards to find ground
+        // Better than a ray cast as it handles when you are near the edge of a surface
+        let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
+
+        let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
+        let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
+        move_to_world.z_axis *= -1.0; // Forward is -Z
+        let mut wish_direction = move_to_world * (input.movement * speeds);
+        let mut wish_speed = wish_direction.length();
+        if wish_speed > f32::EPSILON {
+            // Avoid division by zero
+            wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
+        }
+
         //WALKING UP STAIRS CODE
         // WALKING UP STAIRS - IMPROVED VERSION
         if controller_mutables.step_offset > 0.0 {
@@ -419,13 +466,6 @@ pub fn fps_controller_move(
                 controller_mutables.step_offset = 0.0;
             }
         }
-        //  Fixes wobbly velocity
-        if velocity.0.z.abs() < 0.004 {
-            velocity.0.z = 0.0;
-        }
-        if velocity.0.x.abs() < 0.004 {
-            velocity.0.x = 0.0;
-        }
     }
 }
 
@@ -437,31 +477,13 @@ pub fn fps_controller_spatial_hitter(
             &GoldenControllerInput,
             &GoldenController,
             &mut GoldenControllerSpatialHits,
-            &mut GoldenControllerMutables,
             &Collider,
             &mut Transform,
-            &mut LinearVelocity,
-            &mut ExternalImpulse,
-            &mut LinearDamping,
         ),
         With<LogicalPlayer>,
     >,
 ) {
-    let dt = 1.0 / FPS as f32;
-
-    for (
-        entity,
-        input,
-        controller,
-        mut spatial_hits,
-        controller_mutables,
-        collider,
-        transform,
-        velocity,
-        external_force,
-        damping,
-    ) in query.iter_mut()
-    {
+    for (entity, input, controller, mut spatial_hits, collider, transform) in query.iter_mut() {
         // Shape cast downwards to find ground
         // Better than a ray cast as it handles when you are near the edge of a surface
         let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
