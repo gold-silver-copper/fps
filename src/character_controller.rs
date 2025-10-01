@@ -254,7 +254,7 @@ impl Default for GoldenControllerMutables {
 const ANGLE_EPSILON: f32 = 0.001953125;
 const CALC_EPSILON: f32 = 0.01;
 
-const SLIGHT_SCALE_DOWN: f32 = 0.7;
+const SLIGHT_SCALE_DOWN: f32 = 0.9;
 
 pub fn fps_controller_move(
     mut query: Query<
