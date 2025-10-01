@@ -416,7 +416,7 @@ pub fn fps_controller_move(
         if input.lean.abs() > 0.1 {
             println!("leaning")
         }
-        gravity.0 = 1.0;
+
         match bottom_down_hit {
             // NEAR GROUND
             Some(hit) => {
@@ -449,7 +449,6 @@ pub fn fps_controller_move(
                 }
 
                 if has_traction {
-                    gravity.0 = 1.0;
                     // Only try steps when grounded, moving, and not blocked above
                     if top_up_hit.is_none() && input.movement.length_squared() > 0.1 && !input.jump
                     {
@@ -578,6 +577,372 @@ pub fn fps_controller_move(
     }
 }
 
+pub fn fps_controller_move(
+    spatial_query_pipeline: Res<SpatialQueryPipeline>,
+    mut query: Query<
+        (
+            Entity,
+            &GoldenControllerInput,
+            &GoldenController,
+            &mut GoldenControllerMutables,
+            &mut Collider,
+            &mut Transform,
+            &mut LinearVelocity,
+            &mut ExternalImpulse,
+            &mut GravityScale,
+            &mut LinearDamping,
+        ),
+        With<LogicalPlayer>,
+    >,
+) {
+    let dt = 1.0 / FPS as f32;
+
+    for (
+        entity,
+        input,
+        controller,
+        mut controller_mutables,
+        mut collider,
+        mut transform,
+        mut velocity,
+        mut external_force,
+        mut gravity,
+        mut damping,
+    ) in query.iter_mut()
+    {
+        // Shape cast downwards to find ground
+        // Better than a ray cast as it handles when you are near the edge of a surface
+        let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
+
+        let bottom_down_hit = spatial_query_pipeline.cast_shape(
+            // Consider when the controller is right up against a wall
+            // We do not want the shape cast to detect it,
+            // so provide a slightly smaller collider in the XZ plane
+            &scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN),
+            transform.translation,
+            transform.rotation,
+            -Dir3::Y,
+            &ShapeCastConfig::from_max_distance(
+                controller.grounded_distance, //+ controller.lean_degree.abs() / 20.0 hack to stay grounded while leaning
+            ),
+            &filter,
+        );
+        // the top hit should be at least the stair height so that the player isnt translated inside a roof
+        let top_up_hit = spatial_query_pipeline.cast_shape(
+            &scaled_collider_laterally(&collider, 0.99),
+            transform.translation + Vec3::new(0.0, controller.height, 0.0),
+            Quat::IDENTITY,
+            Dir3::Y,
+            &ShapeCastConfig::from_max_distance(controller.grounded_distance),
+            &filter,
+        );
+
+        let speeds = Vec3::new(controller.side_speed, 0.0, controller.forward_speed);
+        let mut move_to_world = Mat3::from_axis_angle(Vec3::Y, input.yaw);
+        move_to_world.z_axis *= -1.0; // Forward is -Z
+        let mut wish_direction = move_to_world * (input.movement * speeds);
+        let mut wish_speed = wish_direction.length();
+        if wish_speed > f32::EPSILON {
+            // Avoid division by zero
+            wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
+        }
+        // limit move speed while leaning or crouching
+        let max_speed = (controller.walk_speed
+            * (1.0 - controller_mutables.crouch_degree / 2.0)
+            * (1.0 - controller_mutables.lean_degree.abs() / 2.0))
+            .max(3.0);
+        wish_speed = f32::min(wish_speed, max_speed);
+
+        /* Crouching */
+
+        // Target crouch state: 1 = crouch, 0 = stand
+        let target_crouch = if input.crouch {
+            input.crouch_degree_mod
+        } else {
+            0.0
+        };
+
+        let epsilon = 0.01; // deadzone threshold, used for lean as well
+
+        // Smoothly move actual crouch_degree toward target
+        if (controller_mutables.crouch_degree - target_crouch).abs() > epsilon {
+            if controller_mutables.crouch_degree < target_crouch {
+                controller_mutables.crouch_degree += controller.crouch_speed * dt;
+            } else if controller_mutables.crouch_degree > target_crouch {
+                // Only allow standing up if there's no ceiling
+                if top_up_hit.is_none() {
+                    controller_mutables.crouch_degree -= controller.crouch_speed * dt;
+                }
+            }
+        } else {
+            // Snap to target when within epsilon to avoid jitter
+            controller_mutables.crouch_degree = target_crouch;
+        }
+
+        // Clamp for safety
+        controller_mutables.crouch_degree = controller_mutables.crouch_degree.clamp(0.0, 1.0);
+
+        // Update collider height
+
+        let current_height =
+            (controller.height / 2.0) / (4.0 * controller_mutables.crouch_degree + 1.0);
+        collider.set_shape(SharedShape::capsule_y(current_height, controller.radius));
+
+        /* Leaning */
+        let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
+        let right_dir = yaw_rotation * Vec3::X; // world-space right
+
+        let lean_step = controller.leaning_speed * dt;
+
+        let probe_origin = transform.translation + Vec3::new(0.0, current_height * 0.1, 0.0);
+        let probe_distance = 1.0;
+        let side_shape = Collider::cylinder(controller.radius * 0.99, current_height);
+
+        // Right wall check
+        let right_hit = spatial_query_pipeline.cast_shape(
+            &side_shape,
+            probe_origin,
+            transform.rotation,
+            Dir3::new(right_dir).unwrap(),
+            &ShapeCastConfig::from_max_distance(probe_distance),
+            &filter,
+        );
+
+        // Left wall check
+        let left_hit = spatial_query_pipeline.cast_shape(
+            &side_shape,
+            probe_origin,
+            transform.rotation,
+            Dir3::new(-right_dir).unwrap(),
+            &ShapeCastConfig::from_max_distance(probe_distance),
+            &filter,
+        );
+
+        let rhd = right_hit.map_or(1.0, |h| h.distance);
+        let lhd = left_hit.map_or(1.0, |h| h.distance);
+
+        // Desired lean from input
+        let mut target_lean = input.lean;
+
+        // Block intentional lean into wall
+        if right_hit.is_some() && (target_lean > 0.0) {
+            target_lean = rhd;
+        }
+        if left_hit.is_some() && (target_lean < 0.0) {
+            target_lean = -lhd;
+        }
+        controller_mutables.lean_degree = controller_mutables.lean_degree.clamp(-lhd, rhd);
+        let old_degree = controller_mutables.lean_degree;
+
+        // Apply lean degree modifier
+        target_lean *= 1.0 - input.lean_degree_mod;
+
+        // Smooth toward target with epsilon deadzone
+        if (controller_mutables.lean_degree - target_lean).abs() > epsilon {
+            controller_mutables.lean_degree +=
+                lean_step * (target_lean - controller_mutables.lean_degree).signum();
+        } else {
+            controller_mutables.lean_degree = target_lean;
+        }
+
+        controller_mutables.lean_degree = controller_mutables.lean_degree.clamp(-lhd, rhd);
+
+        let degree_change = controller_mutables.lean_degree - old_degree;
+
+        // Shift collider sideways to simulate body lean (peeking)
+        transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
+
+        // Rotate to show visual lean
+        let lean_amount = controller_mutables.lean_degree * controller.lean_max;
+        let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
+        transform.rotation = (yaw_rotation * lean_rotation).normalize();
+        if input.lean.abs() > 0.1 {
+            println!("leaning")
+        }
+
+        match bottom_down_hit {
+            // NEAR GROUND
+            Some(hit) => {
+                // check if player is on walkable slope
+                let has_traction =
+                    Vec3::dot(hit.normal1, Vec3::Y) > controller.traction_normal_cutoff;
+                damping.0 = controller.air_damp * 10.0;
+
+                if !input.jump {
+                    let add = acceleration(
+                        wish_direction,
+                        wish_speed,
+                        controller.acceleration,
+                        velocity.0,
+                        dt,
+                    );
+                    external_force.apply_impulse(add * controller.mass);
+                } else {
+                    //When bhopping with jump held, use air accel logic for smoother movement
+                    wish_speed = f32::min(wish_speed, controller.air_speed_cap);
+                    let add = acceleration(
+                        wish_direction,
+                        wish_speed,
+                        controller.air_acceleration,
+                        velocity.0,
+                        dt,
+                    );
+
+                    external_force.apply_impulse(add * controller.mass);
+                }
+
+                if has_traction {
+                    // Only try steps when grounded, moving, and not blocked above
+                    if top_up_hit.is_none() && input.movement.length_squared() > 0.1 && !input.jump
+                    {
+                        let feet_origin = transform.translation - collider_y_offset(&collider)
+                            + Vec3::new(0.0, controller.grounded_distance / 1.0, 0.0);
+                        let body_origin = feet_origin + Vec3::Y * controller.step_height * 1.5;
+
+                        let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
+
+                        let body_shape =
+                            Collider::cylinder(controller.radius * 0.95, current_height);
+
+                        // Cast at foot level
+                        if let Some(foot_hit) = spatial_query_pipeline.cast_shape(
+                            &foot_shape,
+                            feet_origin,
+                            Quat::IDENTITY,
+                            Dir3::new(wish_direction).unwrap(),
+                            &ShapeCastConfig::from_max_distance(controller.step_height / 2.0),
+                            &filter,
+                        ) {
+                            if foot_hit.normal1.y < 0.1 {
+                                let body_hit = spatial_query_pipeline.cast_shape(
+                                    &body_shape,
+                                    body_origin,
+                                    Quat::IDENTITY,
+                                    Dir3::new(wish_direction).unwrap(),
+                                    &ShapeCastConfig::from_max_distance(controller.step_height),
+                                    &filter,
+                                );
+
+                                // If foot hits but body does not → step up
+                                if body_hit.is_none() {
+                                    controller_mutables.step_offset = controller.step_height;
+
+                                    println!("Stepped up!");
+                                }
+                            }
+                        }
+                    }
+
+                    if controller_mutables.ground_tick < 10 {
+                        //This fixes bug that pushes player randomly upon landing
+                        let linear_velocity = velocity.0;
+                        let normal_force = Vec3::dot(linear_velocity, hit.normal1) * hit.normal1;
+                        velocity.0 -= normal_force;
+                    }
+                    if !input.jump && input.movement.length_squared() < 0.1 {
+                        damping.0 = controller.air_damp * 30.0;
+                    }
+
+                    if input.jump && velocity.0.y < 1.0 {
+                        let jump_force = Vec3 {
+                            x: 0.0,
+                            y: controller.jump_force,
+                            z: 0.0,
+                        } * controller.mass;
+                        external_force.apply_impulse(jump_force);
+                    }
+                }
+                controller_mutables.ground_tick = controller_mutables.ground_tick.saturating_add(1);
+            }
+
+            //IN AIR
+            None => {
+                controller_mutables.ground_tick = 0;
+
+                damping.0 = controller.air_damp;
+
+                wish_speed = f32::min(wish_speed, controller.air_speed_cap);
+
+                let add = acceleration(
+                    wish_direction,
+                    wish_speed,
+                    controller.air_acceleration,
+                    velocity.0,
+                    dt,
+                );
+
+                external_force.apply_impulse(add * controller.mass);
+            }
+        }
+        //WALKING UP STAIRS CODE
+        // WALKING UP STAIRS - IMPROVED VERSION
+        if controller_mutables.step_offset > 0.0 {
+            controller_mutables.ground_tick = 0;
+            let step_speed = 20.0; // larger = faster snap
+            let offset_change = controller_mutables.step_offset * dt * step_speed;
+            // Store original position for collision testing
+            let original_pos = transform.translation;
+
+            // Try to move up and forward in one frame
+            let step_up_amount = offset_change;
+            let target_pos = original_pos
+                + Vec3::Y * step_up_amount
+                + wish_direction * dt * controller.walk_speed;
+
+            // Check if target position is valid (no collisions)
+            let collision_test = spatial_query_pipeline.cast_shape(
+                &collider,
+                target_pos,
+                transform.rotation,
+                Dir3::new(wish_direction).unwrap_or(Dir3::Y), // Zero direction for overlap test
+                &ShapeCastConfig::from_max_distance(0.001),
+                &filter,
+            );
+
+            if collision_test.is_none() {
+                // Safe to move to target position
+                transform.translation = target_pos;
+                controller_mutables.step_offset -= step_up_amount;
+            }
+
+            // Clean up small values
+            if controller_mutables.step_offset < 0.01 {
+                controller_mutables.step_offset = 0.0;
+            }
+        }
+        //  Fixes wobbly velocity
+        if velocity.0.z.abs() < 0.004 {
+            velocity.0.z = 0.0;
+        }
+        if velocity.0.x.abs() < 0.004 {
+            velocity.0.x = 0.0;
+        }
+    }
+}
+
+/*
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
 pub fn fps_controller_input(
     key_input: Res<ButtonInput<KeyCode>>,
     mut mouse_events: EventReader<MouseMotion>,
@@ -669,20 +1034,25 @@ pub fn fps_controller_look(
 /// Needed for when we want to originate something at the foot of the player.
 fn collider_y_offset(collider: &Collider) -> Vec3 {
     Vec3::Y
-        * if let Some(capsule) = collider.shape().as_capsule() {
+        * if let Some(cylinder) = collider.shape().as_cylinder() {
+            cylinder.half_height
+        } else if let Some(capsule) = collider.shape().as_capsule() {
             capsule.half_height() + capsule.radius
         } else {
-            panic!("Controller must use a capsule  collider")
+            panic!("Controller must use a cylinder or capsule collider")
         }
 }
 
 /// Return a collider that is scaled laterally (XZ plane) but not vertically (Y axis).
 fn scaled_collider_laterally(collider: &Collider, scale: f32) -> Collider {
-    if let Some(capsule) = collider.shape().as_capsule() {
+    if let Some(cylinder) = collider.shape().as_cylinder() {
+        let new_cylinder = Collider::cylinder(cylinder.radius * scale, cylinder.half_height * 2.0);
+        new_cylinder
+    } else if let Some(capsule) = collider.shape().as_capsule() {
         let new_capsule = Collider::capsule(capsule.radius * scale, capsule.segment.length());
         new_capsule
     } else {
-        panic!("Controller must use a capsule collider")
+        panic!("Controller must use a cylinder or capsule collider")
     }
 }
 
