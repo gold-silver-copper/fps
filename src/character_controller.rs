@@ -299,6 +299,12 @@ pub fn fps_controller_move(
         wish_speed = f32::min(wish_speed, max_speed);
 
         if spatial_hits.bottom_down {
+            let floating_force = Vec3 {
+                x: 0.0,
+                y: controller.jump_force,
+                z: 0.0,
+            };
+            external_force.apply_impulse(floating_force * 2.0);
             damping.0 = controller.air_damp * 10.0;
             if !input.jump {
                 let add = acceleration(
@@ -497,12 +503,15 @@ pub fn fps_controller_spatial_hitter(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
+        let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
+        let feet_origin = transform.translation - collider_y_offset(&collider)
+            + Vec3::new(0.0, controller.grounded_distance, 0.0);
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
             // Consider when the controller is right up against a wall
             // We do not want the shape cast to detect it,
             // so provide a slightly smaller collider in the XZ plane
-            &scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN),
-            transform.translation,
+            &foot_shape,
+            feet_origin,
             transform.rotation,
             -Dir3::Y,
             &ShapeCastConfig::from_max_distance(
@@ -576,12 +585,8 @@ pub fn fps_controller_spatial_hitter(
         if wish_direction.length_squared() > 0.1 {
             let dir = Dir3::new(wish_direction).unwrap();
 
-            let feet_origin = transform.translation - collider_y_offset(&collider)
-                + Vec3::new(0.0, controller.grounded_distance, 0.0);
-
             let body_origin = feet_origin + Vec3::Y * controller.step_height * 1.5;
 
-            let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.05);
             let body_shape = scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN);
 
             // Feet cast
