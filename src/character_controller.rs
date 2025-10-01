@@ -28,7 +28,14 @@ impl Plugin for GoldenControllerPlugin {
                     .after(gamepad::gamepad_connection_system)
                     .after(touch::touch_screen_input_system),
             )
-            .add_systems(FixedUpdate, (fps_controller_move, fps_controller_crouch));
+            .add_systems(
+                FixedUpdate,
+                (
+                    fps_controller_move,
+                    fps_controller_crouch,
+                    fps_controller_lean,
+                ),
+            );
     }
 }
 
@@ -209,6 +216,8 @@ pub struct GoldenControllerMutables {
 #[derive(Component, Default)]
 pub struct GoldenControllerSpatialHits {
     pub top_up: bool,
+    pub right_wall_hit: (bool, f32),
+    pub left_wall_hit: (bool, f32),
 }
 
 impl Default for GoldenControllerMutables {
@@ -249,7 +258,7 @@ pub fn fps_controller_move(
             &GoldenController,
             &mut GoldenControllerSpatialHits,
             &mut GoldenControllerMutables,
-            &mut Collider,
+            &Collider,
             &mut Transform,
             &mut LinearVelocity,
             &mut ExternalImpulse,
@@ -266,7 +275,7 @@ pub fn fps_controller_move(
         controller,
         mut spatial_hits,
         mut controller_mutables,
-        mut collider,
+        collider,
         mut transform,
         mut velocity,
         mut external_force,
@@ -325,8 +334,6 @@ pub fn fps_controller_move(
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // world-space right
 
-        let lean_step = controller.leaning_speed * dt;
-
         let probe_origin = transform.translation + Vec3::new(0.0, 0.1, 0.0);
         let probe_distance = 1.0;
         let side_shape = &scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN);
@@ -341,6 +348,11 @@ pub fn fps_controller_move(
             &filter,
         );
 
+        match right_hit {
+            Some(h) => spatial_hits.right_wall_hit = (true, h.distance),
+            None => spatial_hits.right_wall_hit = (false, 1.0),
+        }
+
         // Left wall check
         let left_hit = spatial_query_pipeline.cast_shape(
             &side_shape,
@@ -350,47 +362,9 @@ pub fn fps_controller_move(
             &ShapeCastConfig::from_max_distance(probe_distance),
             &filter,
         );
-
-        let rhd = right_hit.map_or(1.0, |h| h.distance);
-        let lhd = left_hit.map_or(1.0, |h| h.distance);
-
-        // Desired lean from input
-        let mut target_lean = input.lean;
-
-        // Block intentional lean into wall
-        if right_hit.is_some() && (target_lean > 0.0) {
-            target_lean = rhd;
-        }
-        if left_hit.is_some() && (target_lean < 0.0) {
-            target_lean = -lhd;
-        }
-        controller_mutables.lean_degree = controller_mutables.lean_degree.clamp(-lhd, rhd);
-        let old_degree = controller_mutables.lean_degree;
-
-        // Apply lean degree modifier
-        target_lean *= 1.0 - input.lean_degree_mod;
-
-        // Smooth toward target with epsilon deadzone
-        if (controller_mutables.lean_degree - target_lean).abs() > CALC_EPSILON {
-            controller_mutables.lean_degree +=
-                lean_step * (target_lean - controller_mutables.lean_degree).signum();
-        } else {
-            controller_mutables.lean_degree = target_lean;
-        }
-
-        controller_mutables.lean_degree = controller_mutables.lean_degree.clamp(-lhd, rhd);
-
-        let degree_change = controller_mutables.lean_degree - old_degree;
-
-        // Shift collider sideways to simulate body lean (peeking)
-        transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
-
-        // Rotate to show visual lean
-        let lean_amount = controller_mutables.lean_degree * controller.lean_max;
-        let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
-        transform.rotation = (yaw_rotation * lean_rotation).normalize();
-        if input.lean.abs() > 0.1 {
-            println!("leaning")
+        match left_hit {
+            Some(h) => spatial_hits.left_wall_hit = (true, h.distance),
+            None => spatial_hits.left_wall_hit = (false, 1.0),
         }
 
         match bottom_down_hit {
@@ -552,6 +526,70 @@ pub fn fps_controller_move(
     }
 }
 
+pub fn fps_controller_lean(
+    mut query: Query<
+        (
+            &GoldenControllerInput,
+            &GoldenController,
+            &GoldenControllerSpatialHits,
+            &mut GoldenControllerMutables,
+            &mut Transform,
+        ),
+        With<LogicalPlayer>,
+    >,
+) {
+    let dt = 1.0 / FPS as f32;
+
+    for (input, controller, spatial_hits, mut controller_mutables, mut transform) in
+        query.iter_mut()
+    {
+        /* Leaning */
+        let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
+        let right_dir = yaw_rotation * Vec3::X; // world-space right
+
+        let lean_step = controller.leaning_speed * dt;
+
+        // Desired lean from input
+        let mut target_lean = input.lean;
+
+        // Block intentional lean into wall
+        if spatial_hits.right_wall_hit.0 && (target_lean > 0.0) {
+            target_lean = spatial_hits.right_wall_hit.1;
+        }
+        if spatial_hits.left_wall_hit.0 && (target_lean < 0.0) {
+            target_lean = -spatial_hits.left_wall_hit.1;
+        }
+        controller_mutables.lean_degree = controller_mutables
+            .lean_degree
+            .clamp(-spatial_hits.left_wall_hit.1, spatial_hits.right_wall_hit.1);
+        let old_degree = controller_mutables.lean_degree;
+
+        // Apply lean degree modifier
+        target_lean *= 1.0 - input.lean_degree_mod;
+
+        // Smooth toward target with epsilon deadzone
+        if (controller_mutables.lean_degree - target_lean).abs() > CALC_EPSILON {
+            controller_mutables.lean_degree +=
+                lean_step * (target_lean - controller_mutables.lean_degree).signum();
+        } else {
+            controller_mutables.lean_degree = target_lean;
+        }
+
+        controller_mutables.lean_degree = controller_mutables
+            .lean_degree
+            .clamp(-spatial_hits.left_wall_hit.1, spatial_hits.right_wall_hit.1);
+
+        let degree_change = controller_mutables.lean_degree - old_degree;
+
+        // Shift collider sideways to simulate body lean (peeking)
+        transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
+
+        // Rotate to show visual lean
+        let lean_amount = controller_mutables.lean_degree * controller.lean_max;
+        let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
+        transform.rotation = (yaw_rotation * lean_rotation).normalize();
+    }
+}
 pub fn fps_controller_crouch(
     mut query: Query<
         (
