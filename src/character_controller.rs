@@ -935,7 +935,6 @@ pub fn fps_controller_render(
     logical_query: Query<
         (
             &Transform,
-            &Collider,
             &GoldenControllerMutables,
             &FeetOf,
             &CameraConfig,
@@ -944,7 +943,7 @@ pub fn fps_controller_render(
     >,
 ) {
     for (mut render_transform, render_player) in render_query.iter_mut() {
-        if let Ok((logical_transform, collider, controller_mutables, feetof, camera_config)) =
+        if let Ok((logical_transform, controller_mutables, feetof, camera_config)) =
             logical_query.get(render_player.logical_entity)
         {
             println!("okay");
