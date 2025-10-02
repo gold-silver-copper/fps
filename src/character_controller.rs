@@ -322,22 +322,48 @@ pub fn fps_controller_move(
             if has_traction {
                 println!("HAS TRACTION");
                 if !input.jump {
+                    // height control (spring–damper)
                     let current_height = spatial_hits.bottom_down_distance;
                     let target_height = controller.grounded_distance;
                     let height_error = target_height - current_height;
-                    let freq = 6.0;
-                    let damping = 0.1;
 
-                    let omega = 2.0 * std::f32::consts::PI * freq;
-                    let k = controller.mass * omega * omega;
-                    let c = 2.0 * controller.mass * damping * omega;
+                    // Tuning: make these snappy for fast pop-back
+                    let freq_hz = 6.0; // natural frequency for normal spring (Hz)
 
-                    let vertical_vel = velocity.0.y;
-                    let f_spring = k * height_error;
-                    let f_damp = -c * vertical_vel;
-                    let f_total = f_spring + f_damp + controller.mass * 9.81;
+                    let omega = 2.0 * std::f32::consts::PI * freq_hz;
+                    let k = controller.mass * omega * omega; // N/m
 
-                    external_force.apply_impulse(Vec3::Y * f_total * dt);
+                    // basic vectors
+                    let gravity = Vec3::new(0.0, -9.81, 0.0);
+                    let n = spatial_hits.bottom_hit_normal.normalize(); // ground normal
+
+                    // decompose velocity into normal and tangential parts
+                    let v = velocity.0;
+                    let v_normal_scalar = Vec3::dot(v, n);
+                    let v_normal = n * v_normal_scalar;
+                    let v_tangent = v - v_normal;
+
+                    // desired normal acceleration from PD spring (m/s^2)
+                    // Hooke: F_spring = k * error, F_damp = -c * v_normal_scalar
+                    let a_normal_des = (k * height_error) / controller.mass;
+
+                    // normal component of gravity (scalar)
+                    let g_dot_n = Vec3::dot(gravity, n); // negative value (e.g. -9.81 on flat)
+                    // Force along normal needed: m*(a_normal_des - g_normal)
+                    let f_normal = n * (controller.mass * (a_normal_des - g_dot_n));
+
+                    // tangential gravity vector (gravity projection onto plane)
+                    let g_tangent = gravity - n * g_dot_n; // this is the downslope pull (vector)
+                    // cancel tangential gravity exactly + actively damp tangent velocity:
+                    let f_tangent_cancel = -controller.mass * g_tangent; // cancels downslope accel
+                    let f_tangent_damp = -controller.mass * v_tangent; // active damping
+                    let f_tangent = f_tangent_cancel + f_tangent_damp;
+
+                    // total thrust (Newtons)
+                    let mut f_total = f_normal + f_tangent;
+
+                    // apply as impulse (force * dt)
+                    external_force.apply_impulse(f_total * dt);
                 }
 
                 //This fixes bug that pushes player randomly upon landing
