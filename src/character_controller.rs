@@ -263,6 +263,7 @@ pub fn fps_controller_move(
         ),
         With<LogicalPlayer>,
     >,
+    gravity: Res<Gravity>,
 ) {
     let dt = 1.0 / FPS as f32;
 
@@ -321,10 +322,11 @@ pub fn fps_controller_move(
                 > controller.traction_normal_cutoff;
             if has_traction {
                 println!("HAS TRACTION");
-                if !input.jump {
+                if !input.jump && spatial_hits.bottom_hit_normal.y > 0.5 {
                     // height control (spring–damper)
                     let current_height = spatial_hits.bottom_down_distance;
-                    let target_height = controller.grounded_distance;
+                    let target_height =
+                        controller.grounded_distance * (1.0 - controller_mutables.crouch_degree);
                     let height_error = target_height - current_height;
 
                     // Tuning: make these snappy for fast pop-back
@@ -333,8 +335,6 @@ pub fn fps_controller_move(
                     let omega = 2.0 * std::f32::consts::PI * freq_hz;
                     let k = controller.mass * omega * omega; // N/m
 
-                    // basic vectors
-                    let gravity = Vec3::new(0.0, -9.81, 0.0);
                     let n = spatial_hits.bottom_hit_normal.normalize(); // ground normal
 
                     // decompose velocity into normal and tangential parts
@@ -348,19 +348,19 @@ pub fn fps_controller_move(
                     let a_normal_des = (k * height_error) / controller.mass;
 
                     // normal component of gravity (scalar)
-                    let g_dot_n = Vec3::dot(gravity, n); // negative value (e.g. -9.81 on flat)
+                    let g_dot_n = Vec3::dot(gravity.0, n); // negative value (e.g. -9.81 on flat)
                     // Force along normal needed: m*(a_normal_des - g_normal)
                     let f_normal = n * (controller.mass * (a_normal_des - g_dot_n));
 
                     // tangential gravity vector (gravity projection onto plane)
-                    let g_tangent = gravity - n * g_dot_n; // this is the downslope pull (vector)
+                    let g_tangent = gravity.0 - n * g_dot_n; // this is the downslope pull (vector)
                     // cancel tangential gravity exactly + actively damp tangent velocity:
                     let f_tangent_cancel = -controller.mass * g_tangent; // cancels downslope accel
                     let f_tangent_damp = -controller.mass * v_tangent; // active damping
                     let f_tangent = f_tangent_cancel + f_tangent_damp;
 
                     // total thrust (Newtons)
-                    let mut f_total = f_normal + f_tangent;
+                    let f_total = f_normal + f_tangent;
 
                     // apply as impulse (force * dt)
                     external_force.apply_impulse(f_total * dt);
@@ -372,11 +372,13 @@ pub fn fps_controller_move(
                     * spatial_hits.bottom_hit_normal;
                 velocity.0 -= normal_force;
 
+                //fast slow down when player does not wish to move
                 if !input.jump && input.movement.length_squared() < 0.1 {
                     damping.0 = controller.air_damp * 30.0;
                 }
 
-                if input.jump && velocity.0.y < 1.0 {
+                //this has to be tuned to prevent double jumps
+                if input.jump && velocity.0.y < 2.0 {
                     let jump_force = Vec3 {
                         x: 0.0,
                         y: controller.jump_force,
@@ -443,7 +445,7 @@ pub fn fps_controller_spatial_hitter(
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
         let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.1);
-        let feet_origin = transform.translation - collider_y_offset(&collider) * 0.98;
+        let feet_origin = transform.translation - collider_y_offset(&collider);
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
             &foot_shape,
             feet_origin,
@@ -485,7 +487,7 @@ pub fn fps_controller_spatial_hitter(
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // world-space right
 
-        let probe_origin = transform.translation + Vec3::new(0.0, 0.1, 0.0);
+        let probe_origin = transform.translation;
         let probe_distance = 1.0;
         let side_shape = &scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN);
 
@@ -632,7 +634,7 @@ pub fn fps_controller_crouch(
         // Update collider height
 
         let current_height =
-            (controller.height / 2.0) / (4.0 * controller_mutables.crouch_degree + 1.0);
+            (controller.height / 2.0) / (9.0 * controller_mutables.crouch_degree + 1.0);
         collider.set_shape(SharedShape::capsule_y(current_height, controller.radius));
     }
 }

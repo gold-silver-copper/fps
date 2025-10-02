@@ -4,6 +4,9 @@ can loot items off dead bodies
 quake movement
 all bullets are physical entities
 
+fix slope walking
+fix random bumps when walking
+
 
 notes
 icnrease accel
