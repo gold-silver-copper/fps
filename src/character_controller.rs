@@ -243,7 +243,7 @@ impl Default for GoldenControllerMutables {
 const ANGLE_EPSILON: f32 = 0.001953125;
 const CALC_EPSILON: f32 = 0.01;
 
-const SLIGHT_SCALE_DOWN: f32 = 0.9;
+const SLIGHT_SCALE_DOWN: f32 = 0.8;
 
 pub fn fps_controller_move(
     mut query: Query<
@@ -289,58 +289,47 @@ pub fn fps_controller_move(
         wish_speed = f32::min(wish_speed, max_speed);
 
         if spatial_hits.bottom_down {
-            damping.0 = controller.air_damp * 10.0;
-            if !input.jump {
-                let add = acceleration(
-                    wish_direction,
-                    wish_speed,
-                    controller.acceleration,
-                    velocity.0,
-                    dt,
-                );
-                external_force.apply_impulse(add * controller.mass);
-            } else {
-                //When bhopping with jump held, use air accel logic for smoother movement
-                wish_speed = f32::min(wish_speed, controller.air_speed_cap);
-                let add = acceleration(
-                    wish_direction,
-                    wish_speed,
-                    controller.air_acceleration,
-                    velocity.0,
-                    dt,
-                );
+            let mut add = acceleration(
+                wish_direction,
+                f32::min(wish_speed, controller.air_speed_cap),
+                controller.air_acceleration,
+                velocity.0,
+                dt,
+            );
 
-                external_force.apply_impulse(add * controller.mass);
-            }
             // check if player is on walkable slope
             let has_traction = Vec3::dot(spatial_hits.bottom_hit_normal, Vec3::Y)
                 > controller.traction_normal_cutoff;
             if has_traction {
+                if !input.jump {
+                    add = acceleration(
+                        wish_direction,
+                        wish_speed,
+                        controller.acceleration,
+                        velocity.0,
+                        dt,
+                    );
+                }
+                damping.0 = controller.air_damp * 10.0;
                 println!("HAS TRACTION");
-                if !input.jump && spatial_hits.bottom_hit_normal.y > 0.5 {
+                if !input.jump {
                     // spring–damper height control
                     let current_height = spatial_hits.bottom_down_distance;
                     let target_height =
-                        controller.grounded_distance * (1.0 - controller_mutables.crouch_degree);
+                        controller.grounded_distance * (0.9 - controller_mutables.crouch_degree);
                     let height_error = target_height - current_height;
 
                     // spring stiffness from frequency
                     let omega = 2.0 * std::f32::consts::PI * 6.0;
                     let k = controller.mass * omega * omega;
 
-                    let n = spatial_hits.bottom_hit_normal.normalize();
+                    let f_spring = k * height_error;
 
-                    // desired normal acceleration
-                    let a_normal_des = (k * height_error) / controller.mass;
+                    let f_total = f_spring + controller.mass * gravity.0;
+                    let force_to_apply = Vec3::Y * f_total * dt;
+                    println!("forcik {:#?}", force_to_apply);
 
-                    // gravity along normal
-                    let g_dot_n = gravity.0.dot(n);
-
-                    // normal force (spring + gravity compensation)
-                    let f_normal = n * (controller.mass * (a_normal_des - g_dot_n));
-
-                    // impulse
-                    external_force.apply_impulse(f_normal * dt);
+                    external_force.apply_impulse(force_to_apply);
                 }
 
                 //This fixes bug that pushes player randomly upon landing
@@ -372,6 +361,7 @@ pub fn fps_controller_move(
                 }
             }
             controller_mutables.ground_tick = controller_mutables.ground_tick.saturating_add(1);
+            external_force.apply_impulse(add * controller.mass);
         } else {
             println!("has AIR");
             controller_mutables.ground_tick = 0;
@@ -421,7 +411,7 @@ pub fn fps_controller_spatial_hitter(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
-        let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.1);
+        let foot_shape = Collider::cylinder(controller.radius * SLIGHT_SCALE_DOWN, 0.1);
         let feet_origin = transform.translation - collider_y_offset(&collider) * 0.99;
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
             &foot_shape,
@@ -429,7 +419,7 @@ pub fn fps_controller_spatial_hitter(
             Quat::IDENTITY,
             -Dir3::Y,
             &ShapeCastConfig::from_max_distance(
-                controller.grounded_distance * 1.01, //+ controller.lean_degree.abs() / 20.0 hack to stay grounded while leaning
+                controller.grounded_distance * 1.1, //+ controller.lean_degree.abs() / 20.0 hack to stay grounded while leaning
             ),
             &filter,
         );
