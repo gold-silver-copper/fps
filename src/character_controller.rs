@@ -287,6 +287,7 @@ pub fn fps_controller_move(
         wish_speed = f32::min(wish_speed, max_speed);
 
         if spatial_hits.bottom_down {
+            damping.0 = controller.air_damp;
             let mut add = acceleration(
                 wish_direction,
                 f32::min(wish_speed, controller.air_speed_cap),
@@ -299,6 +300,8 @@ pub fn fps_controller_move(
             let has_traction = Vec3::dot(spatial_hits.bottom_hit_normal, Vec3::Y)
                 > controller.traction_normal_cutoff;
             if has_traction {
+                damping.0 = controller.air_damp * 10.0;
+                println!("HAS TRACTION");
                 if !input.jump {
                     add = acceleration(
                         wish_direction,
@@ -308,48 +311,81 @@ pub fn fps_controller_move(
                         dt,
                     );
                 }
-                damping.0 = controller.air_damp * 10.0;
-                println!("HAS TRACTION");
+
+                // SPRING + SLOPE SUPPORT
                 if !input.jump {
-                    // spring–damper height control
+                    // spring–damper height control, slope-aware
                     let current_height = spatial_hits.bottom_down_distance;
-                    let target_height =
-                        controller.grounded_distance * (0.9 - controller_mutables.crouch_degree);
+                    let target_height = controller.grounded_distance * 0.9;
                     let height_error = target_height - current_height;
 
                     // spring stiffness from frequency
-                    let omega = 2.0 * std::f32::consts::PI * 6.0;
+                    let omega = 2.0 * std::f32::consts::PI * 2.0;
                     let k = controller.mass * omega * omega;
 
+                    // damping coefficient (critical damping = 2 * m * omega)
+                    let c = 2.0 * controller.mass * omega * 0.4; // 0.8 = slightly underdamped, tune this
+
+                    // ground normal (unit)
+                    let normal = {
+                        let n = spatial_hits.bottom_hit_normal;
+                        if n.length_squared() > 0.0 {
+                            n.normalize()
+                        } else {
+                            Vec3::Y
+                        }
+                    };
+
+                    // gravity vector (gravity.0 is your Vec3)
+                    let gravity_vec = gravity.0;
+
+                    // 1) cancel tangential part of gravity so it doesn't slide us down the slope
+                    let gravity_normal_comp = normal * Vec3::dot(gravity_vec, normal);
+                    let gravity_tangent = gravity_vec - gravity_normal_comp;
+                    let cancel_tangent_impulse = -controller.mass * gravity_tangent * dt;
+                    external_force.apply_impulse(cancel_tangent_impulse);
+
+                    // 2) spring + damping along the normal
+                    // velocity along the normal
+                    let vel_along_normal = Vec3::dot(velocity.0, normal);
+
+                    // spring force (scalar)
                     let f_spring = k * height_error;
 
-                    let f_total = f_spring + controller.mass * gravity.0;
-                    let force_to_apply = Vec3::Y * f_total * dt;
-                    println!("forcik {:#?}", force_to_apply);
+                    // damping force (scalar, resists motion along the normal)
+                    let f_damp = -c * vel_along_normal;
 
-                    external_force.apply_impulse(force_to_apply);
+                    // include gravity’s normal component
+                    let gravity_normal_scalar = Vec3::dot(gravity_vec, normal);
+
+                    // total force along the normal
+                    let f_total_normal =
+                        f_spring + f_damp - controller.mass * gravity_normal_scalar;
+
+                    // impulse this frame
+                    let spring_damper_impulse = normal * (f_total_normal * dt);
+                    external_force.apply_impulse(spring_damper_impulse);
                 }
-
-                //This fixes bug that pushes player randomly upon landing
-                let linear_velocity = velocity.0;
-                let normal_force = Vec3::dot(linear_velocity, spatial_hits.bottom_hit_normal)
-                    * spatial_hits.bottom_hit_normal;
-                velocity.0 -= normal_force;
 
                 //fast slow down when player does not wish to move
                 if !input.jump && input.movement.length_squared() < 0.1 {
                     damping.0 = controller.air_damp * 30.0;
                     //  Fixes wobbly velocity
-                    if velocity.0.z.abs() < 0.01 {
+                    if velocity.0.z.abs() < 0.3 {
                         velocity.0.z = 0.0;
                     }
-                    if velocity.0.x.abs() < 0.01 {
+                    if velocity.0.x.abs() < 0.3 {
                         velocity.0.x = 0.0;
                     }
                 }
 
                 //this has to be tuned to prevent double jumps
-                if input.jump && velocity.0.y < 2.0 {
+                if input.jump && velocity.0.y < 1.0 {
+                    //This fixes bug that pushes player randomly upon landing
+                    let linear_velocity = velocity.0;
+                    let normal_force = Vec3::dot(linear_velocity, spatial_hits.bottom_hit_normal)
+                        * spatial_hits.bottom_hit_normal;
+                    velocity.0 -= normal_force;
                     let jump_force = Vec3 {
                         x: 0.0,
                         y: controller.jump_force,
@@ -361,6 +397,7 @@ pub fn fps_controller_move(
 
             external_force.apply_impulse(add * controller.mass);
         } else {
+            println!("IN AIR");
             damping.0 = controller.air_damp;
 
             wish_speed = f32::min(wish_speed, controller.air_speed_cap);
