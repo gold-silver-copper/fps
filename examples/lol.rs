@@ -42,9 +42,9 @@ fn main() {
         .add_plugins(bevy::render::diagnostic::RenderDiagnosticsPlugin)
         .add_plugins(iyes_perf_ui::PerfUiPlugin)
         .add_plugins(PhysicsPlugins::new(FixedPostUpdate))
-        .add_plugins(GoldenUI)
+        // .add_plugins(GoldenUI)
         .add_plugins(GunPlayPlugin)
-        // .add_plugins(PhysicsDebugPlugin::default())
+        .add_plugins(PhysicsDebugPlugin::default())
         .add_plugins(GoldenControllerPlugin)
         .add_plugins(bevy_framepace::FramepacePlugin)
         .add_plugins(MyInputPlugin)
@@ -238,9 +238,9 @@ fn scene_colliders(
                 let gltf_mesh = gltf_mesh_assets.get(&gltf_mesh).unwrap();
                 for mesh_primitive in &gltf_mesh.primitives {
                     commands.spawn((
-                        ColliderConstructor::TrimeshFromMeshWithConfig(
-                            TrimeshFlags::FIX_INTERNAL_EDGES,
-                        ),
+                        ColliderConstructor::TrimeshFromMesh,
+                        //   ColliderConstructor::TrimeshFromMeshWithConfig(TrimeshFlags::all()),
+                        SpeculativeMargin::ZERO,
                         Mesh3d(mesh_primitive.mesh.clone()),
                         RigidBody::Static,
                         node.transform,

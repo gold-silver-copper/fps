@@ -287,7 +287,7 @@ pub fn fps_controller_move(
             * (1.0 - controller_mutables.lean_degree.abs() / 2.0))
             .max(3.0);
         wish_speed = f32::min(wish_speed, max_speed);
-
+        println!("{:#?}", controller_mutables.ground_tick);
         if spatial_hits.bottom_down {
             let mut add = acceleration(
                 wish_direction,
@@ -411,8 +411,8 @@ pub fn fps_controller_spatial_hitter(
             // Avoid division by zero
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
-        let foot_shape = Collider::cylinder(controller.radius * SLIGHT_SCALE_DOWN, 0.1);
-        let feet_origin = transform.translation - collider_y_offset(&collider) * 0.99;
+        let foot_shape = Collider::cylinder(controller.radius * 0.9, 0.01);
+        let feet_origin = transform.translation - collider_y_offset(&collider) * 0.95;
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
             &foot_shape,
             feet_origin,
