@@ -115,7 +115,6 @@ pub struct GoldenController {
 
     pub air_damp: f32,
 
-    pub friction: f32,
     pub mass: f32,
 
     pub enable_input: bool,
@@ -123,7 +122,6 @@ pub struct GoldenController {
     pub jump_force: f32,
     pub lean_max: f32,
 
-    pub air_friction: f32,
     pub lean_side_impulse: f32,
     pub leaning_speed: f32,
 }
@@ -143,8 +141,6 @@ impl Default for GoldenController {
             //how fast your character enters crouched position
             crouch_speed: 4.0,
 
-            //air friction is actually contact friction to objects while in air, dont change this
-            air_friction: 0.0,
             //air damp is actual air friction
             air_damp: 0.3,
             //force to apply when jumping, higher force = higher jumps
@@ -163,10 +159,9 @@ impl Default for GoldenController {
             leaning_speed: 2.0,
 
             //how fast the player accelerates on the ground, a too low value can break horizontal movement when leaning
-            acceleration: 4.0,
+            acceleration: 4.5,
 
             traction_normal_cutoff: 0.6,
-            friction: 0.0,
 
             //how much to move horizontally while leaning
             lean_side_impulse: 65.0,
@@ -323,47 +318,29 @@ pub fn fps_controller_move(
             if has_traction {
                 println!("HAS TRACTION");
                 if !input.jump && spatial_hits.bottom_hit_normal.y > 0.5 {
-                    // height control (spring–damper)
+                    // spring–damper height control
                     let current_height = spatial_hits.bottom_down_distance;
                     let target_height =
                         controller.grounded_distance * (1.0 - controller_mutables.crouch_degree);
                     let height_error = target_height - current_height;
 
-                    // Tuning: make these snappy for fast pop-back
-                    let freq_hz = 6.0; // natural frequency for normal spring (Hz)
+                    // spring stiffness from frequency
+                    let omega = 2.0 * std::f32::consts::PI * 6.0;
+                    let k = controller.mass * omega * omega;
 
-                    let omega = 2.0 * std::f32::consts::PI * freq_hz;
-                    let k = controller.mass * omega * omega; // N/m
+                    let n = spatial_hits.bottom_hit_normal.normalize();
 
-                    let n = spatial_hits.bottom_hit_normal.normalize(); // ground normal
-
-                    // decompose velocity into normal and tangential parts
-                    let v = velocity.0;
-                    let v_normal_scalar = Vec3::dot(v, n);
-                    let v_normal = n * v_normal_scalar;
-                    let v_tangent = v - v_normal;
-
-                    // desired normal acceleration from PD spring (m/s^2)
-                    // Hooke: F_spring = k * error, F_damp = -c * v_normal_scalar
+                    // desired normal acceleration
                     let a_normal_des = (k * height_error) / controller.mass;
 
-                    // normal component of gravity (scalar)
-                    let g_dot_n = Vec3::dot(gravity.0, n); // negative value (e.g. -9.81 on flat)
-                    // Force along normal needed: m*(a_normal_des - g_normal)
+                    // gravity along normal
+                    let g_dot_n = gravity.0.dot(n);
+
+                    // normal force (spring + gravity compensation)
                     let f_normal = n * (controller.mass * (a_normal_des - g_dot_n));
 
-                    // tangential gravity vector (gravity projection onto plane)
-                    let g_tangent = gravity.0 - n * g_dot_n; // this is the downslope pull (vector)
-                    // cancel tangential gravity exactly + actively damp tangent velocity:
-                    let f_tangent_cancel = -controller.mass * g_tangent; // cancels downslope accel
-                    let f_tangent_damp = -controller.mass * v_tangent; // active damping
-                    let f_tangent = f_tangent_cancel + f_tangent_damp;
-
-                    // total thrust (Newtons)
-                    let f_total = f_normal + f_tangent;
-
-                    // apply as impulse (force * dt)
-                    external_force.apply_impulse(f_total * dt);
+                    // impulse
+                    external_force.apply_impulse(f_normal * dt);
                 }
 
                 //This fixes bug that pushes player randomly upon landing
@@ -375,6 +352,13 @@ pub fn fps_controller_move(
                 //fast slow down when player does not wish to move
                 if !input.jump && input.movement.length_squared() < 0.1 {
                     damping.0 = controller.air_damp * 30.0;
+                    //  Fixes wobbly velocity
+                    if velocity.0.z.abs() < 0.01 {
+                        velocity.0.z = 0.0;
+                    }
+                    if velocity.0.x.abs() < 0.01 {
+                        velocity.0.x = 0.0;
+                    }
                 }
 
                 //this has to be tuned to prevent double jumps
@@ -389,6 +373,7 @@ pub fn fps_controller_move(
             }
             controller_mutables.ground_tick = controller_mutables.ground_tick.saturating_add(1);
         } else {
+            println!("has AIR");
             controller_mutables.ground_tick = 0;
 
             damping.0 = controller.air_damp;
@@ -404,14 +389,6 @@ pub fn fps_controller_move(
             );
 
             external_force.apply_impulse(add * controller.mass);
-        }
-
-        //  Fixes wobbly velocity
-        if velocity.0.z.abs() < 0.004 {
-            velocity.0.z = 0.0;
-        }
-        if velocity.0.x.abs() < 0.004 {
-            velocity.0.x = 0.0;
         }
     }
 }
@@ -445,14 +422,14 @@ pub fn fps_controller_spatial_hitter(
             wish_direction /= wish_speed; // Effectively normalize, avoid length computation twice
         }
         let foot_shape = Collider::cylinder(controller.radius * 0.95, 0.1);
-        let feet_origin = transform.translation - collider_y_offset(&collider);
+        let feet_origin = transform.translation - collider_y_offset(&collider) * 0.99;
         let bottom_down_hit = spatial_query_pipeline.cast_shape(
             &foot_shape,
             feet_origin,
             Quat::IDENTITY,
             -Dir3::Y,
             &ShapeCastConfig::from_max_distance(
-                controller.grounded_distance * 1.1, //+ controller.lean_degree.abs() / 20.0 hack to stay grounded while leaning
+                controller.grounded_distance * 1.01, //+ controller.lean_degree.abs() / 20.0 hack to stay grounded while leaning
             ),
             &filter,
         );
