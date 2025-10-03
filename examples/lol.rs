@@ -238,8 +238,10 @@ fn scene_colliders(
                 let gltf_mesh = gltf_mesh_assets.get(&gltf_mesh).unwrap();
                 for mesh_primitive in &gltf_mesh.primitives {
                     commands.spawn((
-                        ColliderConstructor::TrimeshFromMesh,
-                        //   ColliderConstructor::TrimeshFromMeshWithConfig(TrimeshFlags::all()),
+                        //      ColliderConstructor::TrimeshFromMesh,
+                        ColliderConstructor::TrimeshFromMeshWithConfig(
+                            TrimeshFlags::FIX_INTERNAL_EDGES,
+                        ),
                         SpeculativeMargin::ZERO,
                         Mesh3d(mesh_primitive.mesh.clone()),
                         RigidBody::Static,
