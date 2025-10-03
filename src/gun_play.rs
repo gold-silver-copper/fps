@@ -41,20 +41,22 @@ fn shoot_bullet(
 
             commands.spawn((
                 // Small sphere collider
-                Collider::sphere(0.01),
+                Collider::sphere(0.001),
                 Bullet {},
                 Mesh3d(meshes.add(Sphere::new(0.01))),
                 MeshMaterial3d(emissive_material),
                 RigidBody::Dynamic,
-                Mass(0.01),
+                Mass(0.001),
+                SpeculativeMargin::ZERO,
                 // Spawn at player position
                 Transform::from_translation(spawn_pos),
                 LinearVelocity(forward * speed),
                 // Optional: disable gravity if you want straight shot
                 GravityScale(1.0),
+                SweptCcd::default(),
                 // Optional: frictionless
-                Friction::new(0.0),
-                Restitution::new(0.8),
+                Friction::new(0.1),
+                Restitution::new(0.6),
                 LinearDamping(0.01),
             ));
         }
