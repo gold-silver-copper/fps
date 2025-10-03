@@ -200,7 +200,6 @@ impl Default for GoldenControllerKeys {
 
 #[derive(Component)]
 pub struct GoldenControllerMutables {
-    pub ground_tick: u8,
     pub pitch: f32,
     pub yaw: f32,
     pub lean_degree: f32,
@@ -223,8 +222,7 @@ impl Default for GoldenControllerMutables {
             //degrees determine the amount you are currently crouched/leaned, used for variable crouching and leaning
             crouch_degree: 0.0,
             lean_degree: 0.0,
-            //how long you have been on the ground, used for some hacky stuff
-            ground_tick: 0,
+
             pitch: 0.0,
             yaw: 0.0,
             sensitivity: 0.001,
@@ -287,7 +285,7 @@ pub fn fps_controller_move(
             * (1.0 - controller_mutables.lean_degree.abs() / 2.0))
             .max(3.0);
         wish_speed = f32::min(wish_speed, max_speed);
-        println!("{:#?}", controller_mutables.ground_tick);
+
         if spatial_hits.bottom_down {
             let mut add = acceleration(
                 wish_direction,
@@ -360,12 +358,9 @@ pub fn fps_controller_move(
                     external_force.apply_impulse(jump_force);
                 }
             }
-            controller_mutables.ground_tick = controller_mutables.ground_tick.saturating_add(1);
+
             external_force.apply_impulse(add * controller.mass);
         } else {
-            println!("has AIR");
-            controller_mutables.ground_tick = 0;
-
             damping.0 = controller.air_damp;
 
             wish_speed = f32::min(wish_speed, controller.air_speed_cap);
