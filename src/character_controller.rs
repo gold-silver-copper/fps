@@ -500,8 +500,8 @@ pub fn fps_controller_upright_stabilization(
     for (controller, mut transform, mut angular_impulse, angular_velocity) in query.iter_mut() {
         // --- Parameters ---
         let mass = controller.mass.max(0.001); // avoid divide-by-zero
-        let kp = 5.0 * mass; // proportional to mass
-        let kd = 1.0 * mass; // damping also scales with mass
+        let kp = 1.0 * mass; // proportional to mass
+        let kd = 5.0 * mass; // damping also scales with mass
 
         // --- Compute current tilt ---
         let current_up = transform.rotation * Vec3::Y;
