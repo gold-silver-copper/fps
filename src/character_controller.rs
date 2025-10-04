@@ -157,7 +157,7 @@ impl Default for GoldenController {
             //max angle degree of leaning, if it is too high there can be clipping bugs when turning fast, very bad
             lean_max: 0.35,
             //how fast you lean
-            leaning_speed: 2.0,
+            leaning_speed: 3.0,
 
             //how fast the player accelerates on the ground, a too low value can break horizontal movement when leaning
             acceleration: 4.5,
@@ -165,7 +165,7 @@ impl Default for GoldenController {
             traction_normal_cutoff: 0.6,
 
             //how much to move horizontally while leaning
-            lean_side_impulse: 65.0,
+            lean_side_impulse: 650.0,
 
             enable_input: true,
         }
@@ -493,13 +493,20 @@ pub fn fps_controller_lean(
             &GoldenController,
             &GoldenControllerSpatialHits,
             &mut GoldenControllerMutables,
+            &mut ExternalImpulse,
             &mut Transform,
         ),
         With<LogicalPlayer>,
     >,
 ) {
-    for (input, controller, spatial_hits, mut controller_mutables, mut transform) in
-        query.iter_mut()
+    for (
+        input,
+        controller,
+        spatial_hits,
+        mut controller_mutables,
+        mut external_force,
+        mut transform,
+    ) in query.iter_mut()
     {
         /* Leaning */
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
@@ -542,7 +549,10 @@ pub fn fps_controller_lean(
         let degree_change = controller_mutables.lean_degree - old_degree;
 
         // Shift collider sideways to simulate body lean (peeking)
-        transform.translation += right_dir * controller.lean_side_impulse * degree_change * DT;
+        let forcik =
+            right_dir * controller.lean_side_impulse * degree_change * DT * controller.mass;
+
+        external_force.apply_impulse(forcik);
 
         // Rotate to show visual lean
         let lean_amount = controller_mutables.lean_degree * controller.lean_max;
