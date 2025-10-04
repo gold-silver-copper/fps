@@ -36,6 +36,7 @@ impl Plugin for GoldenControllerPlugin {
                     fps_controller_move,
                     fps_controller_crouch,
                     fps_controller_lean,
+                    fps_controller_upright_stabilization,
                 )
                     .chain(),
             );
@@ -482,6 +483,53 @@ pub fn fps_controller_spatial_hitter(
         match left_hit {
             Some(h) => spatial_hits.left_wall_dist = (true, h.distance),
             None => spatial_hits.left_wall_dist = (false, 10.0),
+        }
+    }
+}
+pub fn fps_controller_upright_stabilization(
+    mut query: Query<
+        (
+            &GoldenController,
+            &mut Transform,
+            &mut ExternalAngularImpulse,
+            &AngularVelocity,
+        ),
+        With<LogicalPlayer>,
+    >,
+) {
+    for (controller, mut transform, mut angular_impulse, angular_velocity) in query.iter_mut() {
+        // --- Parameters ---
+        let mass = controller.mass.max(0.001); // avoid divide-by-zero
+        let kp = 5.0 * mass; // proportional to mass
+        let kd = 1.0 * mass; // damping also scales with mass
+
+        // --- Compute current tilt ---
+        let current_up = transform.rotation * Vec3::Y;
+        let world_up = Vec3::Y;
+
+        // Axis between them, stable even for near-parallel vectors
+        let tilt_axis = current_up.cross(world_up);
+        let tilt_mag_sq = tilt_axis.length_squared();
+
+        if tilt_mag_sq > 1e-8 {
+            // Normalize safely
+            let torque_dir = tilt_axis.normalize();
+            // Compute small-angle approximation for efficiency and stability
+            let tilt_amount = current_up
+                .angle_between(world_up)
+                .min(std::f32::consts::FRAC_PI_2);
+
+            // --- Compute corrective torque ---
+            let spring_torque = torque_dir * (tilt_amount * kp);
+            let damping_torque = -angular_velocity.0 * kd;
+
+            let total_torque = (spring_torque + damping_torque) * DT;
+
+            angular_impulse.apply_impulse(total_torque);
+        } else {
+            // If almost upright, gently damp residual rotation
+            let residual_damp = -angular_velocity.0 * kd * 0.5 * DT;
+            angular_impulse.apply_impulse(residual_damp);
         }
     }
 }

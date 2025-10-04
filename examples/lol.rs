@@ -119,7 +119,7 @@ fn setup(
             SpeculativeMargin::ZERO,
             RigidBody::Dynamic,
             Sleeping,
-            LockedAxes::ROTATION_LOCKED,
+            //  LockedAxes::ROTATION_LOCKED,
             Mass(mass),
             GravityScale(1.0),
             Transform::from_translation(SPAWN_POINT),
