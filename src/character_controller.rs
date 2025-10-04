@@ -160,7 +160,7 @@ impl Default for GoldenController {
             leaning_speed: 3.0,
 
             //how fast the player accelerates on the ground, a too low value can break horizontal movement when leaning
-            acceleration: 4.5,
+            acceleration: 4.0,
 
             traction_normal_cutoff: 0.6,
 
