@@ -8,6 +8,7 @@ use bevy::{input::mouse::MouseMotion, prelude::*};
 
 pub struct GoldenControllerPlugin;
 pub static FPS: f64 = 120.0;
+pub static DT: f32 = 1.0 / FPS as f32;
 impl Plugin for GoldenControllerPlugin {
     fn build(&self, app: &mut App) {
         use bevy::input::{gamepad, keyboard, mouse, touch};
@@ -258,13 +259,11 @@ pub fn fps_controller_move(
     >,
     gravity: Res<Gravity>,
 ) {
-    let dt = 1.0 / FPS as f32;
-
     for (
         input,
         controller,
         spatial_hits,
-        mut controller_mutables,
+        controller_mutables,
         mut velocity,
         mut external_force,
         mut damping,
@@ -293,7 +292,6 @@ pub fn fps_controller_move(
                 f32::min(wish_speed, controller.air_speed_cap),
                 controller.air_acceleration,
                 velocity.0,
-                dt,
             );
 
             // check if player is on walkable slope
@@ -308,7 +306,6 @@ pub fn fps_controller_move(
                         wish_speed,
                         controller.acceleration,
                         velocity.0,
-                        dt,
                     );
                 }
 
@@ -342,7 +339,7 @@ pub fn fps_controller_move(
                     // 1) cancel tangential part of gravity so it doesn't slide us down the slope
                     let gravity_normal_comp = normal * Vec3::dot(gravity_vec, normal);
                     let gravity_tangent = gravity_vec - gravity_normal_comp;
-                    let cancel_tangent_impulse = -controller.mass * gravity_tangent * dt;
+                    let cancel_tangent_impulse = -controller.mass * gravity_tangent * DT;
                     external_force.apply_impulse(cancel_tangent_impulse);
 
                     // 2) spring + damping along the normal
@@ -363,7 +360,7 @@ pub fn fps_controller_move(
                         f_spring + f_damp - controller.mass * gravity_normal_scalar;
 
                     // impulse this frame
-                    let spring_damper_impulse = normal * (f_total_normal * dt);
+                    let spring_damper_impulse = normal * (f_total_normal * DT);
                     external_force.apply_impulse(spring_damper_impulse);
                 }
 
@@ -407,7 +404,6 @@ pub fn fps_controller_move(
                 wish_speed,
                 controller.air_acceleration,
                 velocity.0,
-                dt,
             );
 
             external_force.apply_impulse(add * controller.mass);
@@ -533,8 +529,6 @@ pub fn fps_controller_lean(
         With<LogicalPlayer>,
     >,
 ) {
-    let dt = 1.0 / FPS as f32;
-
     for (input, controller, spatial_hits, mut controller_mutables, mut transform) in
         query.iter_mut()
     {
@@ -542,7 +536,7 @@ pub fn fps_controller_lean(
         let yaw_rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, 0.0, 0.0);
         let right_dir = yaw_rotation * Vec3::X; // world-space right
 
-        let lean_step = controller.leaning_speed * dt;
+        let lean_step = controller.leaning_speed * DT;
 
         // Desired lean from input
         let mut target_lean = input.lean;
@@ -579,7 +573,7 @@ pub fn fps_controller_lean(
         let degree_change = controller_mutables.lean_degree - old_degree;
 
         // Shift collider sideways to simulate body lean (peeking)
-        transform.translation += right_dir * controller.lean_side_impulse * degree_change * dt;
+        transform.translation += right_dir * controller.lean_side_impulse * degree_change * DT;
 
         // Rotate to show visual lean
         let lean_amount = controller_mutables.lean_degree * controller.lean_max;
@@ -599,8 +593,6 @@ pub fn fps_controller_crouch(
         With<LogicalPlayer>,
     >,
 ) {
-    let dt = 1.0 / FPS as f32;
-
     for (input, controller, spatial_hits, mut controller_mutables, mut collider) in query.iter_mut()
     {
         /* Crouching */
@@ -615,11 +607,11 @@ pub fn fps_controller_crouch(
         // Smoothly move actual crouch_degree toward target
         if (controller_mutables.crouch_degree - target_crouch).abs() > CALC_EPSILON {
             if controller_mutables.crouch_degree < target_crouch {
-                controller_mutables.crouch_degree += controller.crouch_speed * dt;
+                controller_mutables.crouch_degree += controller.crouch_speed * DT;
             } else if controller_mutables.crouch_degree > target_crouch {
                 // Only allow standing up if there's no ceiling
                 if !spatial_hits.top_up {
-                    controller_mutables.crouch_degree -= controller.crouch_speed * dt;
+                    controller_mutables.crouch_degree -= controller.crouch_speed * DT;
                 }
             }
         } else {
@@ -774,20 +766,14 @@ fn scaled_collider_laterally(collider: &Collider, scale: f32) -> Collider {
     }
 }
 
-fn acceleration(
-    wish_direction: Vec3,
-    wish_speed: f32,
-    acceleration: f32,
-    velocity: Vec3,
-    dt: f32,
-) -> Vec3 {
+fn acceleration(wish_direction: Vec3, wish_speed: f32, acceleration: f32, velocity: Vec3) -> Vec3 {
     let velocity_projection = Vec3::dot(velocity, wish_direction);
     let add_speed = wish_speed - velocity_projection;
     if add_speed <= 0.0 {
         return Vec3::ZERO;
     }
 
-    let acceleration_speed = f32::min(acceleration * wish_speed * dt, add_speed);
+    let acceleration_speed = f32::min(acceleration * wish_speed * DT, add_speed);
     wish_direction * acceleration_speed
 }
 
