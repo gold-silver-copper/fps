@@ -312,8 +312,8 @@ pub fn fps_controller_move(
                 if !input.jump {
                     // spring–damper height control (vertical only)
                     let current_height = spatial_hits.bottom_down_distance;
-                    let target_height =
-                        (controller.grounded_distance) / (1.0 + controller_mutables.crouch_degree);
+                    let target_height = (controller.grounded_distance * 0.8)
+                        / (1.0 + controller_mutables.crouch_degree);
                     let height_error = target_height - current_height;
 
                     // spring stiffness from frequency
@@ -450,7 +450,7 @@ pub fn fps_controller_spatial_hitter(
 
         let probe_origin = transform.translation;
         let probe_distance = 1.0;
-        let side_shape = &scaled_collider_laterally(&collider, SLIGHT_SCALE_DOWN);
+        let side_shape = &scaled_collider_laterally(&collider, 0.8);
 
         // Right wall check
         let right_hit = spatial_query_pipeline.cast_shape(
