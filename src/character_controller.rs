@@ -131,7 +131,7 @@ impl Default for GoldenController {
     fn default() -> Self {
         Self {
             //used for projecting collision to ground, to check if player has traction
-            grounded_distance: 0.2,
+            grounded_distance: 0.3,
             //collider height and radius
             radius: 0.4,
             height: 1.0,
@@ -284,22 +284,21 @@ pub fn fps_controller_move(
             * (1.0 - controller_mutables.lean_degree.abs() / 2.0))
             .max(3.0);
         wish_speed = f32::min(wish_speed, max_speed);
-
+        damping.0 = controller.air_damp;
+        let mut add = acceleration(
+            wish_direction,
+            f32::min(wish_speed, controller.air_speed_cap),
+            controller.air_acceleration,
+            velocity.0,
+        );
         if spatial_hits.bottom_down {
-            damping.0 = controller.air_damp;
-            let mut add = acceleration(
-                wish_direction,
-                f32::min(wish_speed, controller.air_speed_cap),
-                controller.air_acceleration,
-                velocity.0,
-            );
-
             // check if player is on walkable slope
             let has_traction = Vec3::dot(spatial_hits.bottom_hit_normal, Vec3::Y)
                 > controller.traction_normal_cutoff;
             if has_traction {
                 damping.0 = controller.air_damp * 10.0;
 
+                //ground accel
                 if !input.jump {
                     add = acceleration(
                         wish_direction,
@@ -309,55 +308,38 @@ pub fn fps_controller_move(
                     );
                 }
 
-                // SPRING + SLOPE SUPPORT
+                // PURE VERTICAL SPRING–DAMPER (no slope support)
                 if !input.jump {
-                    // spring–damper height control, slope-aware
+                    // spring–damper height control (vertical only)
                     let current_height = spatial_hits.bottom_down_distance;
-                    let target_height = controller.grounded_distance * 0.9;
+                    let target_height =
+                        (controller.grounded_distance) / (1.0 + controller_mutables.crouch_degree);
                     let height_error = target_height - current_height;
 
                     // spring stiffness from frequency
-                    let omega = 2.0 * std::f32::consts::PI * 2.0;
+                    let omega = 2.0 * std::f32::consts::PI * 5.0;
                     let k = controller.mass * omega * omega;
 
                     // damping coefficient (critical damping = 2 * m * omega)
-                    let c = 2.0 * controller.mass * omega * 0.4; // 0.8 = slightly underdamped, tune this
+                    let c = 2.0 * controller.mass * omega * 0.4; // 0.8 = slightly underdamped
 
-                    // ground normal (unit)
-                    let normal = {
-                        let n = spatial_hits.bottom_hit_normal;
-                        if n.length_squared() > 0.0 {
-                            n.normalize()
-                        } else {
-                            Vec3::Y
-                        }
-                    };
-
-                    // 1) cancel tangential part of gravity so it doesn't slide us down the slope
-                    let gravity_normal_comp = normal * Vec3::dot(gravity.0, normal);
-                    let gravity_tangent = gravity.0 - gravity_normal_comp;
-                    let cancel_tangent_impulse = -controller.mass * gravity_tangent * DT;
-                    external_force.apply_impulse(cancel_tangent_impulse);
-
-                    // 2) spring + damping along the normal
-                    // velocity along the normal
-                    let vel_along_normal = Vec3::dot(velocity.0, normal);
+                    // velocity along Y
+                    let vel_y = velocity.0.y;
 
                     // spring force (scalar)
                     let f_spring = k * height_error;
 
-                    // damping force (scalar, resists motion along the normal)
-                    let f_damp = -c * vel_along_normal;
+                    // damping force (scalar)
+                    let f_damp = -c * vel_y;
 
-                    // include gravity’s normal component
-                    let gravity_normal_scalar = Vec3::dot(gravity.0, normal);
+                    // include gravity
+                    let gravity_force = controller.mass * gravity.0.y;
 
-                    // total force along the normal
-                    let f_total_normal =
-                        f_spring + f_damp - controller.mass * gravity_normal_scalar;
+                    // total force along Y
+                    let f_total_y = f_spring + f_damp - gravity_force;
 
                     // impulse this frame
-                    let spring_damper_impulse = normal * (f_total_normal * DT);
+                    let spring_damper_impulse = Vec3::Y * (f_total_y * DT);
                     external_force.apply_impulse(spring_damper_impulse);
                 }
 
@@ -390,22 +372,8 @@ pub fn fps_controller_move(
                     external_force.apply_impulse(jump_force);
                 }
             }
-
-            external_force.apply_impulse(add * controller.mass);
-        } else {
-            damping.0 = controller.air_damp;
-
-            wish_speed = f32::min(wish_speed, controller.air_speed_cap);
-
-            let add = acceleration(
-                wish_direction,
-                wish_speed,
-                controller.air_acceleration,
-                velocity.0,
-            );
-
-            external_force.apply_impulse(add * controller.mass);
         }
+        external_force.apply_impulse(add * controller.mass);
     }
 }
 
@@ -496,7 +464,10 @@ pub fn fps_controller_spatial_hitter(
 
         match right_hit {
             Some(h) => spatial_hits.right_wall_dist = (true, h.distance),
-            None => spatial_hits.right_wall_dist = (false, 1.0),
+            None => spatial_hits.right_wall_dist = (false, 10.0),
+        }
+        if right_hit.is_some() {
+            println!("ASUDASIDUJAHSId")
         }
 
         // Left wall check
@@ -510,7 +481,7 @@ pub fn fps_controller_spatial_hitter(
         );
         match left_hit {
             Some(h) => spatial_hits.left_wall_dist = (true, h.distance),
-            None => spatial_hits.left_wall_dist = (false, 1.0),
+            None => spatial_hits.left_wall_dist = (false, 10.0),
         }
     }
 }
