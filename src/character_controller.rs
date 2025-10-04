@@ -131,7 +131,7 @@ impl Default for GoldenController {
     fn default() -> Self {
         Self {
             //used for projecting collision to ground, to check if player has traction
-            grounded_distance: 0.3,
+            grounded_distance: 0.25,
             //collider height and radius
             radius: 0.4,
             height: 1.0,
