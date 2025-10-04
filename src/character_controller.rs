@@ -450,7 +450,7 @@ pub fn fps_controller_spatial_hitter(
 
         let probe_origin = transform.translation;
         let probe_distance = 1.0;
-        let side_shape = &scaled_collider_laterally(&collider, 0.8);
+        let side_shape = &scaled_collider_laterally(&collider, 0.5);
 
         // Right wall check
         let right_hit = spatial_query_pipeline.cast_shape(
