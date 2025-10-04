@@ -223,7 +223,6 @@ impl Default for GoldenControllerMutables {
             //degrees determine the amount you are currently crouched/leaned, used for variable crouching and leaning
             crouch_degree: 0.0,
             lean_degree: 0.0,
-
             pitch: 0.0,
             yaw: 0.0,
             sensitivity: 0.001,
@@ -242,7 +241,8 @@ impl Default for GoldenControllerMutables {
 const ANGLE_EPSILON: f32 = 0.001953125;
 const CALC_EPSILON: f32 = 0.01;
 
-const SLIGHT_SCALE_DOWN: f32 = 0.8;
+const SLIGHT_SCALE_DOWN: f32 = 0.9;
+const SLIGHT_SCALE_UP: f32 = 1.1;
 
 pub fn fps_controller_move(
     mut query: Query<
@@ -299,7 +299,7 @@ pub fn fps_controller_move(
                 > controller.traction_normal_cutoff;
             if has_traction {
                 damping.0 = controller.air_damp * 10.0;
-                println!("HAS TRACTION");
+
                 if !input.jump {
                     add = acceleration(
                         wish_direction,
@@ -333,12 +333,9 @@ pub fn fps_controller_move(
                         }
                     };
 
-                    // gravity vector (gravity.0 is your Vec3)
-                    let gravity_vec = gravity.0;
-
                     // 1) cancel tangential part of gravity so it doesn't slide us down the slope
-                    let gravity_normal_comp = normal * Vec3::dot(gravity_vec, normal);
-                    let gravity_tangent = gravity_vec - gravity_normal_comp;
+                    let gravity_normal_comp = normal * Vec3::dot(gravity.0, normal);
+                    let gravity_tangent = gravity.0 - gravity_normal_comp;
                     let cancel_tangent_impulse = -controller.mass * gravity_tangent * DT;
                     external_force.apply_impulse(cancel_tangent_impulse);
 
@@ -353,7 +350,7 @@ pub fn fps_controller_move(
                     let f_damp = -c * vel_along_normal;
 
                     // include gravity’s normal component
-                    let gravity_normal_scalar = Vec3::dot(gravity_vec, normal);
+                    let gravity_normal_scalar = Vec3::dot(gravity.0, normal);
 
                     // total force along the normal
                     let f_total_normal =
@@ -368,21 +365,23 @@ pub fn fps_controller_move(
                 if !input.jump && input.movement.length_squared() < 0.1 {
                     damping.0 = controller.air_damp * 30.0;
                     //  Fixes wobbly velocity
-                    if velocity.0.z.abs() < 0.3 {
+                    if velocity.0.z.abs() < CALC_EPSILON {
                         velocity.0.z = 0.0;
                     }
-                    if velocity.0.x.abs() < 0.3 {
+                    if velocity.0.x.abs() < CALC_EPSILON {
                         velocity.0.x = 0.0;
                     }
                 }
 
                 //this has to be tuned to prevent double jumps
                 if input.jump && velocity.0.y < 1.0 {
-                    //This fixes bug that pushes player randomly upon landing
-                    let linear_velocity = velocity.0;
-                    let normal_force = Vec3::dot(linear_velocity, spatial_hits.bottom_hit_normal)
-                        * spatial_hits.bottom_hit_normal;
-                    velocity.0 -= normal_force;
+                    {
+                        let linear_velocity = velocity.0;
+                        let normal_force =
+                            Vec3::dot(linear_velocity, spatial_hits.bottom_hit_normal)
+                                * spatial_hits.bottom_hit_normal;
+                        velocity.0 -= normal_force;
+                    }
                     let jump_force = Vec3 {
                         x: 0.0,
                         y: controller.jump_force,
@@ -394,7 +393,6 @@ pub fn fps_controller_move(
 
             external_force.apply_impulse(add * controller.mass);
         } else {
-            println!("IN AIR");
             damping.0 = controller.air_damp;
 
             wish_speed = f32::min(wish_speed, controller.air_speed_cap);
