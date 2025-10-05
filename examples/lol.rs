@@ -2,28 +2,17 @@ use std::f32::consts::TAU;
 
 use avian3d::prelude::*;
 use bevy::{
-    core_pipeline::{
-        bloom::{Bloom, BloomCompositeMode},
-        tonemapping::Tonemapping,
-    },
-    math::ops,
+    core_pipeline::{bloom::Bloom, tonemapping::Tonemapping},
     prelude::*,
 };
 use bevy::{
     gltf::{Gltf, GltfMesh, GltfNode},
-    math::Vec3Swizzles,
     render::camera::Exposure,
     window::CursorGrabMode,
 };
 
 use fps::*;
-use iyes_perf_ui::{
-    entries::{
-        PerfUiFixedTimeEntries, PerfUiFramerateEntries, PerfUiSystemEntries, PerfUiWindowEntries,
-    },
-    prelude::PerfUiDefaultEntries,
-    *,
-};
+use iyes_perf_ui::prelude::PerfUiDefaultEntries;
 
 const SPAWN_POINT: Vec3 = Vec3::new(0.0, 1.625, 0.0);
 
