@@ -510,7 +510,7 @@ pub fn fps_controller_upright_stabilization(
         // Axis between them, stable even for near-parallel vectors
         let tilt_axis = current_up.cross(world_up);
         let tilt_mag_sq = tilt_axis.length_squared();
-
+        //
         if tilt_mag_sq > 1e-8 {
             // Normalize safely
             let torque_dir = tilt_axis.normalize();
