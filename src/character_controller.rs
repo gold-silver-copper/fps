@@ -533,7 +533,6 @@ pub fn fps_controller_upright_stabilization(
         }
     }
 }
-
 pub fn fps_controller_lean(
     mut query: Query<
         (
@@ -542,7 +541,9 @@ pub fn fps_controller_lean(
             &GoldenControllerSpatialHits,
             &mut GoldenControllerMutables,
             &mut ExternalImpulse,
-            &mut Transform,
+            &mut ExternalAngularImpulse,
+            &Transform,
+            &AngularVelocity,
         ),
         With<LogicalPlayer>,
     >,
@@ -553,7 +554,9 @@ pub fn fps_controller_lean(
         spatial_hits,
         mut controller_mutables,
         mut external_force,
-        mut transform,
+        mut angular_impulse,
+        transform,
+        angular_velocity,
     ) in query.iter_mut()
     {
         /* Leaning */
@@ -602,10 +605,36 @@ pub fn fps_controller_lean(
 
         external_force.apply_impulse(forcik);
 
-        // Rotate to show visual lean
-        let lean_amount = controller_mutables.lean_degree * controller.lean_max;
-        let lean_rotation = Quat::from_axis_angle(Vec3::Z, -lean_amount);
-        transform.rotation = (yaw_rotation * lean_rotation).normalize();
+        // --- Angular impulse-based lean rotation ---
+        let mass = controller.mass.max(0.001);
+
+        // Target lean angle around forward axis (Z-axis in local space)
+        let target_lean_angle = controller_mutables.lean_degree * controller.lean_max;
+
+        // Desired rotation combining yaw and lean
+        let target_rotation = yaw_rotation * Quat::from_axis_angle(Vec3::Z, -target_lean_angle);
+
+        // Compute rotation error
+        let rotation_diff = target_rotation * transform.rotation.inverse();
+        let (axis, angle) = rotation_diff.to_axis_angle();
+
+        // Ensure we take shortest path
+        let (torque_axis, torque_angle) = if angle > std::f32::consts::PI {
+            (-axis, std::f32::consts::TAU - angle)
+        } else {
+            (axis, angle)
+        };
+
+        // Spring-damper control
+        let kp_lean = 20.0 * mass;
+        let kd_lean = 10.0 * mass;
+
+        let spring_torque = torque_axis * (torque_angle * kp_lean);
+        let damping_torque = -angular_velocity.0 * kd_lean;
+
+        let total_torque = (spring_torque + damping_torque) * DT;
+
+        angular_impulse.apply_impulse(total_torque);
     }
 }
 pub fn fps_controller_crouch(
